@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="utf-8"?>
+<extension version="4.0" type="plugin" group="system" method="upgrade">
+    <name>System - JStats by SEO NW</name>
+    <author>SEO NW - Alexander Müller</author>
+    <creationDate>April 2025</creationDate>
+    <license>GNU General Public License version 2 or later; see LICENSE.txt</license>
+    <version>1.0.9</version>
+	<description><![CDATA[
+			<div class="tpl-info">
+				<h2>Joomla Matomo/Analytics Plugin - JSTATS</h2>
+				<p>You have to activate the Plugin</p>
+				<p>If you need Support <b><a href="https://jstats.de" class="nav-link">write me a Mail</a></b></p>
+			</div>
+
+			<style>
+				.tpl-info { overflow: hidden; padding: 20px 0; }
+				.tpl-info p { float: left; width: 60%;}
+				.tpl-info .btn { box-shadow: 0 2px 10px 0 rgba(0,0,0,.16); border: 0; border-radius: 3px; float: right; min-height: 52px; padding: 0 24px; line-height: 52px; transition: all .2s cubic-bezier(.4,0,.2,1); }
+				.tpl-info .btn span { margin-right: 12px;}
+			</style>
+		]]></description>
+    <files>
+        <filename plugin="jstats">jstats.php</filename>
+        <folder>fields</folder> <!-- Stellen Sie sicher, dass Ihr benutzerdefiniertes Feld hier eingefügt wird -->
+    </files>
+	<languages>
+		<language tag="en-GB">en-GB.plg_system_jstats.ini</language>
+		<language tag="de-DE">de-DE.plg_system_jstats.ini</language>
+		<language tag="af-ZA">en-GB.plg_system_jstats.ini</language>
+		<language tag="ar-AA">de-DE.plg_system_jstats.ini</language>
+		<language tag="es-ES">en-GB.plg_system_jstats.ini</language>
+		<language tag="fi-FI">de-DE.plg_system_jstats.ini</language>
+		<language tag="fr-FR">en-GB.plg_system_jstats.ini</language>
+		<language tag="nl-NL">de-DE.plg_system_jstats.ini</language>
+		<language tag="ru-RU">en-GB.plg_system_jstats.ini</language>
+		<language tag="tr-TR">de-DE.plg_system_jstats.ini</language>
+		<language tag="uk-UA">en-GB.plg_system_jstats.ini</language>
+		<language tag="zh-CN">de-DE.plg_system_jstats.ini</language>
+	</languages>
+    <config>
+        <fields name="params">
+            <fieldset name="basic" label="PLG_SYSTEM_JSTATS_BASIC">
+                <field 
+                    name="custom_code" 
+                    type="textarea" 
+                    default="" 
+                    filter="raw" 
+                    rows="10" 
+                    cols="30" 
+                    label="PLG_SYSTEM_JSTATS_CUSTOM_CODE" 
+                    description="PLG_SYSTEM_JSTATS_CUSTOM_CODE_DESC" 
+                />
+
+                <field 
+                    name="disable_cookies" 
+                    type="checkbox" 
+                    default="0"
+                    label="PLG_SYSTEM_JSTATS_BASIC_LABEL"
+                    description="PLG_SYSTEM_JSTATS_BASIC_DESC"
+                />
+
+                <!-- Hier fügen wir das benutzerdefinierte Menüauswahlfeld ein -->
+                <field 
+                    name="excluded_menu_items" 
+                    type="menuitem" 
+                    label="PLG_SYSTEM_JSTATS_BASIC_EXCLUDE" 
+                    description="Wählen Sie die Menüeinträge aus, bei denen der Code nicht hinzugefügt werden soll."
+                    rows="10" 
+                    cols="30" 					
+                    multiple="true"
+                    default="" 
+                    key_field="id" 
+                    value_field="title" 
+                />
+            </fieldset>
+        </fields>
+    </config>
+	
+		<updateservers>
+    <server type="extension" priority="1" name="JStats Content Plugin">https://jstats.de/_download/extension.xml</server>
+  </updateservers>	
+
+</extension>

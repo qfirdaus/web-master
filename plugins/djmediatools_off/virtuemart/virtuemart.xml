@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<extension version="2.5.5" type="plugin" group="djmediatools" method="upgrade">
+	<name>plg_djmediatools_virtuemart</name>
+	<creationDate>September 2021</creationDate>
+    <author>DJ-Extensions.com</author>
+	<copyright>Copyright (C) 2017 DJ-Extensions.com, All rights reserved.</copyright>
+	<license>http://www.gnu.org/licenses GNU/GPL</license>
+	<authorEmail>contact@dj-extensions.com</authorEmail>
+	<authorUrl>http://dj-extensions.com</authorUrl>
+	<version>2.17.6</version>
+	<description>PLG_DJMEDIATOOLS_VIRTUEMART_DESCRIPTION</description>
+	<files>
+		<filename plugin="virtuemart">virtuemart.php</filename>
+		<filename>index.html</filename>
+		<filename>icon.png</filename>
+		<folder>language</folder>
+	</files>
+
+	<config>
+		<fields name="params" addfieldpath="/administrator/components/com_virtuemart/elements">
+
+			<fieldset name="source_settings" addfieldpath="/administrator/components/com_virtuemart/fields">
+
+				<field name="plg_virtuemart_category_id" type="vmcategories" value_field="category_name" label="PLG_DJMEDIATOOLS_VIRTUEMART_CATEGORY_ID" />
+
+				<field name="plg_virtuemart_product_group" type="list" default="latest"
+					label="PLG_DJMEDIATOOLS_VIRTUEMART_DISPLAY" description="PLG_DJMEDIATOOLS_VIRTUEMART_DISPLAY_DESC" >
+				    <option value="featured">PLG_DJMEDIATOOLS_VIRTUEMART_FEATURED_PRODUCTS</option>
+				    <option value="latest">PLG_DJMEDIATOOLS_VIRTUEMART_LATEST_PRODUCTS</option>
+				    <option value="topten">PLG_DJMEDIATOOLS_VIRTUEMART_BEST_SALES</option>
+				    <option value="random">PLG_DJMEDIATOOLS_VIRTUEMART_RANDOM_PRODUCTS</option>
+				    <option value="recent">PLG_DJMEDIATOOLS_VIRTUEMART_RECENT_PRODUCTS</option>
+				</field>
+
+				<field name="plg_virtuemart_show_price" type="list" default="1"
+					label="PLG_DJMEDIATOOLS_VIRTUEMART_SHOW_PRICE">
+				    <option value="1">JYES</option>
+				    <option value="0">JNO</option>
+				</field>
+				<field name="plg_virtuemart_show_addtocart" type="list" default="1"
+					label="PLG_DJMEDIATOOLS_VIRTUEMART_SHOW_ADDTOCART">
+		            <option value="0">JNO</option>
+		            <option value="1">JYES</option>
+				</field>
+
+				<field name="plg_virtuemart_itemid" type="menuitem" default="" label="PLG_DJMEDIATOOLS_VIRTUEMART_MENUITEM" description="PLG_DJMEDIATOOLS_VIRTUEMART_MENUITEM_DESC">
+					<option value="">JNONE</option>
+				</field>
+
+				<field name="plg_virtuemart_image" type="media" label="PLG_DJMEDIATOOLS_VIRTUEMART_DEFAULT_IMAGE" description="PLG_DJMEDIATOOLS_VIRTUEMART_DEFAULT_IMAGE_DESC" />
+			</fieldset>
+
+		</fields>
+	</config>
+
+</extension>

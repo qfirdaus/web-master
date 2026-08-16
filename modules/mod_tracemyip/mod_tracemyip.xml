@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<extension version="3.9" type="module" client="site" method="upgrade">
+	<name>TraceMyIP</name>
+	<author>TraceMyIP</author>
+	<authorEmail>relations@tracemyip.org</authorEmail>
+	<authorUrl>http://www.tracemyip.org/</authorUrl>
+	<creationDate>July 2024</creationDate>
+	<copyright>Copyright (C) 2024 TraceMyIP. All rights reserved.</copyright>
+	<license>GNU/GPL</license>
+	<version>1.0.2</version>
+	
+	<description><![CDATA[<h1>5 Easy Steps to Setup TraceMyIP Tracking</h1>
+    <p><b>To activate TraceMyIP tracking for Joomla, follow these steps:</b></p>
+    <ol>
+        <li><b><a target="_blank" href="https://www.tracemyip.org/tools/website-visitors-counter-traffic-tracker-statistics/index.php?sto=1&joomlaext=description">Select a Visitor Tracker Icon style </a></b> and generate a JavaScript version of TraceMyIP.org Visitor Tracker Code. Confirm your TraceMyIP.org account. If you already have a TraceMyIP.org account, login to your account and click on <b>"Add a New Project"</b> menu link to generate a website Visitor Tracker Code for your new Joomla website.
+            <br>* If you need to change a tracker style for an existing project, login to your account, go to [<b>My Projects</b>] page and click on the <b>"tracker code"</b> link located to the right of the project's name.</li>
+        <li><b>Copy the Visitor Tracker Code and paste</b> it into the [<b>Visitor Tracker Code</b>] input box below.</li>
+        <li>On the right side panel, select the Tracker Icon <b>Position</b>, <b>Status</b> and <b>Access</b> of the module using the drop down menu [<b>Position</b>] and set to your preference, [<b>Status</b>] to Published and [<b>Access</b>] to public.</li>
+        <li>Verify that a Visitor Tracker Icon appears on <b>ALL pages</b> of your Joomla website. Go to [<b>Menu Assignment</b>] tab and select [<b>On all pages</b>] module assignment (if not already selected). If you are a Level 2+ TraceMyIP.org subscriber, you can enable an <b><a target="_blank" href="https://www.tracemyip.org/learn/how-to-make-a-visitor-tracker-invisible-91/?joomlaext=description">"invisible tracker"</a></b> option. To locate this option, login to your TraceMyIP.org account and click on [<b>My Projects</b>] menu link and then on the <b>"edit"</b> link for your project.</li>
+        <li>[<b>Save & Close</b>] the module. Open frontend of your Joomla website to check if the tracker icon appears on all pages of your site.</li>
+    </ol>
+
+    <h2>Step-by-step tutorials:</h2>
+    <ul>
+        <li>Installing <b><a target="_blank" href="https://www.tracemyip.org/learn/kb/joomla-visitor-ip-tracker-and-website-statistics-extension/?joomlaext=description">Joomla Visitor Tracker</a></b></li>
+        <li>See other <b><a target="_blank" href="https://www.tracemyip.org/learn/most-popular-tracemyip-features-1594/?joomlaext=description">most popular</a></b> tutorials</li>
+    </ul>]]></description>
+
+	<files>
+		<filename module="mod_tracemyip">mod_tracemyip.php</filename>
+		<filename>mod_tracemyip.xml</filename>
+		<filename>mod_tracemyip.php</filename>
+		<folder>tmpl</folder>
+	</files>
+
+	<languages>
+		<language tag="en-GB">en-GB.mod_tracemyip.ini</language>
+	</languages>
+
+	<config>
+        <fields name="params">
+            <fieldset name="basic">
+                <field name="tracemyipTrackerCode" type="textarea" filter="raw" rows="10" cols="40" default="" label="[Visitor Tracker Code]" description="Paste your TraceMyIP tracker code here." />
+            </fieldset>
+        </fields>
+    </config>
+
+    <updateservers>
+		<server type="extension" priority="1" name="TraceMyIP Update"><![CDATA[https://tracemyip.org/support/joomla/extension-update.xml]]></server>
+	</updateservers>
+</extension>

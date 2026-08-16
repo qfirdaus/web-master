@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<form type="browse" show_header="1" show_filters="1" show_pagination="1" norows_placeholder="COM_SPLMS_COMMON_NORECORDS">
+	<headerset>
+		<header name="splms_event_id" type="rowselect" tdwidth="20" />
+		<header name="enabled" type="published" sortable="true" tdwidth="5%" label="COM_SPLMS_TITLE_STATUS" />
+		<header name="title" type="fieldsearchable" label="COM_SPLMS_EVENT_FIELD_TITLE" sortable="true" buttons="yes" buttonclass="btn" />
+		<header name="event_start_date" type="fielddate" label="COM_SPLMS_EVENT_FIELD_DATE" sortable="true" buttons="yes" buttonclass="btn" tdwidth="20%"/>
+		<header name="splms_eventcategory_id" type="fieldsql" translate="false" query="SELECT splms_eventcategory_id, title FROM #__splms_eventcategories ORDER BY ordering ASC" key_field="splms_eventcategory_id" label="COM_SPLMS_TITLE_EVENTCATEGORIES" value_field="title" sortable="true"/>
+		<header name="language" type="language" label="JFIELD_LANGUAGE_LABEL" tdwidth="200" />
+		<header name="ordering" type="ordering" sortable="true" tdwidth="5%" />
+	</headerset>
+
+	<fieldset name="items">
+		<field name="splms_event_id" type="selectrow" />
+		<field name="enabled" type="published"/>
+		<field name="title" type="text" show_link="true" url="index.php?option=com_splms&amp;view=event&amp;id=[ITEM:ID]" />
+		<field name="event_start_date" type="text" />
+		<field name="splms_eventcategory_id" type="sql" translate="false" query="SELECT * FROM #__splms_eventcategories" key_field="splms_eventcategory_id" value_field="title" />
+		<field name="language" type="language" />
+		<field name="ordering" type="ordering" labelclass="order" />
+	</fieldset>
+</form>

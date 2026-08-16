@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<form validate="true" serverside_validate="true" show_header="1" show_filters="1" show_pagination="1" addfieldpath="/administrator/components/com_splms/fields">
+	<fieldset name="basic_configuration" label="COM_SPLMS_QUIZQUESTIONS_TOP_TITLE" class="another-class" innerclass="span6">
+
+        <field name="user_id"
+                label="COM_SPLMS_FIELD_STUDENT_NAME"
+                type="user"
+        />
+
+        <field name="splms_quizquestion_id" 
+        	type="sql"
+        	translate="false" 
+        	query="SELECT splms_quizquestion_id, title FROM #__splms_quizquestions WHERE enabled = 1" 
+        	key_field="splms_quizquestion_id" 
+        	label="COM_SPLMS_FIELD_QUIZ_NAME" 
+        	value_field="title"
+        />
+
+        <field name="splms_course_id" 
+        	type="sql"
+        	translate="false" 
+        	query="SELECT splms_course_id, title FROM #__splms_courses WHERE enabled = 1" 
+        	key_field="splms_course_id" 
+        	label="COM_SPLMS_FIELD_COURSE_NAME" 
+        	value_field="title"
+        />
+
+        <field name="point" type="number"
+		class="inputbox"
+		label="COM_SPLMS_FIELD_QUIZ_POINT"
+		labelclass="splms-label"
+		required="true"
+		size="50"
+	/>
+
+	<field name="total_marks" type="number"
+		class="inputbox"
+		label="COM_SPLMS_FIELD_QUIZ_MARKS"
+		labelclass="splms-label"
+		required="true"
+		size="50"
+	/>
+
+
+	<field name="enabled" type="list" label="JSTATUS" class="inputbox" filter="intval" default="1">
+		<option value="1">JPUBLISHED</option>
+		<option value="0">JUNPUBLISHED</option>
+	</field>
+	</fieldset>
+</form>

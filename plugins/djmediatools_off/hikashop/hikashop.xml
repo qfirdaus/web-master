@@ -1,0 +1,129 @@
+<?xml version="1.0" encoding="utf-8"?>
+<extension version="2.5.5" type="plugin" group="djmediatools" method="upgrade">
+	<name>plg_djmediatools_hikashop</name>
+	<creationDate>September 2021</creationDate>
+    <author>DJ-Extensions.com</author>
+	<copyright>Copyright (C) 2017 DJ-Extensions.com, All rights reserved.</copyright>
+	<license>http://www.gnu.org/licenses GNU/GPL</license>
+	<authorEmail>contact@dj-extensions.com</authorEmail>
+	<authorUrl>http://dj-extensions.com</authorUrl>
+	<version>2.17.6</version>
+	<description>PLG_DJMEDIATOOLS_HIKASHOP_DESCRIPTION</description>
+	<files>
+		<filename plugin="hikashop">hikashop.php</filename>
+		<filename>index.html</filename>
+		<filename>icon.png</filename>
+		<folder>language</folder>
+		<folder>fields</folder>
+	</files>
+
+	<config>
+		<fields name="params">
+
+			<fieldset name="source_settings" addfieldpath="/plugins/djmediatools/hikashop/fields">
+
+				<field name="plg_hikashop_content_synchronize" type="list" default="0;plg_hikashop_recently_viewed" label="PLG_DJMEDIATOOLS_HIKASHOP_SYNCHRONIZE" class="djoptionswitcher">
+					<option value="1;plg_hikashop_product_synchronize">JYES</option>
+					<option value="0;plg_hikashop_recently_viewed">JNO</option>
+				</field>
+				<field name="plg_hikashop_product_synchronize" type="list" default="0" label="PLG_DJMEDIATOOLS_HIKASHOP_PRODUCT_SYNCHRONIZE">
+					<option value="0">PLG_DJMEDIATOOLS_HIKASHOP_SYNCH_TO_CATEGORY</option>
+					<option value="2">PLG_DJMEDIATOOLS_HIKASHOP_SYNCH_TO_RELETED_PRODUCTS</option>
+					<option value="1">PLG_DJMEDIATOOLS_HIKASHOP_SYNCH_TO_PRODUCT_CATEGORIES</option>
+					<option value="3">PLG_DJMEDIATOOLS_HIKASHOP_SYNCH_TO_PRODUCT_BRAND</option>
+				</field>
+				<field name="plg_hikashop_recently_viewed" type="list" default="0;plg_hikashop_selectparentlisting;plg_hikashop_filter_type" label="PLG_DJMEDIATOOLS_HIKASHOP_RECENTLY_VIEWED" class="djoptionswitcher">
+					<option value="1">JYES</option>
+					<option value="0;plg_hikashop_selectparentlisting;plg_hikashop_filter_type">JNO</option>
+				</field>
+
+				<field name="plg_hikashop_selectparentlisting" type="hikashopcategory" label="PLG_DJMEDIATOOLS_HIKASHOP_CATEGORY" description="PLG_DJMEDIATOOLS_HIKASHOP_CATEGORY_DESC" />
+				<field name="plg_hikashop_filter_type" type="list" default="1" label="PLG_DJMEDIATOOLS_HIKASHOP_FILTER_TYPE" description="PLG_DJMEDIATOOLS_HIKASHOP_FILTER_TYPE_DESC">
+					<option value="0">PLG_DJMEDIATOOLS_HIKASHOP_EXCLUDE_SUB</option>
+					<option value="1">PLG_DJMEDIATOOLS_HIKASHOP_INCLUDE_SUB</option>
+				</field>
+
+				<field name="plg_hikashop_show_out_of_stock" type="radio" default="1" label="PLG_DJMEDIATOOLS_HIKASHOP_DISPLAY_OUT_OF_STOCK_PRODUCTS" class="btn-group">
+					<option value="1">JYES</option>
+					<option value="0">JNO</option>
+				</field>
+
+				<field name="plg_hikashop_product_order" type="list" default="ordering" label="PLG_DJMEDIATOOLS_HIKASHOP_ORDER">
+					<option value="ordering">Ordering</option>
+					<option value="product_access">product_access</option>
+					<option value="product_alias">product_alias</option>
+					<option value="product_average_score">product_average_score</option>
+					<option value="product_canonical">product_canonical</option>
+					<option value="product_code">product_code</option>
+					<option value="product_contact">product_contact</option>
+					<option value="product_created">product_created</option>
+					<option value="product_delay_id">product_delay_id</option>
+					<option value="product_description">product_description</option>
+					<option value="product_dimension_unit">product_dimension_unit</option>
+					<option value="product_display_quantity_field">product_display_quantity_field</option>
+					<option value="product_group_after_purchase">product_group_after_purchase</option>
+					<option value="product_height">product_height</option>
+					<option value="product_hit">product_hit</option>
+					<option value="product_id">product_id</option>
+					<option value="product_keywords">product_keywords</option>
+					<option value="product_last_seen_date">product_last_seen_date</option>
+					<option value="product_layout">product_layout</option>
+					<option value="product_length">product_length</option>
+					<option value="product_manufacturer_id">product_manufacturer_id</option>
+					<option value="product_max_per_order">product_max_per_order</option>
+					<option value="product_meta_description">product_meta_description</option>
+					<option value="product_min_per_order">product_min_per_order</option>
+					<option value="product_modified">product_modified</option>
+					<option value="product_msrp">product_msrp</option>
+					<option value="product_name">product_name</option>
+					<option value="product_page_title">product_page_title</option>
+					<option value="product_parent_id">product_parent_id</option>
+					<option value="product_price_percentage">product_price_percentage</option>
+					<option value="product_published">product_published</option>
+					<option value="product_quantity">product_quantity</option>
+					<option value="product_quantity_layout">product_quantity_layout</option>
+					<option value="product_sale_end">product_sale_end</option>
+					<option value="product_sale_start">product_sale_start</option>
+					<option value="product_sales">product_sales</option>
+					<option value="product_tax_id">product_tax_id</option>
+					<option value="product_total_vote">product_total_vote</option>
+					<option value="product_type">product_type</option>
+					<option value="product_url">product_url</option>
+					<option value="product_vendor_id">product_vendor_id</option>
+					<option value="product_waitlist">product_waitlist</option>
+					<option value="product_warehouse_id">product_warehouse_id</option>
+					<option value="product_weight">product_weight</option>
+					<option value="product_weight_unit">product_weight_unit</option>
+					<option value="product_width">product_width</option>
+					<option value="random">Random</option>
+				</field>
+				<field name="plg_hikashop_order_dir" type="list" default="ASC" label="PLG_DJMEDIATOOLS_HIKASHOP_ORDER_DIR">
+					<option value="DESC">PLG_DJMEDIATOOLS_HIKASHOP_DESCENDING</option>
+					<option value="ASC">PLG_DJMEDIATOOLS_HIKASHOP_ASCENDING</option>
+				</field>
+
+				<field name="plg_hikashop_itemid" type="menuitem" default="" label="PLG_DJMEDIATOOLS_HIKASHOP_MENUITEM" description="PLG_DJMEDIATOOLS_HIKASHOP_MENUITEM_DESC">
+					<option value="">JNONE</option>
+				</field>
+
+				<field name="plg_hikashop_add_to_cart" type="radio" default="1" label="PLG_DJMEDIATOOLS_HIKASHOP_ADD_TO_CART" class="btn-group">
+					<option value="1">JSHOW</option>
+					<option value="0">JHIDE</option>
+				</field>
+				<field name="plg_hikashop_show_quantity_field" type="radio" default="0" label="PLG_DJMEDIATOOLS_HIKASHOP_SHOW_QUANTITY" class="btn-group">
+					<option value="1">JSHOW</option>
+					<option value="0">JHIDE</option>
+				</field>
+
+				<field name="plg_hikashop_show_price" type="radio" default="1" label="PLG_DJMEDIATOOLS_HIKASHOP_PRICE" class="btn-group">
+					<option value="1">JSHOW</option>
+					<option value="0">JHIDE</option>
+				</field>
+
+				<field name="plg_hikashop_image" type="media" label="PLG_DJMEDIATOOLS_HIKASHOP_DEFAULT_IMAGE" description="PLG_DJMEDIATOOLS_HIKASHOP_DEFAULT_IMAGE_DESC" />
+			</fieldset>
+
+		</fields>
+	</config>
+
+</extension>

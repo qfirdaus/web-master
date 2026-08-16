@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<extension type="package" version="5.0" method="upgrade">
+    <name>JO Visitor Counter Package</name>
+    <author>JewelOsman.Com</author>
+    <creationDate>June 2025</creationDate>
+    <copyright>Copyright (C) 2025 jewelosman.com.</copyright>
+    <license>GNU/GPL v2 or later http://www.gnu.org/licenses/gpl-2.0.html</license>
+    <authorEmail>jewelosman@gmail.com</authorEmail>
+    <authorUrl>www.jewelosman.com</authorUrl>
+    <version>2.0.3</version>
+    <description>Installs all JO Visitor Counter extensions.</description>
+	
+	<updateservers>
+        <server type="extension" priority="1" name="JO Visitor Counter Package">https://jewelosman.com/downloads/pkg_jo_visitor_counter.xml</server>
+    </updateservers>
+
+	<languages>
+		<language tag="en-GB">language/en-GB/en-GB.jovisitorcounterpackage.ini</language>
+		<language tag="en-GB">language/en-GB/en-GB.jovisitorcounterpackage.sys.ini</language>
+	</languages>
+    <packagename>jo_visitor_counter</packagename>
+
+    <files>
+        <file type="module" client="site" id="mod_jovisitorcounter">mod_jovisitorcounter.zip</file>
+        <file type="plugin" group="system" id="jovisitorcounter">jovisitorcounter.zip</file>
+        <file type="module" client="administrator" id="mod_jovisitorcounter_admin">mod_jovisitorcounter_admin.zip</file>
+    </files>
+</extension>

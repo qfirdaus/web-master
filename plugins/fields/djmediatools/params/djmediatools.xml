@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<form>
+	<fields name="fieldparams">
+		<fieldset name="fieldparams" addfieldpath="/administrator/components/com_djmediatools/models/fields">
+			<field type="djmtpreset" name="preset" label="PLG_FIELDS_DJMEDIATOOLS_PRESET">
+				<option value="">PLG_FIELDS_DJMEDIATOOLS_INHERIT</option>
+				<option value="-1">JNONE</option>
+			</field>
+			<field name="filter" type="hidden" default="raw" />
+		</fieldset>
+	</fields>
+</form>

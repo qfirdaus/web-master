@@ -1,0 +1,406 @@
+<?xml version="1.0" encoding="utf-8"?>
+<extension type="module" version="5.0" client="site" method="upgrade">
+    <name>JO Visitor Counter</name>
+    <author>JewelOsman.Com</author>
+    <creationDate>April 2025</creationDate>
+    <copyright>Copyright (C) 2025 jewelosman.com.</copyright>
+    <license>GNU/GPL v2 or later http://www.gnu.org/licenses/gpl-2.0.html</license>
+    <authorEmail>jewelosman@gmail.com</authorEmail>
+    <authorUrl>www.jewelosman.com</authorUrl>
+    <version>2.0.3</version>
+    <description>MOD_JOVISITORCOUNTER_DESC</description>
+	
+	<updateservers>
+        <server type="extension" priority="1" name="JO Visitor Counter">https://jewelosman.com/downloads/pkg_jo_visitor_counter.xml</server>
+    </updateservers>
+	
+    <files>
+        <filename module="mod_jovisitorcounter">mod_jovisitorcounter.php</filename>
+        <filename>helper.php</filename>
+        <folder>tmpl</folder>
+        <folder>language</folder>
+        <folder>sql</folder>
+        <folder>assets</folder>
+    </files>
+    <!-- Parameters -->
+    <config>
+        <fields name="params">
+			<fieldset name="basic">
+                <field
+                    name="show_visitor_counter"
+                    type="radio"
+                    label="MOD_JOVISITORCOUNTER_SHOW_VISITOR_COUNTER"
+                    description="MOD_JOVISITORCOUNTER_SHOW_VISITOR_COUNTER_DESC"
+                    default="1"
+                    class="btn-group btn-group-yesno">
+                    <option value="1">JYES</option>
+                    <option value="0">JNO</option>
+                </field>
+                <field
+                    name="visitor_statistics"
+                    type="radio"
+                    label="MOD_JOVISITORCOUNTER_VISITOR_STATISTICS"
+                    description="MOD_JOVISITORCOUNTER_VISITOR_STATISTICS_DESC"
+                    default="1"
+                    class="btn-group btn-group-yesno">
+                    <option value="1">JYES</option>
+                    <option value="0">JNO</option>
+                </field>
+                <field
+                    name="show_recent_visitors"
+                    type="radio"
+                    label="MOD_JOVISITORCOUNTER_SHOW_RECENT_VISITORS"
+                    description="MOD_JOVISITORCOUNTER_SHOW_RECENT_VISITORS_DESC"
+                    default="1"
+                    class="btn-group btn-group-yesno">
+                    <option value="1">JYES</option>
+                    <option value="0">JNO</option>
+                </field>
+                <field
+                    name="show_visitor_by_country"
+                    type="radio"
+                    label="MOD_JOVISITORCOUNTER_SHOW_VISITOR_BY_COUNTRY"
+                    description="MOD_JOVISITORCOUNTER_SHOW_VISITOR_BY_COUNTRY_DESC"
+                    default="1"
+                    class="btn-group btn-group-yesno">
+                    <option value="1">JYES</option>
+                    <option value="0">JNO</option>
+                </field>
+				<field
+					name="layout"
+					type="radio"
+					label="MOD_JOVISITORCOUNTER_LAYOUT"
+					description="Select the layout for the module: Vertical or Horizontal."
+					class="btn-group btn-group-yesno"
+					default="vertical">
+					<option value="vertical">MOD_JOVISITORCOUNTER_LAYOUT_VERTICAL</option>
+					<option value="horizontal">MOD_JOVISITORCOUNTER_LAYOUT_HORIZONTAL</option>
+				</field>
+				<field
+					name="module_theme"
+					type="radio"
+					label="MOD_JOVISITORCOUNTER_THEME"
+					description="MOD_JOVISITORCOUNTER_THEME_DESC"
+					class="btn-group btn-group-yesno"
+					default="light">
+					<option value="light">MOD_JOVISITORCOUNTER_THEME_LIGHT</option>
+					<option value="dark">MOD_JOVISITORCOUNTER_THEME_DARK</option>
+				</field>
+			</fieldset>
+            <fieldset name="visitor_counter" label="MOD_JOVISITORCOUNTER_VISITOR_COUNTER_SETTINGS">
+				<field
+					name="show_title_visitor_counter"
+					type="radio"
+					label="MOD_JOVISITORCOUNTER_SHOW_TITLE_VISITOR_COUNTER"
+					description="MOD_JOVISITORCOUNTER_SHOW_TITLE_VISITOR_COUNTER_DESC"
+					default="1"
+					class="btn-group btn-group-yesno"
+					showon="show_visitor_counter:1">
+					<option value="1">JYES</option>
+					<option value="0">JNO</option>
+				</field>
+				<field
+					name="counter_start_from"
+					type="number"
+					label="MOD_JOVISITORCOUNTER_COUNTER_START_FROM"
+					description="MOD_JOVISITORCOUNTER_COUNTER_START_FROM_DESC"
+                    default="0"
+                    filter="integer"
+                    min="0"
+                    validate="number"
+					showon="show_visitor_counter:1" />
+                <field
+                    name="counter_style"
+                    type="list"
+                    label="MOD_JOVISITORCOUNTER_COUNTER_STYLE"
+                    description="MOD_JOVISITORCOUNTER_COUNTER_STYLE_DESC"
+                    default="default"
+                    showon="show_visitor_counter:1">
+                    <option value="default">MOD_JOVISITORCOUNTER_COUNTER_STYLE_DEFAULT</option>
+                    <option value="badge">MOD_JOVISITORCOUNTER_COUNTER_STYLE_BADGE</option>
+                    <option value="animated_odometer">MOD_JOVISITORCOUNTER_COUNTER_STYLE_ANIMATED_ODOMETER</option>
+                </field>
+                <field
+                    name="odometer_theme"
+                    type="list"
+                    label="MOD_JOVISITORCOUNTER_ODOMETER_THEME"
+                    description="MOD_JOVISITORCOUNTER_ODOMETER_THEME_DESC"
+                    default="default"
+                    showon="show_visitor_counter:1[AND]counter_style:animated_odometer">
+                    <option value="default">MOD_JOVISITORCOUNTER_ODOMETER_THEME_DEFAULT</option>
+                    <option value="minimal">MOD_JOVISITORCOUNTER_ODOMETER_THEME_MINIMAL</option>
+                    <option value="car">MOD_JOVISITORCOUNTER_ODOMETER_THEME_CAR</option>
+                    <option value="plaza">MOD_JOVISITORCOUNTER_ODOMETER_THEME_PLAZA</option>
+                    <option value="slot-machine">MOD_JOVISITORCOUNTER_ODOMETER_THEME_SLOT_MACHINE</option>
+                    <option value="train-station">MOD_JOVISITORCOUNTER_ODOMETER_THEME_TRAIN_STATION</option>
+                    <option value="digital">MOD_JOVISITORCOUNTER_ODOMETER_THEME_DIGITAL</option>
+                </field>
+                <field
+                    name="responsive_classes_visitor_counter"
+                    type="text"
+                    label="MOD_JOVISITORCOUNTER_RESPONSIVE_CLASSES"
+                    description="MOD_JOVISITORCOUNTER_RESPONSIVE_CLASSES_DESC"
+					hint="E.g., col-lg-6 mb-4"
+                    default="" />
+            </fieldset>
+            <fieldset name="visitor_statistics" label="MOD_JOVISITORCOUNTER_VISITOR_STATISTICS_SETTINGS">
+				<field
+					name="show_title_visitor_statistics"
+					type="radio"
+					label="MOD_JOVISITORCOUNTER_SHOW_TITLE_VISITOR_STATISTICS"
+					description="MOD_JOVISITORCOUNTER_SHOW_TITLE_VISITOR_STATISTICS_DESC"
+					default="1"
+					class="btn-group btn-group-yesno"
+					showon="visitor_statistics:1">
+					<option value="1">JYES</option>
+					<option value="0">JNO</option>
+				</field>
+                <field
+                    name="show_today"
+                    type="radio"
+                    label="MOD_JOVISITORCOUNTER_TODAY"
+                    description="MOD_JOVISITORCOUNTER_TODAY_DESC"
+                    default="1"
+                    class="btn-group btn-group-yesno"
+                    showon="visitor_statistics:1">
+                    <option value="1">JYES</option>
+                    <option value="0">JNO</option>
+                </field>
+                <field
+                    name="show_yesterday"
+                    type="radio"
+                    label="MOD_JOVISITORCOUNTER_YESTERDAY"
+                    description="MOD_JOVISITORCOUNTER_YESTERDAY_DESC"
+                    default="1"
+                    class="btn-group btn-group-yesno"
+                    showon="visitor_statistics:1">
+                    <option value="1">JYES</option>
+                    <option value="0">JNO</option>
+                </field>
+                <field
+                    name="show_this_week"
+                    type="radio"
+                    label="MOD_JOVISITORCOUNTER_THIS_WEEK"
+                    description="MOD_JOVISITORCOUNTER_THIS_WEEK_DESC"
+                    default="1"
+                    class="btn-group btn-group-yesno"
+                    showon="visitor_statistics:1">
+                    <option value="1">JYES</option>
+                    <option value="0">JNO</option>
+                </field>
+                <field
+                    name="show_last_week"
+                    type="radio"
+                    label="MOD_JOVISITORCOUNTER_LAST_WEEK"
+                    description="MOD_JOVISITORCOUNTER_LAST_WEEK_DESC"
+                    default="1"
+                    class="btn-group btn-group-yesno"
+                    showon="visitor_statistics:1">
+                    <option value="1">JYES</option>
+                    <option value="0">JNO</option>
+                </field>
+                <field
+                    name="show_this_month"
+                    type="radio"
+                    label="MOD_JOVISITORCOUNTER_THIS_MONTH"
+                    description="MOD_JOVISITORCOUNTER_THIS_MONTH_DESC"
+                    default="1"
+                    class="btn-group btn-group-yesno"
+                    showon="visitor_statistics:1">
+                    <option value="1">JYES</option>
+                    <option value="0">JNO</option>
+                </field>
+                <field
+                    name="show_last_month"
+                    type="radio"
+                    label="MOD_JOVISITORCOUNTER_LAST_MONTH"
+                    description="MOD_JOVISITORCOUNTER_LAST_MONTH_DESC"
+                    default="1"
+                    class="btn-group btn-group-yesno"
+                    showon="visitor_statistics:1">
+                    <option value="1">JYES</option>
+                    <option value="0">JNO</option>
+                </field>
+				<field
+					name="show_two_months_ago"
+					type="radio"
+					label="MOD_JOVISITORCOUNTER_TWO_MONTHS_AGO"
+					description="MOD_JOVISITORCOUNTER_TWO_MONTHS_AGO_DESC"
+					default="1"
+					class="btn-group btn-group-yesno"
+					showon="visitor_statistics:1">
+					<option value="1">JYES</option>
+					<option value="0">JNO</option>
+				</field>
+				<field
+					name="show_three_months_ago"
+					type="radio"
+					label="MOD_JOVISITORCOUNTER_THREE_MONTHS_AGO"
+					description="MOD_JOVISITORCOUNTER_THREE_MONTHS_AGO_DESC"
+					default="1"
+					class="btn-group btn-group-yesno"
+					showon="visitor_statistics:1">
+					<option value="1">JYES</option>
+					<option value="0">JNO</option>
+				</field>
+				<field
+					name="show_four_months_ago"
+					type="radio"
+					label="MOD_JOVISITORCOUNTER_FOUR_MONTHS_AGO"
+					description="MOD_JOVISITORCOUNTER_FOUR_MONTHS_AGO_DESC"
+					default="1"
+					class="btn-group btn-group-yesno"
+					showon="visitor_statistics:1">
+					<option value="1">JYES</option>
+					<option value="0">JNO</option>
+				</field>
+				<field
+					name="show_five_months_ago"
+					type="radio"
+					label="MOD_JOVISITORCOUNTER_FIVE_MONTHS_AGO"
+					description="MOD_JOVISITORCOUNTER_FIVE_MONTHS_AGO_DESC"
+					default="1"
+					class="btn-group btn-group-yesno"
+					showon="visitor_statistics:1">
+					<option value="1">JYES</option>
+					<option value="0">JNO</option>
+				</field>
+                <field
+                    name="show_last_six_months"
+                    type="radio"
+                    label="MOD_JOVISITORCOUNTER_LAST_SIX_MONTHS"
+                    description="MOD_JOVISITORCOUNTER_LAST_SIX_MONTHS_DESC"
+                    default="1"
+                    class="btn-group btn-group-yesno"
+                    showon="visitor_statistics:1">
+                    <option value="1">JYES</option>
+                    <option value="0">JNO</option>
+                </field>
+                <field
+                    name="show_this_year"
+                    type="radio"
+                    label="MOD_JOVISITORCOUNTER_THIS_YEAR"
+                    description="MOD_JOVISITORCOUNTER_THIS_YEAR_DESC"
+                    default="1"
+                    class="btn-group btn-group-yesno"
+                    showon="visitor_statistics:1">
+                    <option value="1">JYES</option>
+                    <option value="0">JNO</option>
+                </field>
+				<field
+					name="show_last_year"
+					type="radio"
+					label="MOD_JOVISITORCOUNTER_LAST_YEAR"
+					description="MOD_JOVISITORCOUNTER_LAST_YEAR_DESC"
+					default="1"
+					class="btn-group btn-group-yesno"
+					showon="visitor_statistics:1">
+					<option value="1">JYES</option>
+					<option value="0">JNO</option>
+				</field>
+                <field
+                    name="responsive_classes_visitor_statistics"
+                    type="text"
+                    label="MOD_JOVISITORCOUNTER_RESPONSIVE_CLASSES"
+                    description="MOD_JOVISITORCOUNTER_RESPONSIVE_CLASSES_DESC"
+					hint="E.g., col-lg-6 mb-4"
+                    default="" />
+            </fieldset>
+            <fieldset name="recent_visitors" label="MOD_JOVISITORCOUNTER_RECENT_VISITORS_SETTINGS">
+				<field
+					name="show_title_recent_visitors"
+					type="radio"
+					label="MOD_JOVISITORCOUNTER_SHOW_TITLE_RECENT_VISITORS"
+					description="MOD_JOVISITORCOUNTER_SHOW_TITLE_RECENT_VISITORS_DESC"
+					default="1"
+					class="btn-group btn-group-yesno"
+					showon="show_recent_visitors:1">
+					<option value="1">JYES</option>
+					<option value="0">JNO</option>
+				</field>
+                <field
+                    name="list_limit_recent"
+                    type="number"
+                    label="MOD_JOVISITORCOUNTER_LIST_LIMIT_RECENT"
+                    description="MOD_JOVISITORCOUNTER_LIST_LIMIT_RECENT_DESC"
+                    default="10"
+                    filter="integer"
+                    min="1"
+                    validate="number"
+                    showon="show_recent_visitors:1" />
+                <field
+                    name="responsive_classes_recent_visitors"
+                    type="text"
+                    label="MOD_JOVISITORCOUNTER_RESPONSIVE_CLASSES"
+                    description="MOD_JOVISITORCOUNTER_RESPONSIVE_CLASSES_DESC"
+					hint="E.g., col-lg-6 mb-4"
+                    default="" />
+            </fieldset>
+            <fieldset name="visitor_by_country" label="MOD_JOVISITORCOUNTER_VISITOR_BY_COUNTRY_SETTINGS">
+				<field
+					name="show_title_visitor_by_country"
+					type="radio"
+					label="MOD_JOVISITORCOUNTER_SHOW_TITLE_VISITOR_BY_COUNTRY"
+					description="MOD_JOVISITORCOUNTER_SHOW_TITLE_VISITOR_BY_COUNTRY_DESC"
+					default="1"
+					class="btn-group btn-group-yesno"
+					showon="show_visitor_by_country:1">
+					<option value="1">JYES</option>
+					<option value="0">JNO</option>
+				</field>
+                <field
+                    name="calculation_period"
+                    type="list"
+                    label="MOD_JOVISITORCOUNTER_CALCULATION_PERIOD"
+                    description="MOD_JOVISITORCOUNTER_CALCULATION_PERIOD_DESC"
+                    default="all_time"
+                    showon="show_visitor_by_country:1">
+                    <option value="today">MOD_JOVISITORCOUNTER_CALCULATION_PERIOD_TODAY</option>
+					<option value="yesterday">MOD_JOVISITORCOUNTER_CALCULATION_PERIOD_YESTERDAY</option>
+                    <option value="this_week">MOD_JOVISITORCOUNTER_CALCULATION_PERIOD_THIS_WEEK</option>
+					<option value="last_week">MOD_JOVISITORCOUNTER_CALCULATION_PERIOD_LAST_WEEK</option>
+                    <option value="this_month">MOD_JOVISITORCOUNTER_CALCULATION_PERIOD_THIS_MONTH</option>
+					<option value="last_month">MOD_JOVISITORCOUNTER_CALCULATION_PERIOD_LAST_MONTH</option>
+                    <option value="last_six_months">MOD_JOVISITORCOUNTER_CALCULATION_PERIOD_LAST_SIX_MONTHS</option>
+                    <option value="this_year">MOD_JOVISITORCOUNTER_CALCULATION_PERIOD_THIS_YEAR</option>
+                    <option value="all_time">MOD_JOVISITORCOUNTER_CALCULATION_PERIOD_ALL_TIME</option>
+                </field>
+                <field
+                    name="list_limit_country"
+                    type="text"
+                    label="MOD_JOVISITORCOUNTER_LIST_LIMIT_COUNTRY"
+                    description="MOD_JOVISITORCOUNTER_LIST_LIMIT_COUNTRY_DESC"
+                    default="10"
+                    showon="show_visitor_by_country:1" />
+                <field
+                    name="responsive_classes_visitor_by_country"
+                    type="text"
+                    label="MOD_JOVISITORCOUNTER_RESPONSIVE_CLASSES"
+                    description="MOD_JOVISITORCOUNTER_RESPONSIVE_CLASSES_DESC"
+					hint="E.g., col-lg-6 mb-4"
+                    default="" />
+            </fieldset>
+        </fields>
+    </config>
+    <languages>
+        <language tag="en-GB">language/en-GB/en-GB.mod_jovisitorcounter.ini</language>
+        <language tag="en-GB">language/en-GB/en-GB.mod_jovisitorcounter.sys.ini</language>
+    </languages>
+    <install>
+        <sql>
+            <file driver="mysql" charset="utf8">sql/install.mysql.utf8.sql</file>
+        </sql>
+    </install>
+<!--
+<update>
+    <schemas>
+        <schemapath type="mysql">sql/updates/mysql</schemapath>
+    </schemas>
+</update>
+-->
+    <uninstall>
+        <sql>
+            <file driver="mysql" charset="utf8">sql/uninstall.mysql.utf8.sql</file>
+        </sql>
+    </uninstall>
+</extension>

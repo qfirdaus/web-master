@@ -1,0 +1,16 @@
+-- Upgrade from v1.0.x to v2.0.0
+
+-- Modify country column
+ALTER TABLE `#__jovisitorcounter`
+    MODIFY `country` VARCHAR(100) NOT NULL DEFAULT 'Unknown';
+
+-- Modify country_code column
+ALTER TABLE `#__jovisitorcounter`
+    MODIFY `country_code` VARCHAR(10) NOT NULL DEFAULT 'unknown';
+
+ALTER TABLE `#__jovisitorcounter_summary`
+    ADD COLUMN IF NOT EXISTS `two_months_ago` INT NOT NULL DEFAULT 0 AFTER `last_month`,
+    ADD COLUMN IF NOT EXISTS `three_months_ago` INT NOT NULL DEFAULT 0 AFTER `two_months_ago`,
+    ADD COLUMN IF NOT EXISTS `four_months_ago` INT NOT NULL DEFAULT 0 AFTER `three_months_ago`,
+    ADD COLUMN IF NOT EXISTS `five_months_ago` INT NOT NULL DEFAULT 0 AFTER `four_months_ago`,
+    ADD COLUMN IF NOT EXISTS `last_year` INT NOT NULL DEFAULT 0 AFTER `this_year`;

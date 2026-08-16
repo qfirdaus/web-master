@@ -1,0 +1,2027 @@
+<?php
+
+/**
+ * @package SP Page Builder
+ * @author JoomShaper http://www.joomshaper.com
+ * @copyright Copyright (c) 2010 - 2025 JoomShaper
+ * @license http://www.gnu.org/licenses/gpl-2.0.html GNU/GPLv2 or later
+ */
+
+//no direct access
+defined('_JEXEC') or die('Restricted access');
+
+require_once JPATH_ROOT . '/components/com_sppagebuilder/models/dynamic.php';
+use Joomla\CMS\Captcha\Captcha;
+use Joomla\CMS\Factory;
+use Joomla\CMS\HTML\HTMLHelper;
+use Joomla\CMS\Language\Text;
+use Joomla\CMS\Layout\FileLayout;
+use Joomla\CMS\Plugin\PluginHelper;
+use Joomla\CMS\Session\Session;
+
+class SppagebuilderAddonForm_builder extends SppagebuilderAddons
+{
+    /**
+     * Sign a payload with the site's own secret so submissions cannot be forged offline.
+     *
+     * @param   string  $payload  The value to sign.
+     * @return  string            The HMAC signature.
+     */
+    protected static function getSignature($payload)
+    {
+        return hash_hmac('sha256', (string) $payload, (string) Factory::getConfig()->get('secret'));
+    }
+
+    /**
+     * Return the form steps, wrapping a legacy flat field list into a single step.
+     *
+     * @param   object  $settings  The addon settings.
+     * @return  array              List of step objects, each with sp_form_builder_item.
+     */
+    public static function normalizeSteps($settings)
+    {
+        if (isset($settings->sp_form_builder_steps) && is_array($settings->sp_form_builder_steps) && count($settings->sp_form_builder_steps)) {
+            return $settings->sp_form_builder_steps;
+        }
+
+        if (isset($settings->sp_form_builder_item) && is_array($settings->sp_form_builder_item) && count($settings->sp_form_builder_item)) {
+            return [
+                (object) [
+                    'step_title'           => 'Step 1',
+                    'sp_form_builder_item' => $settings->sp_form_builder_item,
+                ],
+            ];
+        }
+
+        return [];
+    }
+
+    /**
+     * The addon frontend render method.
+     * The returned HTML string will render to the frontend page.
+     *
+     * @return  string  The HTML string.
+     * @since   1.0.0
+     */
+    public function render()
+    {
+        //CSRF
+        HTMLHelper::_('jquery.token');
+        Text::script('COM_SPPAGEBUILDER_ADDON_FORM_BUILDER_LENGTH_VALIDATION_ERROR');
+
+        $settings          = $this->addon->settings;
+        $addon_id          = $this->addon->id;
+        $class             = (isset($settings->class) && $settings->class) ? ' ' . $settings->class : '';
+        // Recipient email can be an array (new tags input) or a plain string (legacy
+        // single-email pages). Normalize to a comma-separated string so the rest of
+        // the pipeline (signing, decoding, sendMail) stays unchanged.
+        $recipient_email_raw = isset($settings->recipient_email) ? $settings->recipient_email : '';
+        if (is_array($recipient_email_raw)) {
+            $recipient_email = implode(',', array_filter(array_map('trim', $recipient_email_raw)));
+        } else {
+            $recipient_email = $recipient_email_raw ? trim($recipient_email_raw) : '';
+        }
+        $additional_header = (isset($settings->additional_header) && $settings->additional_header) ? $settings->additional_header : '';
+        $from              = (isset($settings->from) && $settings->from) ? $settings->from : '';
+        $email_template    = (isset($settings->email_template) && $settings->email_template) ? $settings->email_template : '';
+        $email_subject     = (isset($settings->email_subject) && $settings->email_subject) ? $settings->email_subject : '';
+
+        $hide_label         = (isset($settings->hide_label) && $settings->hide_label) ? $settings->hide_label : false;
+        $hidden_label_class = $hide_label ? ' class="sppb-form-label-visually-hidden" ' : '';
+        $domainName         = isset($_SERVER['SERVER_NAME']) ? $_SERVER['SERVER_NAME'] : '';
+
+        $globalConfig         = ApplicationHelper::getAppConfig();
+        $_SESSION['sitename'] = isset($globalConfig['sitename']) ? $globalConfig['sitename'] : $domainName;
+
+        $enable_rate_limit = !empty($settings->enable_rate_limit) ? $settings->enable_rate_limit : 0;
+        $max_requests      = !empty($settings->max_requests) ? $settings->max_requests : 10;
+        $time_window       = !empty($settings->time_window) ? $settings->time_window : 60;
+		
+        $secureData = Session::getInstance();
+        $secureData->set('max_requests_' . $this->addon->id, $max_requests);
+        $secureData->set('enable_rate_limit_' . $this->addon->id, $enable_rate_limit);
+        $secureData->set('time_window_' . $this->addon->id, $time_window);
+
+        // Captcha
+        $enable_captcha = (isset($settings->enable_captcha) && $settings->enable_captcha) ? $settings->enable_captcha : '';
+
+        $_SESSION['isFormBuilderEnabledCaptcha_' . $addon_id] = (isset($settings->enable_captcha) && $settings->enable_captcha) ? true : false;
+
+        $captcha_type     = (isset($settings->captcha_type) && $settings->captcha_type) ? $settings->captcha_type : 'default';
+        $captcha_question = (isset($settings->captcha_question) && $settings->captcha_question) ? $settings->captcha_question : '';
+        $captcha_answer   = (isset($settings->captcha_answer) && $settings->captcha_answer) ? $settings->captcha_answer : '';
+
+        if ($captcha_type === 'turnstile') {
+            $captcha_selector = 'cf-turnstile-response';
+        } elseif ($captcha_type === 'powcaptcha') {
+            $captcha_selector = 'altcha';
+        } else {
+            $captcha_selector = '';
+        }
+
+        // Policy & redirect
+        $enable_policy   = (isset($settings->enable_policy) && $settings->enable_policy) ? $settings->enable_policy : '';
+        $policy_text     = (isset($settings->policy_text) && $settings->policy_text) ? $settings->policy_text : '';
+        $enable_redirect = (isset($settings->enable_redirect) && $settings->enable_redirect) ? $settings->enable_redirect : '';
+        $redirect_url    = (isset($settings->redirect_url) && $settings->redirect_url) ? $settings->redirect_url : '';
+
+        // Success & failed message
+        $success_message        = (isset($settings->success_message) && $settings->success_message) ? $settings->success_message : 'Email successfully sent!';
+        $failed_message         = (isset($settings->failed_message) && $settings->failed_message) ? $settings->failed_message : 'Email sent failed, fill required field and try again!';
+        $required_field_message = (isset($settings->required_field_message) && $settings->required_field_message) ? $settings->required_field_message : 'Please fill the required field.';
+
+        // Button options
+        $btn_text      = (isset($settings->btn_text) && $settings->btn_text) ? $settings->btn_text : '';
+        $btn_text_aria = (isset($settings->btn_text) && $settings->btn_text) ? $settings->btn_text : '';
+        $btn_class     = (isset($settings->btn_type) && $settings->btn_type) ? ' sppb-btn-' . $settings->btn_type : ' sppb-btn-primary';
+        $btn_class .= (isset($settings->btn_size) && $settings->btn_size) ? ' sppb-btn-' . $settings->btn_size : '';
+        $btn_class .= (isset($settings->btn_shape) && $settings->btn_shape) ? ' sppb-btn-' . $settings->btn_shape : ' sppb-btn-rounded';
+        $btn_class .= (isset($settings->btn_appearance) && $settings->btn_appearance) ? ' sppb-btn-' . $settings->btn_appearance : '';
+        $btn_class .= (isset($settings->btn_block) && $settings->btn_block) ? ' ' . $settings->btn_block : '';
+        $btn_icon          = (isset($settings->btn_icon) && $settings->btn_icon) ? $settings->btn_icon : '';
+        $btn_icon_position = (isset($settings->btn_icon_position) && $settings->btn_icon_position) ? $settings->btn_icon_position : 'left';
+        $btn_position      = (isset($settings->btn_position) && $settings->btn_position) ? ' sppb-text-' . $settings->btn_position : ' sppb-text-left';
+        $btn_custom_class  = (isset($settings->btn_class) && $settings->btn_class) ? $settings->btn_class : '';
+        $send_copy_to_applicant = (isset($settings->send_copy_to_applicant) && $settings->send_copy_to_applicant) ? $settings->send_copy_to_applicant : 0;
+
+        $icon_arr = array_filter(explode(' ', $btn_icon));
+
+        if (count($icon_arr) === 1) {
+            $btn_icon = 'fa ' . $btn_icon;
+        }
+
+        if ($btn_icon_position === 'left') {
+            $btn_text = ($btn_icon) ? '<span class="' . $btn_icon . '" aria-hidden="true"></span> ' . $btn_text : $btn_text;
+        } else {
+            $btn_text = ($btn_icon) ? $btn_text . ' <span class="' . $btn_icon . '" aria-hidden="true"></span>' : $btn_text;
+        }
+
+        $output = '';
+        $output .= '<div class="sppb-addon sppb-addon-form-builder' . $class . '">';
+        $output .= '<div class="sppb-addon-content">';
+        $output .= '<form class="sppb-addon-form-builder-form"' . ($enable_redirect && $redirect_url != '' ? ' data-redirect="yes" data-redirect-url="' . $redirect_url . '"' : '') . '>';
+        $output .= HTMLHelper::_('form.token');
+
+        $date_formatters = [];
+
+        $steps = self::normalizeSteps($settings);
+
+        $step_indicator_type   = (isset($settings->step_indicator_type) && $settings->step_indicator_type) ? $settings->step_indicator_type : 'number_text';
+        $step_indicator_shape  = (isset($settings->step_indicator_shape) && $settings->step_indicator_shape) ? $settings->step_indicator_shape : 'circle';
+        $step_next_text        = (isset($settings->step_next_label) && $settings->step_next_label) ? $settings->step_next_label : 'Next';
+        $step_prev_text        = (isset($settings->step_prev_label) && $settings->step_prev_label) ? $settings->step_prev_label : 'Previous';
+
+        // Step button styling (shared by Previous / Next)
+        $step_btn_class  = (isset($settings->step_btn_type) && $settings->step_btn_type) ? ' sppb-btn-' . $settings->step_btn_type : ' sppb-btn-primary';
+        $step_btn_class .= (isset($settings->step_btn_size) && $settings->step_btn_size) ? ' sppb-btn-' . $settings->step_btn_size : '';
+        $step_btn_class .= (isset($settings->step_btn_shape) && $settings->step_btn_shape) ? ' sppb-btn-' . $settings->step_btn_shape : ' sppb-btn-rounded';
+        $step_btn_class .= (isset($settings->step_btn_appearance) && $settings->step_btn_appearance) ? ' sppb-btn-' . $settings->step_btn_appearance : '';
+        $step_btn_class .= (isset($settings->step_btn_block) && $settings->step_btn_block) ? ' ' . $settings->step_btn_block : '';
+        $step_next_position = (isset($settings->step_next_position) && $settings->step_next_position) ? ' sppb-text-' . $settings->step_next_position : ' sppb-text-left';
+        $step_prev_position = (isset($settings->step_prev_position) && $settings->step_prev_position) ? ' sppb-text-' . $settings->step_prev_position : ' sppb-text-left';
+
+        $is_multi_step       = count($steps) > 1;
+        $increasing_addon_id = (int) $addon_id;
+        $global_item_key     = 0;
+        $total_steps         = count($steps);
+
+        $check_svg = '<svg class="sppb-step-indicator-check" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M13.3 4.6 6.4 11.5 2.7 7.8" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+
+        if ($is_multi_step && $step_indicator_type !== 'none') {
+            if ($step_indicator_type === 'progress_bar') {
+                $progress_value = $total_steps ? (int) round(100 / $total_steps) : 0;
+
+                $output .= '<div class="sppb-form-builder-progress">';
+                $output .= '<div class="sppb-form-builder-progress-text"><span class="sppb-form-builder-progress-percent">' . $progress_value . '%</span></div>';
+                $output .= '<div class="sppb-form-builder-progress-track">';
+                $output .= '<span class="sppb-form-builder-progress-fill" style="width:' . $progress_value . '%;"></span>';
+                $output .= '</div>';
+                $output .= '</div>';
+            } else {
+                $has_marker = ($step_indicator_type !== 'text');
+                $has_label  = ($step_indicator_type === 'text' || $step_indicator_type === 'number_text' || $step_indicator_type === 'icon_text');
+                $is_icon    = ($step_indicator_type === 'icon' || $step_indicator_type === 'icon_text');
+
+                $output .= '<ol class="sppb-form-builder-steps-indicator sppb-step-shape-' . $step_indicator_shape . ' sppb-step-type-' . $step_indicator_type . '">';
+
+                foreach ($steps as $step_index => $step) {
+                    $step_title = (isset($step->step_title) && $step->step_title) ? $step->step_title : ('Step ' . ($step_index + 1));
+
+                    $output .= '<li class="sppb-form-builder-step-indicator-item' . ($step_index === 0 ? ' active' : '') . '" data-step="' . $step_index . '">';
+
+                    if ($has_marker) {
+                        $output .= '<span class="sppb-step-indicator-marker">';
+                        $output .= $is_icon ? $check_svg : '<span class="sppb-step-indicator-number">' . ($step_index + 1) . '</span>';
+                        $output .= '</span>';
+                    }
+
+                    if ($has_label) {
+                        $output .= '<span class="sppb-step-indicator-label">' . $step_title . '</span>';
+                    }
+
+                    $output .= '</li>';
+                }
+
+                $output .= '</ol>';
+            }
+        }
+
+        foreach ($steps as $step_index => $step) {
+            $step_fields = (isset($step->sp_form_builder_item) && is_array($step->sp_form_builder_item)) ? $step->sp_form_builder_item : [];
+
+            if ($is_multi_step) {
+                $output .= '<div class="sppb-form-builder-step" data-step="' . $step_index . '"' . ($step_index === 0 ? '' : ' style="display:none;"') . '>';
+            }
+
+            foreach ($step_fields as $item_value) {
+                $increasing_addon_id++;
+                $item_key = $global_item_key;
+                $global_item_key++;
+
+                $label               = (isset($item_value->title) && $item_value->title) ? $item_value->title : '';
+                $field_name          = (isset($item_value->field_name) && $item_value->field_name) ? $item_value->field_name : '';
+                $field_placeholder   = (isset($item_value->field_placeholder) && $item_value->field_placeholder) ? $item_value->field_placeholder : '';
+                $field_is_required   = (isset($item_value->field_is_required) && $item_value->field_is_required) ? $item_value->field_is_required : '';
+                $field_required_star = (isset($item_value->field_required_star) && $item_value->field_required_star) ? $item_value->field_required_star : '';
+                $is_resize           = (isset($item_value->is_resize) && $item_value->is_resize) ? $item_value->is_resize : '';
+                $field_type          = (isset($item_value->field_type) && $item_value->field_type) ? $item_value->field_type : 'text';
+                $item_name_id        = $field_type ? 'sppb-form-builder-field-' . $item_key : '';
+
+                // Range & number field
+                $range_min         = (isset($item_value->range_min) && $item_value->range_min != '') ? $item_value->range_min : 0;
+                $range_max         = (isset($item_value->range_max) && $item_value->range_max) ? $item_value->range_max : 100;
+                $range_step        = (isset($item_value->range_step) && $item_value->range_step) ? $item_value->range_step : 1;
+                $number_min        = (isset($item_value->number_min) && $item_value->number_min != '') ? $item_value->number_min : '';
+                $number_max        = (isset($item_value->number_max) && $item_value->number_max) ? $item_value->number_max : '';
+                $number_step       = (isset($item_value->number_step) && $item_value->number_step) ? $item_value->number_step : '';
+                $tel_pattern       = (isset($item_value->tel_pattern) && $item_value->tel_pattern) ? $item_value->tel_pattern : '';
+                $minimum_character = (isset($item_value->minimum_character) && $item_value->minimum_character) ? " minlength = " . $item_value->minimum_character : '';
+                $maximum_character = (isset($item_value->maximum_character) && $item_value->maximum_character) ? " maxlength = " . $item_value->maximum_character : '';
+                
+                if ($field_type === 'date' && $field_name) {
+                    $date_formatter = (isset($item_value->date_formatter) && $item_value->date_formatter) ? $item_value->date_formatter : 'Y-m-d';
+                    $date_formatters[$field_name] = $date_formatter;
+                }
+
+                if ($field_type == 'radio') {
+                    $output .= '<div class="sppb-form-group ' . $item_name_id . '">';
+
+                    if ($label) {
+                        $output .= '<label ' . $hidden_label_class . '>' . $label . '' . ($field_required_star && $field_is_required ? '<span class="sppb-field-required"> *</span>' : '') . '</label>';
+                    }
+
+                    $output .= '<div class="form-builder-radio-content">';
+                    $key = "sp_form_builder_inner_item_radio";
+
+                    if (isset($item_value->$key) && is_array($item_value->$key)) {
+                        $inner_values = $item_value->$key;
+
+                        foreach ($inner_values as $inner_item_key => $inner_item_value) {
+                            if (isset($inner_item_value->title) && $inner_item_value->title) {
+                                $output .= '<div class="form-builder-radio-item">';
+                                $inner_item_id = 'form-' . $increasing_addon_id . '-radio-' . $inner_item_key;
+
+                                $is_radio_checked = (isset($inner_item_value->is_radio_checked) && $inner_item_value->is_radio_checked) ? $inner_item_value->is_radio_checked : '';
+
+                                $output .= '<input type="radio" name="form-builder-item-[' . $field_name . '' . ($field_is_required ? '*' : '') . ']" id="' . $inner_item_id . '" value="' . $inner_item_value->title . '" class="sppb-form-control"' . ($is_radio_checked ? ' checked' : '') . '' . ($field_is_required ? ' aria-required="true" required' : '') . '>';
+                                $output .= '<label for="' . $inner_item_id . '" class="form-builder-radio-label">' . $inner_item_value->title . '</label>';
+                                $output .= '</div>'; //.form-builder-radio-item
+                            }
+                        }
+                    }
+
+                    $output .= '</div>'; //.form-builder-radio-content
+                    $output .= $field_is_required ? '<span class="sppb-form-builder-required">' . $required_field_message . '</span>' : '';
+
+                    $output .= '</div>'; //.sppb-form-group
+                } elseif ($field_type === 'checkbox') {
+                    $output .= '<div class="sppb-form-group ' . $item_name_id . '">';
+
+                    if ($label) {
+                        $output .= '<label ' . $hidden_label_class . '>' . $label . '' . ($field_required_star ? '<span class="sppb-field-required"> *</span>' : '') . '</label>';
+                    }
+
+                    $output .= '<div class="form-builder-checkbox-content">';
+                    $key = "sp_form_builder_inner_item_checkbox";
+
+                    if (isset($item_value->$key) && is_array($item_value->$key)) {
+                        $inner_values = $item_value->$key;
+
+                        foreach ($inner_values as $inner_item_key => $inner_item_value) {
+                            if (isset($inner_item_value->title) && $inner_item_value->title) {
+                                $output .= '<div class="form-builder-checkbox-item">';
+                                $inner_item_id = 'form-' . $increasing_addon_id . '-checkbox-' . $inner_item_key;
+
+                                $is_checkbox_checked  = (isset($inner_item_value->is_checkbox_checked) && $inner_item_value->is_checkbox_checked) ? $inner_item_value->is_checkbox_checked : '';
+                                $checkbox_is_required = (isset($inner_item_value->checkbox_is_required) && $inner_item_value->checkbox_is_required) ? $inner_item_value->checkbox_is_required : '';
+                                $checkbox_field_name  = (isset($inner_item_value->checkbox_field_name) && $inner_item_value->checkbox_field_name) ? $inner_item_value->checkbox_field_name : '';
+
+                                $output .= '<input type="checkbox" name="form-builder-item-[' . $checkbox_field_name . '' . ($checkbox_is_required ? '*' : '') . ']" id="' . $inner_item_id . '" value="' . $inner_item_value->title . '" class="sppb-form-control"' . ($is_checkbox_checked ? ' checked' : '') . '' . ($checkbox_is_required ? ' aria-required="true" required' : '') . '>';
+                                $output .= '<label for="' . $inner_item_id . '" class="form-builder-checkbox-label">' . $inner_item_value->title . '</label>';
+                                $output .= '</div>'; //.form-builder-checkbox-item
+                            }
+                        }
+                    }
+
+                    $output .= '</div>'; //.form-builder-checkbox-item
+                    $output .= $field_is_required ? '<span class="sppb-form-builder-required">' . $required_field_message . '</span>' : '';
+
+                    $output .= '</div>'; //.sppb-form-group
+                } elseif ($field_type == 'textarea') {
+                    $output .= '<div class="sppb-form-group ' . $item_name_id . '">';
+
+                    if ($label) {
+                        $output .= '<label ' . $hidden_label_class . ' for="' . $item_name_id . '">' . $label . '' . ($field_required_star && $field_is_required ? '<span class="sppb-field-required"> *</span>' : '') . '</label>';
+                    }
+
+                    $output .= '<textarea name="form-builder-item-[' . $field_name . '' . ($field_is_required ? '*' : '') . ']" id="' . $item_name_id . '" class="sppb-form-control' . ($is_resize ? '' : ' not-resize') . '" ' . ($field_placeholder ? 'placeholder="' . $field_placeholder . '"' : '') . '' . ($field_is_required ? ' aria-required="true" required' : '') . $maximum_character . $minimum_character . '></textarea>';
+                    $output .= ($field_is_required || $minimum_character || $maximum_character) ? '<span class="sppb-form-builder-required">' . $required_field_message . '</span>' : '';
+
+                    $output .= '</div>'; //.sppb-form-group
+                } elseif ($field_type == 'select') {
+                    $output .= '<div class="sppb-form-group ' . $item_name_id . '">';
+
+                    if ($label) {
+                        $output .= '<label for="' . $item_name_id . '">' . $label . '' . ($field_required_star && $field_is_required ? '<span class="sppb-field-required"> *</span>' : '') . '</label>';
+                    }
+
+                    $key = "sp_form_builder_inner_item_select";
+
+                    if (isset($item_value->$key) && is_array($item_value->$key)) {
+                        $inner_values = $item_value->$key;
+                        $output .= '<select class="sppb-form-control" name="form-builder-item-[' . $field_name . '' . ($field_is_required ? '*' : '') . ']" id="' . $item_name_id . '"' . ($field_is_required ? ' aria-required="true" required' : '') . '>';
+                        $output .= $field_placeholder ? '<option value="">' . $field_placeholder . '</option>' : '';
+
+                        foreach ($inner_values as $inner_item_key => $inner_item_value) {
+                            if (isset($inner_item_value->title) && $inner_item_value->title) {
+
+                                $is_selected = (isset($inner_item_value->is_selected) && $inner_item_value->is_selected) ? $inner_item_value->is_selected : '';
+                                $output .= '<option value="' . $inner_item_value->title . '"' . ($is_selected ? ' selected' : '') . '>' . $inner_item_value->title . '</option>';
+                            }
+                        }
+
+                        $output .= '</select>';
+                        $output .= $field_is_required ? '<span class="sppb-form-builder-required">' . $required_field_message . '</span>' : '';
+                    }
+
+                    $output .= '</div>'; //.sppb-form-group
+                } elseif ($field_type == 'range') {
+                    $output .= '<div class="sppb-form-group sppb-form-builder-range ' . $item_name_id . '">';
+
+                    if ($label) {
+                        $output .= '<label ' . $hidden_label_class . ' for="' . $item_name_id . '">' . $label . '' . ($field_required_star && $field_is_required ? '<span class="sppb-field-required"> *</span>' : '') . '</label>';
+                    }
+
+                    $output .= '<div class="sppb-form-builder-range-wrap">';
+                    $output .= '<input type="range" id="' . $item_name_id . '" name="form-builder-item-[' . $field_name . '' . ($field_is_required ? '*' : '') . ']" class="sppb-form-control"' . ($range_min != '' ? ' min="' . $range_min . '"' : '') . '' . ($range_max ? ' max="' . $range_max . '"' : '') . '' . ($range_step ? ' step="' . $range_step . '"' : '') . '' . ($field_is_required ? ' aria-required="true" required' : '') . '>';
+                    $output .= '<output for="' . $item_name_id . '" class="sppb-form-builder-range-output">' . (($range_max + $range_min) / 2) . '</output>';
+                    $output .= '</div>';
+                    $output .= $field_is_required ? '<span class="sppb-form-builder-required">' . $required_field_message . '</span>' : '';
+                    $output .= '</div>'; //.sppb-form-group
+                } elseif ($field_type == 'number') {
+                    $output .= '<div class="sppb-form-group ' . $item_name_id . '">';
+
+                    if ($label) {
+                        $output .= '<label ' . $hidden_label_class . ' for="' . $item_name_id . '">' . $label . '' . ($field_required_star && $field_is_required ? '<span class="sppb-field-required"> *</span>' : '') . '</label>';
+                    }
+
+                    $output .= '<input inputmode="numeric" type="number" id="' . $item_name_id . '" name="form-builder-item-[' . $field_name . '' . ($field_is_required ? '*' : '') . ']" class="sppb-form-control"' . ($number_min != '' ? ' min="' . $number_min . '"' : '') . '' . ($number_max ? ' max="' . $number_max . '"' : '') . '' . ($number_step ? ' step="' . $number_step . '"' : '') . '' . ($field_placeholder ? ' placeholder="' . $field_placeholder . '"' : '') . '' . ($field_is_required ? ' aria-required="true" required' : '') . '>';
+                    $output .= $field_is_required ? '<span class="sppb-form-builder-required">' . $required_field_message . '</span>' : '';
+                    $output .= '</div>'; //.sppb-form-group
+                } else if ($field_type == 'heading') {
+                    $item_unique_class = 'sppb-form-builder-heading-' . $item_key;
+                    $heading_selector  = (isset($item_value->heading_selector) && $item_value->heading_selector) ? $item_value->heading_selector : 'h3';
+                    $output .= '<' . $heading_selector . ' class="sppb-addon-title ' . $item_unique_class . '">';
+                    $output .= $label;
+                    $output .= '</' . $heading_selector . '>';
+                } else {
+                    $output .= '<div class="sppb-form-group ' . $item_name_id . '">';
+
+                    if ($label) {
+                        $output .= '<label ' . $hidden_label_class . ' for="' . $item_name_id . '">' . $label . '' . ($field_required_star && $field_is_required ? '<span class="sppb-field-required"> *</span>' : '') . '</label>';
+                    }
+
+                    $output .= '<input type="' . $field_type . '" id="' . $item_name_id . '" name="form-builder-item-[' . $field_name . '' . ($field_is_required ? '*' : '') . ']" class="sppb-form-control"' . ($field_placeholder ? ' placeholder="' . $field_placeholder . '"' : '') . '' . ($field_type === 'tel' && $tel_pattern ? ' pattern="' . $tel_pattern . '"' : '') . '' . ($field_is_required ? ' aria-required="true" required' : '') . ($field_type === 'text' ? $maximum_character . $minimum_character : '') . '>';
+                    $output .= ($field_is_required || ($field_type === 'text' && ($minimum_character || $maximum_character))) ? '<span class="sppb-form-builder-required">' . $required_field_message . '</span>' : '';
+                    $output .= '</div>'; //.sppb-form-group
+                }
+            } //end fields foreach
+
+            if ($is_multi_step) {
+                $output .= '</div>'; //.sppb-form-builder-step
+            }
+        } //end steps foreach
+
+        // Hidden field
+        $hidden_value = [
+            'recipient_email'               => base64_encode($recipient_email),
+            'additional_header'             => base64_encode($additional_header),
+            'from'                          => base64_encode($from),
+            'send_copy_to_applicant'        => base64_encode($send_copy_to_applicant),
+            'date_formatters'                => base64_encode(json_encode($date_formatters)),
+        ];
+        $hidden_json   = json_encode($hidden_value);
+        $hidden_base64 = base64_encode($hidden_json);
+
+        $email_subject_b64  = base64_encode($email_subject);
+        $email_template_b64 = base64_encode($email_template);
+
+        // Sign the recipient/from blob together with the subject and body so none can be forged or tampered.
+        $encrypted_salt_key = self::getSignature($hidden_base64 . ':' . $email_subject_b64 . ':' . $email_template_b64);
+
+        $output .= '<input type="hidden" name="form_id" value="' . $hidden_base64 . ':' . $encrypted_salt_key . '" >';
+        $output .= '<input type="hidden" name="addon_id" value="' . $addon_id . '">';
+        $output .= '<input type="hidden" name="email_subject" value="' . $email_subject_b64 . '">';
+        $output .= '<textarea style="display:none;" name="email_template" aria-label="Not For Read">' . $email_template_b64 . '</textarea>';
+        $output .= '<input type="hidden" name="success_message" value="' . base64_encode($success_message) . '">';
+        $output .= '<input type="hidden" name="failed_message" value="' . base64_encode($failed_message) . '">';
+
+        // Captcha
+        if ($enable_captcha && $captcha_type == 'default') {
+            $output .= '<div class="sppb-form-group' . ($is_multi_step ? ' sppb-form-builder-last-step' : '') . '">';
+            $output .= '<label ' . $hidden_label_class . ' for="captcha-' . $addon_id . '">' . $captcha_question . '</label>';
+            $output .= '<input type="text" name="captcha_question" id="captcha-' . $addon_id . '" class="sppb-form-control" placeholder="' . $captcha_question . '" aria-required="true" required>';
+            $output .= '</div>';
+        }
+
+        if ($enable_captcha && $captcha_type == 'default') {
+            // Answer intentionally not emitted; it is verified server-side from stored settings.
+        } elseif ($enable_captcha && ($captcha_type == 'recaptcha' || $captcha_type == 'gcaptcha')) {
+
+            PluginHelper::importPlugin('captcha', 'recaptcha');
+            Factory::getApplication()->triggerEvent('onInit', ['dynamic_recaptcha_' . $addon_id]);
+            $recaptcha = Factory::getApplication()->triggerEvent('onDisplay', [null, 'dynamic_recaptcha_' . $addon_id, 'sppb-form-builder-recaptcha']);
+
+            $output .= (isset($recaptcha[0])) ? $recaptcha[0] : '<p class="sppb-text-danger">' . Text::_('COM_SPPAGEBUILDER_ADDON_AJAX_CONTACT_CAPTCHA_NOT_INSTALLED') . '</p>';
+        } elseif ($enable_captcha && ($captcha_type == 'recaptcha_invisible' || $captcha_type == 'igcaptcha')) {
+            PluginHelper::importPlugin('captcha', 'recaptcha_invisible');
+            Factory::getApplication()->triggerEvent('onInit', ['invisible_recaptcha_' . $this->addon->id]);
+            $recaptcha = Factory::getApplication()->triggerEvent('onDisplay', [null, 'invisible_recaptcha_' . $this->addon->id, 'sppb-dynamic-recaptcha']);
+
+            $output .= (isset($recaptcha[0])) ? $recaptcha[0] : '<p class="sppb-text-danger">' . Text::_('COM_SPPAGEBUILDER_ADDON_AJAX_CONTACT_INVISIBLE_CAPTCHA_NOT_INSTALLED') . '</p>';
+        } else {
+            if ($enable_captcha) {
+                $output .= '<input type="hidden" name="captcha_selector" value="' . $captcha_selector . '">';
+                if ($captcha_type === 'powcaptcha') {
+                    $captcha = Captcha::getInstance('powcaptcha');
+                    $captcha_markup = $captcha ? $captcha->display($captcha_selector, 'pow_captcha_' . $addon_id, 'sppb-form-builder-powcaptcha') : '';
+                    $output .= !empty($captcha_markup) ? $captcha_markup : '<p class="sppb-text-danger">' . Text::_('COM_SPPAGEBUILDER_ADDON_AJAX_CONTACT_CUSTOM_CAPTCHA_NOT_INSTALLED') . '</p>';
+                } else {
+                    PluginHelper::importPlugin('captcha', $captcha_type);
+                    Factory::getApplication()->triggerEvent('onInit', ['custom_captcha_' . $addon_id]);
+                    $recaptcha = Factory::getApplication()->triggerEvent('onDisplay', [null, 'custom_captcha_' . $addon_id, 'sppb-dynamic-recaptcha']);
+                    $output .= (isset($recaptcha[0])) ? $recaptcha[0] : '<p class="sppb-text-danger">' . Text::_('COM_SPPAGEBUILDER_ADDON_AJAX_CONTACT_CUSTOM_CAPTCHA_NOT_INSTALLED') . '</p>';
+                }
+            }
+        }
+
+        $output .= '<input type="hidden" name="captcha_type" value="' . $captcha_type . '">';
+
+        // Policy
+        if ($enable_policy) {
+            $output .= '<div class="sppb-form-check' . ($is_multi_step ? ' sppb-form-builder-last-step' : '') . '">';
+            $output .= '<input class="sppb-form-check-input" type="checkbox" name="policy" id="policy-' . $addon_id . '" aria-label="Policy Text" value="Yes" aria-required="true" required>';
+            $output .= '<label class="sppb-form-check-label" for="policy-' . $addon_id . '">' . $policy_text . '</label>';
+            $output .= '<input type="hidden" value="true" name="is_policy">';
+            $output .= '</div>';
+        }
+
+        // Button
+        if ($btn_text && !$is_multi_step) {
+            $output .= '<div class="sppb-form-builder-btn' . $btn_position . ' ' . $btn_custom_class . '">';
+            $output .= '<button type="submit" id="btn-' . $addon_id . '" class="sppb-btn' . $btn_class . '" aria-label="' . strip_tags($btn_text_aria) . '">' . $btn_text . '</button>';
+            $output .= '</div>'; //.sppb-form-builder-btn
+        }
+
+        // Step navigation (multi-step): the Previous / Next buttons use the dedicated
+        // Step Button styling; the submit button keeps the form's Send-button styling
+        // and replaces Next on the last step.
+        if ($is_multi_step) {
+            $output .= '<div class="sppb-form-builder-step-nav">';
+
+            $output .= '<div class="sppb-form-builder-btn' . $step_prev_position . ' sppb-form-builder-prev" style="display:none;">';
+            $output .= '<button type="button" id="btn-prev-' . $addon_id . '" class="sppb-btn' . $step_btn_class . '" aria-label="' . strip_tags($step_prev_text) . '">' . $step_prev_text . '</button>';
+            $output .= '</div>';
+
+            $output .= '<div class="sppb-form-builder-btn' . $step_next_position . ' sppb-form-builder-next">';
+            $output .= '<button type="button" id="btn-next-' . $addon_id . '" class="sppb-btn' . $step_btn_class . '" aria-label="' . strip_tags($step_next_text) . '">' . $step_next_text . '</button>';
+            $output .= '</div>';
+
+            if ($btn_text) {
+                $output .= '<div class="sppb-form-builder-btn' . $btn_position . ' ' . $btn_custom_class . ' sppb-form-builder-submit" style="display:none;">';
+                $output .= '<button type="submit" id="btn-' . $addon_id . '" class="sppb-btn' . $btn_class . '" aria-label="' . strip_tags($btn_text_aria) . '">' . $btn_text . '</button>';
+                $output .= '</div>';
+            }
+
+            $output .= '</div>';
+        }
+
+        $output .= '</form>'; //.sppb-addon-form-builder-form
+        $output .= '<div style="display:none;margin-top:10px;" class="sppb-ajax-contact-status"></div>';
+        $output .= '</div>'; //.sppb-addon-content
+        $output .= '</div>'; //.sppb-addon-custom-form
+
+        return $output;
+    }
+
+    public static function getAjax()
+    {
+        // if cache isn't enable
+        if (! Factory::getConfig()->get('caching') && ! PluginHelper::getPlugin('system', 'cache')) {
+            // Check CSRF
+            Session::checkToken() or die('Restricted Access');
+        }
+
+        // include page builder page model
+        require_once JPATH_BASE . '/components/com_sppagebuilder/models/page.php';
+
+        $input  = Factory::getApplication()->input;
+        $viewid = $input->get('id', 0, 'INT');
+        $view   = $input->get('view', 'page', 'STRING');
+
+        $mail    = Factory::getMailer();
+        $message = '';
+
+        $has_policy = false;
+
+        //inputs
+        $inputs = $input->get('data', [], 'ARRAY');
+
+        $fieldNames                   = [];
+        $validation                   = true;
+        $isCheckbox                   = false;
+        $emailBody                    = '';
+        $emailSubjectAjax             = '';
+        $additional_header_ajax       = '';
+        $success_message_ajax         = '';
+        $failed_message_ajax          = '';
+        $frequired_field_message_ajax = '';
+
+        $captchaSelector = '';
+
+        $gcaptcha = '';
+        $addonId  = '';
+        $decrypted_data = null;
+
+        $hidden_data         = [];
+        $rawEmailSubjectB64  = '';
+        $rawEmailTemplateB64 = '';
+
+        foreach ($inputs as $name => $input) {
+
+            if ($input['name'] == 'captcha_selector') {
+                if (! empty($input['value'])) {
+                    $captchaSelector = $input['value'];
+                    // $showcaptcha = true;
+                }
+            }
+
+            if ($input['name'] == 'form_id') {
+                // Decode here; the signature (which also covers subject/body) is verified
+                // after this loop, before any mail is sent.
+                $data                   = $input['value'];
+                $hidden_data            = explode(':', $data);
+                $decrypted_data         = json_decode(base64_decode($hidden_data[0]));
+                $recipient              = isset($decrypted_data->recipient_email) ? base64_decode($decrypted_data->recipient_email) : '';
+                $additional_header_ajax = isset($decrypted_data->additional_header) ? base64_decode($decrypted_data->additional_header) : '';
+                $from                   = isset($decrypted_data->from) ? base64_decode($decrypted_data->from) : '';
+                $send_copy_to_applicant = !empty($decrypted_data->send_copy_to_applicant) ? base64_decode($decrypted_data->send_copy_to_applicant) : 0;
+            }
+
+            if ($input['name'] == 'captcha_type') {
+                $captcha_type = $input['value'];
+            }
+
+            if ($input['name'] == 'view_type') {
+                $view_type = $input['value'];
+            }
+
+            if ($input['name'] == 'addon_id') {
+                $addon_id = $input['value'];
+                $addonId  = $addon_id;
+            }
+
+            if ($input['name'] == 'module_id') {
+                $module_id = $input['value'];
+            }
+
+            if ($input['name'] == 'popup_id') {
+                if (! empty($input['value'])) {
+                    $viewid = $input['value'];
+                }
+            }
+
+            if ($input['name'] == 'captcha_question') {
+                $captcha_question = $input['value'];
+            }
+
+            if ($input['name'] == 'captcha_answer') {
+                $captcha_answer = $input['value'];
+                // $showcaptcha = true;
+            }
+
+            if ((strpos($input['name'], 'captcha-response') !== false) && $input['name'] != 'g-recaptcha-response') {
+                $gcaptcha = $input['value'];
+                // $showcaptcha = true;
+            } else if ($input['name'] == 'g-recaptcha-response') {
+                $gcaptcha = $input['value'];
+                // $showcaptcha = true;
+            } else if ($input['name'] == $captchaSelector) {
+                $gcaptcha = $input['value'];
+                // $showcaptcha = true;
+            }
+
+            if ($input['name'] == 'policy') {
+                $policy                     = $input['value'];
+                $fieldNames[$input['name']] = $input['value'];
+            }
+
+            if ($input['name'] == 'is_policy') {
+                $has_policy = true;
+            }
+
+            preg_match_all("/\[([^\]]*)\]/", $input['name'], $matches);
+            $name = '';
+
+            if (is_array($matches) && count($matches[0]) > 0) {
+                $name       = isset($matches[1][0]) ? $matches[1][0] : $input['name'];
+                $isRequired = strpos($name, "*");
+
+                if ($isRequired) {
+                    if ($input['value'] == "") {
+                        $validation = false;
+                    }
+
+                    $name = str_replace('*', '', $name);
+                }
+
+                $fieldNames[$name] = $input['value'];
+            }
+
+            if ($input['name'] === 'email_template') {
+                $rawEmailTemplateB64 = $input['value'];
+                $emailBody           = base64_decode($input['value']);
+            }
+            if ($input['name'] === 'email_subject') {
+                $rawEmailSubjectB64 = $input['value'];
+                $emailSubjectAjax   = base64_decode($input['value']);
+            }
+
+            if ($input['name'] === 'success_message') {
+                $success_message_ajax = base64_decode($input['value']);
+            }
+            if ($input['name'] === 'failed_message') {
+                $failed_message_ajax = base64_decode($input['value']);
+            }
+        }
+
+        // Verify the signature covers recipient/from AND subject/body, so none can be forged or tampered.
+        $expectedSignature = self::getSignature(($hidden_data[0] ?? '') . ':' . $rawEmailSubjectB64 . ':' . $rawEmailTemplateB64);
+        if (empty($hidden_data[0]) || empty($hidden_data[1]) || !hash_equals($expectedSignature, $hidden_data[1])) {
+            die('Restricted Access');
+        }
+
+        $secureData        = Session::getInstance();
+        $ipAddress         = Factory::getApplication()->input->server->get('REMOTE_ADDR');
+        $isRateLimitEnable = $secureData->get('enable_rate_limit_' . $addonId, 0);
+        $maxRequests       = $secureData->get('max_requests_' . $addonId, 10);
+        $timeWindow        = $secureData->get('time_window_' . $addonId, 60);
+        if ($isRateLimitEnable) {
+            require_once JPATH_BASE . '/components/com_sppagebuilder/helpers/rate-limiter.php';
+            // Check if the user is rate limited
+            if (SppagebuilderRateLimiterHelper::isRateLimited($ipAddress . $addonId, $maxRequests, $timeWindow)) {
+                $timeUntilReset    = SppagebuilderRateLimiterHelper::getTimeUntilReset($ipAddress . $addonId, $timeWindow);
+                $output['status']  = false;
+                $output['content'] = '<span class="sppb-text-danger">' . Text::sprintf('COM_SPPAGEBUILDER_RATE_LIMIT_EXCEEDED', $timeUntilReset) . '</span>';
+                return json_encode($output);
+            }
+        }
+
+        $showcaptcha = isset($_SESSION['isFormBuilderEnabledCaptcha_' . $addonId]) ? $_SESSION['isFormBuilderEnabledCaptcha_' . $addonId] : true;
+
+        if (! $validation) {
+            $output['content']         = '<span class="sppb-text-danger">' . $failed_message_ajax . '</span>';
+            $output['form_validation'] = $fieldNames;
+
+            return json_encode($output);
+        }
+        if ($has_policy == true && empty($policy)) {
+            $output['content'] = '<span class="sppb-text-danger">' . $failed_message_ajax . '</span>';
+
+            return json_encode($output);
+        }
+
+        if ($view === 'dynamic') {
+            $viewid = (new SppagebuilderModelDynamic())->getPageIdFromCollectionItemId();
+        }
+
+        // get addon infos
+        if ($view_type == 'module') {
+            $item_data = new stdClass();
+            $page_info = self::getPageInfoById($module_id, $view_type, 'new');
+
+            if (empty($page_info)) { // if old version of module
+                $page_info       = self::getPageInfoById($module_id, $view_type);
+                $item_data->text = json_encode(json_decode($page_info->params)->content);
+            } else { // if new version of module
+                $item_data->text = $page_info->content ?? $item_data->text;
+            }
+        } elseif ($view_type === 'article') {
+            $item_data = new stdClass();
+            $item_data = self::getPageInfoById($viewid, $view_type);
+        } else {
+            $model     = new SppagebuilderModelPage();
+            $item_data = $model->getItem($viewid);
+        }
+
+        $output               = [];
+        $output['status']     = false;
+        $output['gcaptchaId'] = '';
+
+        // Match has addon id
+        if (self::verifyAddon($item_data->content ?? $item_data->text, $addon_id) === false) {
+            $output['content'] = '<span class="sppb-text-danger">' . $failed_message_ajax . '</span>';
+
+            return json_encode($output);
+        }
+
+        if ($showcaptcha) {
+            if ($gcaptcha == '' && $captcha_type != 'default') {
+                $output['content'] = '<span class="sppb-text-danger">' . Text::_('COM_SPPAGEBUILDER_ADDON_AJAX_CONTACT_INVALID_CAPTCHA') . '</span>';
+                return json_encode($output);
+            }
+            if ($captcha_type == 'recaptcha' || $captcha_type == 'recaptcha_invisible' || $captcha_type == 'gcaptcha' || $captcha_type == 'igcaptcha') {
+                if ($captcha_type == 'recaptcha_invisible' || $captcha_type == 'igcaptcha') {
+                    PluginHelper::importPlugin('captcha', 'recaptcha_invisible');
+                    $output['gcaptchaId']   = 'invisible_recaptcha_' . $addon_id;
+                    $output['gcaptchaType'] = 'invisible';
+                } else {
+                    PluginHelper::importPlugin('captcha', 'recaptcha');
+                    $output['gcaptchaId']   = 'dynamic_recaptcha_' . $addon_id;
+                    $output['gcaptchaType'] = 'dynamic';
+                }
+
+                $res = Factory::getApplication()->triggerEvent('onCheckAnswer', [$gcaptcha]);
+
+                // If module then verify gcaptcha
+                if ($view_type === 'module') {
+                    $res = ($gcaptcha != null || strlen($gcaptcha) != 0) ? [true] : [false];
+                }
+
+                if (empty($res[0])) {
+                    $output['content'] = '<span class="sppb-text-danger">' . Text::_('COM_SPPAGEBUILDER_ADDON_AJAX_CONTACT_INVALID_CAPTCHA') . '</span>';
+
+                    return json_encode($output);
+                }
+            } else if ($captcha_type == 'default') {
+                // Read the expected answer from the stored addon, never from the request.
+                $captchaAddon   = self::getAddonById($item_data->content ?? $item_data->text, $addon_id);
+                $expectedAnswer = ($captchaAddon && isset($captchaAddon->settings->captcha_answer)) ? (string) $captchaAddon->settings->captcha_answer : '';
+
+                if ($expectedAnswer === '' || trim((string) $captcha_question) !== trim($expectedAnswer)) {
+                    $output['content'] = '<span class="sppb-text-danger">' . Text::_('COM_SPPAGEBUILDER_ADDON_AJAX_CONTACT_WRONG_CAPTCHA') . '</span>';
+                    return json_encode($output);
+                }
+            } else {
+                if ($captcha_type === 'powcaptcha') {
+                    $captcha = Captcha::getInstance('powcaptcha');
+                    $res = $captcha ? $captcha->checkAnswer($gcaptcha) : false;
+                    if (empty($res)) {
+                        $output['content'] = '<span class="sppb-text-danger">' . Text::_('COM_SPPAGEBUILDER_ADDON_AJAX_CONTACT_INVALID_CAPTCHA') . '</span>';
+
+                        return json_encode($output);
+                    }
+                } else {
+                    PluginHelper::importPlugin('captcha', $captcha_type);
+
+                    $res = Factory::getApplication()->triggerEvent('onCheckAnswer', [$gcaptcha]);
+                    if (empty($res[0])) {
+                        $output['content'] = '<span class="sppb-text-danger">' . Text::_('COM_SPPAGEBUILDER_ADDON_AJAX_CONTACT_INVALID_CAPTCHA') . '</span>';
+
+                        return json_encode($output);
+                    }
+                }
+                $output['gcaptchaId']   = 'custom_recaptcha_' . $addon_id;
+                $output['gcaptchaType'] = 'custom';
+            }
+        }
+
+        $replyToMail = $replyToName = $cc = $bcc = $from_name = $from_email = '';
+		$config = Factory::getConfig();
+
+        // Subject Structure
+        $site_name = isset($_SESSION['sitename']) ? $_SESSION['sitename'] : '';
+        $from_name = !empty($config->get('fromname')) ? $config->get('fromname') : $site_name;
+
+        if ($from != '') {
+            $from = explode(':', $from);
+            if (count($from) > 1) {
+                $from_name  = isset($from[0]) ? trim($from[0]) : '';
+                $from_email = isset($from[1]) ? trim($from[1]) : '';
+            } elseif (count($from) == 1) {
+                $from_email = isset($from[0]) ? trim($from[0]) : '';
+                $validMail  = preg_match("/^([a-z0-9\+_\-]+)(\.[a-z0-9\+_\-]+)*@([a-z0-9\-]+\.)+[a-z]{2,6}$/ix", $from_email);
+                if ($validMail && $from_name == '') {
+                    $from_name = $site_name;
+                }
+            }
+        }
+
+        $additional_header_ajax = explode("\n", $additional_header_ajax);
+
+        foreach ($additional_header_ajax as $_header) {
+            $_header = explode(':', $_header);
+            if (count($_header) > 0) {
+                if (strtolower($_header[0]) == 'reply-to') {
+                    $replyToMail = isset($_header[1]) ? trim($_header[1]) : '';
+                }
+
+                if (strtolower($_header[0]) == 'reply-name') {
+                    $replyToName = isset($_header[1]) ? trim($_header[1]) : '';
+                }
+
+                if (strtolower($_header[0]) == 'cc') {
+                    $cc = isset($_header[1]) ? trim($_header[1]) : '';
+                }
+
+                if (strtolower($_header[0]) == 'bcc') {
+                    $bcc = isset($_header[1]) ? trim($_header[1]) : '';
+                }
+
+            }
+        }
+
+        $dateFormatters = [];
+        if ($decrypted_data && isset($decrypted_data->date_formatters) && $decrypted_data->date_formatters) {
+            $dateFormattersJson = json_decode(base64_decode($decrypted_data->date_formatters), true);
+            if (is_array($dateFormattersJson)) {
+                $dateFormatters = $dateFormattersJson;
+            }
+        }
+
+        $output['fields'] = $fieldNames;
+
+        foreach ($fieldNames as $name => $value) {
+            if (isset($dateFormatters[$name]) && !empty($value)) {
+                try {
+                    $dateObj = new DateTime($value);
+                    $formattedValue = $dateObj->format($dateFormatters[$name]);
+                    $value = $formattedValue;
+                    $fieldNames[$name] = $formattedValue;
+                } catch (Exception $e) {
+                    // If date parsing fails, use original value
+                }
+            }
+            
+            $emailBody        = str_replace("{{" . $name . "}}", $value, $emailBody);
+            $emailSubjectAjax = str_replace("{{" . $name . "}}", $value, $emailSubjectAjax);
+            $replyToName      = str_replace("{{" . $name . "}}", $value, $replyToName);
+            $replyToMail      = str_replace("{{" . $name . "}}", $value, $replyToMail);
+            $from_name        = str_replace("{{" . $name . "}}", $value, $from_name);
+            $cc               = str_replace("{{" . $name . "}}", $value, $cc);
+            $bcc              = str_replace("{{" . $name . "}}", $value, $bcc);
+        }
+
+        if (! empty($cc)) {
+            if (is_string($cc)) {
+                $cc = str_replace([' ', "\t", "\n", "\r", "\0", "\x0B"], '', $cc);
+                $cc = explode(',', $cc);
+            } else {
+                $cc = null;
+            }
+        }
+
+        if (! empty($bcc)) {
+            if (is_string($bcc)) {
+                $bcc = str_replace([' ', "\t", "\n", "\r", "\0", "\x0B"], '', $bcc);
+                $bcc = explode(',', $bcc);
+            } else {
+                $bcc = null;
+            }
+        }
+
+        // Get sender UP
+        $senderip = isset($_SERVER['HTTP_X_FORWARDED_FOR']) ? $_SERVER['HTTP_X_FORWARDED_FOR'] : $_SERVER['REMOTE_ADDR'];
+        // $mail_subject   = $subject . ' | ' . $email . ' | ' . $site_name;
+        $emailSubjectAjax = str_replace("{{site-name}}", $site_name, $emailSubjectAjax);
+
+        $senderMail = $config->get('mailfrom');
+        $senderName = $config->get('fromname');
+
+        if (! empty($from_email)) {
+            $senderMail = $from_email;
+            $senderName = $from_name;
+        }
+
+        if (empty($senderMail) && empty($senderName)) {
+            $output['content'] = '<span class="sppb-text-danger">' . Text::_('COM_SPPAGEBUILDER_ADDON_AJAX_FROM_BUILDER_SENDER_FAILED') . '</span>';
+
+            return json_encode($output);
+        }
+
+        if (empty($recipient)) {
+            $output['content'] = '<span class="sppb-text-danger">' . Text::_('COM_SPPAGEBUILDER_ADDON_AJAX_FROM_BUILDER_RECIPIENT_FAILED') . '</span>';
+
+            return json_encode($output);
+        }
+
+        $isHtmlMode  = true;
+        $attachment  = null;
+        $replyToMail = ! empty($replyToMail) ? $replyToMail : null;
+
+        if (empty($cc)) {
+            $cc = null;
+        }
+        if (empty($bcc)) {
+            $bcc = null;
+        }
+
+        // $recipient may hold multiple comma-separated addresses (multi-recipient
+        // field); split into an array the same way $cc/$bcc are handled above.
+        if (is_string($recipient)) {
+            $recipient = str_replace([' ', "\t", "\n", "\r", "\0", "\x0B"], '', $recipient);
+            $recipient = explode(',', $recipient);
+        }
+
+        if ($mail->sendMail($senderMail, $senderName, $recipient, $emailSubjectAjax, $emailBody, $isHtmlMode, $cc, $bcc, $attachment, $replyToMail, $replyToName)) {
+            if (!empty($send_copy_to_applicant)) {
+                $copyMail        = Factory::getMailer();
+                $copyMailSubject = Text::_('COM_SPPAGEBUILDER_ADDON_AJAX_CONTACT_SEND_COPY_MAIL_SUBJECT') . $emailSubjectAjax;
+                $copyMailBody    = '<div><p>' . Text::_('COM_SPPAGEBUILDER_ADDON_AJAX_CONTACT_SEND_COPY_MAIL_HEADER') . ':</p>' . $emailBody . '</div>';
+
+                if ($copyMail->sendMail($senderMail, $senderName, $replyToMail, $copyMailSubject, $copyMailBody, $isHtmlMode)) {
+                    $output['status']  = true;
+                    $output['content'] = '<span class="sppb-text-success">' . Text::_('COM_SPPAGEBUILDER_ADDON_AJAX_CONTACT_SUCCESS_WITH_COPY') . '</span>';
+                }
+                $output['status']  = true;
+                $output['content'] = '<span class="sppb-text-success">' . $success_message_ajax . '</span>';
+
+            } else {
+                $output['status']  = true;
+                $output['content'] = '<span class="sppb-text-success">' . $success_message_ajax . '</span>';
+            }
+        } else {
+            $output['content'] = '<span class="sppb-text-danger">' . $failed_message_ajax . '</span>';
+        }
+
+        return json_encode($output);
+    }
+
+    public static function getPageInfoById($item_id, $view_type = 'page', $version = '')
+    {
+        $db    = Factory::getDbo();
+        $query = $db->getQuery(true);
+        $query->select(['a.*']);
+
+        if ($view_type === 'module') {
+            if ($version === 'new') {
+                $query->from($db->quoteName('#__sppagebuilder', 'a'));
+                $query->where($db->quoteName('a.extension_view') . " = " . $db->quote('module'));
+                $query->where($db->quoteName('a.view_id') . " = " . $db->quote((int) $item_id));
+            } else {
+                $query->from($db->quoteName('#__modules', 'a'));
+                $query->where($db->quoteName('a.id') . " = " . $db->quote((int) $item_id));
+            }
+        } else if ($view_type == 'article') {
+            $query->from($db->quoteName('#__sppagebuilder', 'a'));
+            $query->where($db->quoteName('a.view_id') . " = " . $db->quote((int) $item_id));
+        } else {
+            $query->from($db->quoteName('#__sppagebuilder', 'a'));
+            $query->where($db->quoteName('a.id') . " = " . $db->quote((int) $item_id));
+        }
+
+        $db->setQuery($query);
+        $result = $db->loadObject();
+
+        return $result;
+    }
+
+    /**
+     * Generate the CSS string for the frontend page.
+     *
+     * @return     string     The CSS string for the page.
+     * @since     1.0.0
+     */
+    public function css()
+    {
+        $settings    = $this->addon->settings;
+        $addon_id    = '#sppb-addon-' . $this->addon->id;
+        $layout_path = JPATH_ROOT . '/components/com_sppagebuilder/layouts';
+        $css_path    = new FileLayout('addon.css.button', $layout_path);
+
+        $cssHelper = new CSSHelper($addon_id);
+
+        $css = '';
+
+        $steps           = self::normalizeSteps($settings);
+        $global_item_key = 0;
+
+        foreach ($steps as $step) {
+            $step_fields = (isset($step->sp_form_builder_item) && is_array($step->sp_form_builder_item)) ? $step->sp_form_builder_item : [];
+
+            foreach ($step_fields as $itemValue) {
+                $item_key = $global_item_key;
+                $global_item_key++;
+
+                $field_type   = (isset($itemValue->field_type) && $itemValue->field_type) ? $itemValue->field_type : 'text';
+                $item_name_id = $field_type ? 'sppb-form-builder-field-' . $item_key : '';
+
+                if (isset($itemValue->field_width) && is_object($itemValue->field_width)) {
+                    // For old layouts
+                    $fieldWidth = $cssHelper->generateMissingBreakPoints($itemValue->field_width);
+                }
+
+                if ($field_type === 'heading') {
+                    $item_unique_class = '.sppb-form-builder-heading-' . $item_key;
+
+                    $itemValue->alignment         = CSSHelper::parseAlignment($itemValue, 'alignment');
+                    $itemValue->title_text_shadow = CSSHelper::parseBoxShadow($itemValue, 'title_text_shadow', true);
+
+                    $headingTypography = $cssHelper->typography('.sppb-addon-title' . $item_unique_class, $itemValue, 'heading_typography');
+                    $css .= $headingTypography;
+
+                    /**
+                     * We've passed the font family here for the heading addon.
+                     * As the the other typography field's are handled by the
+                     * addon's global CSS settings.
+                     */
+                    $titleProps = [
+                        'title_margin'      => 'margin',
+                        'title_padding'     => 'padding',
+                        'title_text_shadow' => 'text-shadow',
+                    ];
+
+                    $units     = ['title_margin' => false, 'title_padding' => false, 'title_text_shadow' => false];
+                    $modifiers = ['title_margin' => 'spacing', 'title_padding' => 'spacing'];
+
+                    $titleStyle = $cssHelper->generateStyle('.sppb-addon-title' . $item_unique_class, $itemValue, $titleProps, $units, $modifiers);
+                    $alignment  = $cssHelper->generateStyle('.sppb-addon-title' . $item_unique_class, $itemValue, ['alignment' => 'text-align'], false);
+                    $alignment  = $cssHelper->generateStyle('.sppb-addon-title' . $item_unique_class, $settings, ['label_color' => 'color'], ['label_color' => false]);
+
+                    $css .= $alignment;
+                    $css .= $titleStyle;
+
+                    if (! empty($itemValue->title_font_family)) {
+                        $cssHelper->loadGoogleFont($itemValue->title_font_family);
+                    }
+
+                    $fieldWidth = $cssHelper->generateStyle('.sppb-addon-title' . $item_unique_class, $itemValue, ['field_width' => 'width'], ['field_width' => '%']);
+                } else {
+                    $fieldWidth = $cssHelper->generateStyle('.sppb-form-group.' . $item_name_id, $itemValue, ['field_width' => 'width'], ['field_width' => '%']);
+                }
+
+                $css .= $fieldWidth;
+            }
+        }
+
+        $formBuilderForm = $cssHelper->generateStyle('.sppb-addon-form-builder-form', $settings, ['field_gutter' => ['margin-left', 'margin-right']]);
+        $formCheck       = $cssHelper->generateStyle('.sppb-form-check, .sppb-form-builder-btn', $settings, ['field_gutter' => ['margin-left', 'margin-right']]);
+        $formRecapt      = $cssHelper->generateStyle('.sppb-form-builder-recaptcha, .sppb-form-builder-invisible-recaptcha, .sppb-addon-form-builder-form .sppb-form-group', $settings, ['field_gutter' => ['padding-left', 'padding-right']]);
+        $formPowCapt      = $cssHelper->generateStyle('.sppb-form-builder-powcaptcha', $settings, ['field_gutter' => ['padding-left', 'padding-right']],[],[],[],[],'margin-bottom:20px;');
+
+        $css .= $formBuilderForm;
+        $css .= $formCheck;
+        $css .= $formRecapt;
+        $css .= $formPowCapt;
+
+        $fieldHorizontalSpace = $cssHelper->generateStyle('.sppb-addon-form-builder-form .sppb-form-group', $settings, ['field_horizontal_space' => 'margin-bottom']);
+
+        $css .= $fieldHorizontalSpace;
+
+        $fieldStyleProps = [
+            'field_bg_color'      => 'background',
+            'field_color'         => 'color',
+            'field_font_size'     => 'font-size',
+            'field_border_width'  => 'border-style:solid; border-width',
+            'field_border_color'  => 'border-color',
+            'field_border_radius' => 'border-radius',
+            'field_padding'       => 'padding',
+            'input_height'        => 'height',
+        ];
+
+        $fieldStyleUnits = [
+            'field_bg_color'     => false,
+            'field_color'        => false,
+            'field_border_color' => false,
+            'field_border_width' => false,
+        ];
+
+        $fieldStyle = $cssHelper->generateStyle('.sppb-addon-form-builder-form .sppb-form-group select, .sppb-addon-form-builder-form .sppb-form-group input:not([type="checkbox"]):not([type="radio"]), .sppb-addon-form-builder-form .sppb-form-group textarea', $settings, $fieldStyleProps, $fieldStyleUnits, ['field_padding' => 'spacing'], null, false, 'transition:.35s;');
+        $css .= $fieldStyle;
+
+        $fieldStyles = $cssHelper->typography('.sppb-addon-form-builder-form .sppb-form-group select, .sppb-addon-form-builder-form .sppb-form-group input:not([type="checkbox"]):not([type="radio"]), .sppb-addon-form-builder-form .sppb-form-group textarea', $settings, 'field_typography', $fieldStyleUnits, ['size' => 'field_font_size']);
+        $css .= $fieldStyles;
+
+        $textareaHeight = $cssHelper->generateStyle('.sppb-addon-form-builder-form .sppb-form-group textarea', $settings, ['textarea_height' => 'height']);
+        $css .= $textareaHeight;
+
+        $fieldHoverStyle = $cssHelper->generateStyle('.sppb-addon-form-builder-form .sppb-form-group input:not([type="checkbox"]):not([type="radio"]):hover, .sppb-addon-form-builder-form .sppb-form-group input:not([type="checkbox"]):not([type="radio"]):active, .sppb-addon-form-builder-form .sppb-form-group input:not([type="checkbox"]):not([type="radio"]):focus, .sppb-addon-form-builder-form .sppb-form-group textarea:hover, .sppb-addon-form-builder-form .sppb-form-group textarea:active, .sppb-addon-form-builder-form .sppb-form-group textarea:focus', $settings, ['field_hover_bg_color' => 'background', 'field_focus_border_color' => 'border-color'], ['field_hover_bg_color' => false, 'field_focus_border_color' => false]);
+        $css .= $fieldHoverStyle;
+
+        //Placeholder
+        $fieldPlaceholderColor = $cssHelper->generateStyle('.sppb-addon-form-builder-form .sppb-form-group input::placeholder,.sppb-addon-form-builder-form .sppb-form-group textarea::placeholder', $settings, ['field_placeholder_color' => 'color'], ['field_placeholder_color' => false], [], null, false, 'opacity: 1; transition:.35s;');
+        $css .= $fieldPlaceholderColor;
+
+        //hover placeholder
+        $fieldHoverPlaceholderColor = $cssHelper->generateStyle('.sppb-addon-form-builder-form .sppb-form-group input:not([type="checkbox"]):not([type="radio"]):hover::placeholder, .sppb-addon-form-builder-form .sppb-form-group textarea:hover::placeholder', $settings, ['field_hover_placeholder_color' => 'color'], ['field_hover_placeholder_color' => false], [], null, false, 'opacity: 1;');
+        $css .= $fieldHoverPlaceholderColor;
+
+        //Label style
+        $labelStyles = $cssHelper->generateStyle('.sppb-addon-form-builder-form .sppb-form-group label:not(.form-builder-radio-label):not(.form-builder-checkbox-label)', $settings, ['label_color' => 'color', 'label_margin' => 'margin'], ['label_color' => false], ['label_margin' => 'spacing']);
+        $css .= $labelStyles;
+
+        $labelStyle = $cssHelper->typography('.sppb-addon-form-builder-form .sppb-form-group label:not(.form-builder-radio-label):not(.form-builder-checkbox-label)', $settings, 'label_typography', [
+            'size'      => 'label_font_size',
+            'weight'    => 'label_font_style.weight',
+            'italic'    => 'label_font_style.italic',
+            'underline' => 'label_font_style.underline',
+            'uppercase' => 'label_font_style.uppercase',
+        ]);
+
+        $css .= $labelStyle;
+
+        //Checkbox and Radio style
+        $checkboxBorderColor     = $cssHelper->generateStyle('.sppb-addon-form-builder .sppb-form-check-label::before, .form-builder-checkbox-item label::before', $settings, ['checkbox_color' => 'border-color'], ['checkbox_color' => false]);
+        $checkboxBackgroundColor = $cssHelper->generateStyle('.sppb-addon-form-builder .sppb-form-check-input:checked + label::before, .form-builder-checkbox-item input:checked + label::before', $settings, ['checkbox_color' => 'background'], ['checkbox_color' => false]);
+
+        $css .= $checkboxBorderColor;
+        $css .= $checkboxBackgroundColor;
+
+        $radioBorderColor     = $cssHelper->generateStyle('.form-builder-radio-item label::before', $settings, ['radio_color' => 'border-color'], ['radio_color' => false]);
+        $radioBackgroundColor = $cssHelper->generateStyle('.form-builder-radio-item input:checked + label::before', $settings, ['radio_color' => 'border-color'], ['radio_color' => false]);
+
+        $css .= $radioBorderColor;
+        $css .= $radioBackgroundColor;
+
+        //Button style
+        $options                                   = new stdClass;
+        $options->button_type                      = (isset($settings->btn_type) && $settings->btn_type) ? $settings->btn_type : '';
+        $options->button_appearance                = (isset($settings->btn_appearance) && $settings->btn_appearance) ? $settings->btn_appearance : '';
+        $options->button_color                     = (isset($settings->btn_color) && $settings->btn_color) ? $settings->btn_color : '';
+        $options->button_color_hover               = (isset($settings->btn_color_hover) && $settings->btn_color_hover) ? $settings->btn_color_hover : '';
+        $options->button_background_color          = (isset($settings->btn_background_color) && $settings->btn_background_color) ? $settings->btn_background_color : '';
+        $options->button_background_color_hover    = (isset($settings->btn_background_color_hover) && $settings->btn_background_color_hover) ? $settings->btn_background_color_hover : '';
+        $options->button_fontstyle                 = (isset($settings->btn_fontstyle) && $settings->btn_fontstyle) ? $settings->btn_fontstyle : '';
+        $options->button_font_style                = (isset($settings->btn_font_style) && $settings->btn_font_style) ? $settings->btn_font_style : '';
+        $options->link_button_color                = (isset($settings->link_button_color) && $settings->link_button_color) ? $settings->link_button_color : '';
+        $options->link_border_color                = (isset($settings->link_border_color) && $settings->link_border_color) ? $settings->link_border_color : '';
+        $options->link_button_border_width         = (isset($settings->link_button_border_width) && $settings->link_button_border_width) ? $settings->link_button_border_width : '';
+        $options->link_button_padding_bottom       = (isset($settings->link_button_padding_bottom) && gettype($settings->link_button_padding_bottom) == 'string') ? $settings->link_button_padding_bottom : '';
+        $options->button_background_gradient       = (isset($settings->btn_background_gradient) && $settings->btn_background_gradient) ? $settings->btn_background_gradient : new stdClass();
+        $options->button_background_gradient_hover = (isset($settings->btn_background_gradient_hover) && $settings->btn_background_gradient_hover) ? $settings->btn_background_gradient_hover : new stdClass();
+        $options->font_family                      = (isset($settings->btn_font_family) && $settings->btn_font_family) ? $settings->btn_font_family : null;
+        $options->fontsize                         = isset($settings->btn_fontsize_original) ? $settings->btn_fontsize_original : ($settings->btn_fontsize ?? null);
+        $options->button_typography                = (isset($settings->btn_typography) && $settings->btn_typography) ? $settings->btn_typography : null;
+
+        $css .= $css_path->render(['addon_id' => $addon_id, 'options' => $options, 'id' => 'btn-' . $this->addon->id]);
+
+        // Step buttons (Previous / Next) use their own dedicated styling.
+        if (count($steps) > 1) {
+            $stepBase                              = new stdClass;
+            $stepBase->button_type                 = (isset($settings->step_btn_type) && $settings->step_btn_type) ? $settings->step_btn_type : '';
+            $stepBase->button_appearance           = (isset($settings->step_btn_appearance) && $settings->step_btn_appearance) ? $settings->step_btn_appearance : '';
+            $stepBase->button_fontstyle            = (isset($settings->step_btn_fontstyle) && $settings->step_btn_fontstyle) ? $settings->step_btn_fontstyle : '';
+            $stepBase->button_font_style           = (isset($settings->step_btn_font_style) && $settings->step_btn_font_style) ? $settings->step_btn_font_style : '';
+            $stepBase->link_button_color           = '';
+            $stepBase->link_border_color           = '';
+            $stepBase->link_button_border_width    = '';
+            $stepBase->link_button_padding_bottom  = '';
+            $stepBase->font_family                 = (isset($settings->step_btn_font_family) && $settings->step_btn_font_family) ? $settings->step_btn_font_family : null;
+            $stepBase->fontsize                    = isset($settings->step_btn_fontsize_original) ? $settings->step_btn_fontsize_original : ($settings->step_btn_fontsize ?? null);
+            $stepBase->button_typography           = (isset($settings->step_btn_typography) && $settings->step_btn_typography) ? $settings->step_btn_typography : null;
+
+            $nextOptions                                = clone $stepBase;
+            $nextOptions->button_color                  = (isset($settings->step_next_color) && $settings->step_next_color) ? $settings->step_next_color : '';
+            $nextOptions->button_color_hover            = (isset($settings->step_next_color_hover) && $settings->step_next_color_hover) ? $settings->step_next_color_hover : '';
+            $nextOptions->button_background_color       = (isset($settings->step_next_background_color) && $settings->step_next_background_color) ? $settings->step_next_background_color : '';
+            $nextOptions->button_background_color_hover = (isset($settings->step_next_background_color_hover) && $settings->step_next_background_color_hover) ? $settings->step_next_background_color_hover : '';
+            $nextOptions->button_background_gradient        = (isset($settings->step_next_background_gradient) && $settings->step_next_background_gradient) ? $settings->step_next_background_gradient : new stdClass();
+            $nextOptions->button_background_gradient_hover  = (isset($settings->step_next_background_gradient_hover) && $settings->step_next_background_gradient_hover) ? $settings->step_next_background_gradient_hover : new stdClass();
+
+            $prevOptions                                = clone $stepBase;
+            $prevOptions->button_color                  = (isset($settings->step_prev_color) && $settings->step_prev_color) ? $settings->step_prev_color : '';
+            $prevOptions->button_color_hover            = (isset($settings->step_prev_color_hover) && $settings->step_prev_color_hover) ? $settings->step_prev_color_hover : '';
+            $prevOptions->button_background_color       = (isset($settings->step_prev_background_color) && $settings->step_prev_background_color) ? $settings->step_prev_background_color : '';
+            $prevOptions->button_background_color_hover = (isset($settings->step_prev_background_color_hover) && $settings->step_prev_background_color_hover) ? $settings->step_prev_background_color_hover : '';
+            $prevOptions->button_background_gradient        = (isset($settings->step_prev_background_gradient) && $settings->step_prev_background_gradient) ? $settings->step_prev_background_gradient : new stdClass();
+            $prevOptions->button_background_gradient_hover  = (isset($settings->step_prev_background_gradient_hover) && $settings->step_prev_background_gradient_hover) ? $settings->step_prev_background_gradient_hover : new stdClass();
+
+            $css .= $css_path->render(['addon_id' => $addon_id, 'options' => $nextOptions, 'id' => 'btn-next-' . $this->addon->id]);
+            $css .= $css_path->render(['addon_id' => $addon_id, 'options' => $prevOptions, 'id' => 'btn-prev-' . $this->addon->id]);
+
+            $stepNavButtons = '.sppb-form-builder-step-nav .sppb-form-builder-prev button, .sppb-form-builder-step-nav .sppb-form-builder-next button';
+            $stepBtnSize    = (isset($settings->step_btn_size) && $settings->step_btn_size) ? $settings->step_btn_size : '';
+
+            if ($stepBtnSize === 'custom') {
+                $css .= $cssHelper->generateStyle($stepNavButtons, $settings, ['step_btn_padding' => 'padding'], [], ['step_btn_padding' => 'spacing']);
+            }
+
+            $css .= $cssHelper->generateStyle($stepNavButtons, $settings, ['step_btn_margin' => 'margin'], [], ['step_btn_margin' => 'spacing']);
+
+            // Gap between the Previous / Next-Send buttons is owned by the parent row.
+            // Cancel the inner-facing gutter/margin on both the wrapper and the button.
+            $css .= $cssHelper->generateStyle('.sppb-form-builder-step-nav', $settings, ['step_btn_gap' => 'gap']);
+            $css .= $addon_id . ' .sppb-form-builder-step-nav .sppb-form-builder-prev,' . $addon_id . ' .sppb-form-builder-step-nav .sppb-form-builder-prev button{margin-right:0 !important;}';
+            $css .= $addon_id . ' .sppb-form-builder-step-nav .sppb-form-builder-next,' . $addon_id . ' .sppb-form-builder-step-nav .sppb-form-builder-next button,' . $addon_id . ' .sppb-form-builder-step-nav .sppb-form-builder-submit,' . $addon_id . ' .sppb-form-builder-step-nav .sppb-form-builder-submit button{margin-left:0 !important;}';
+
+            // Step indicator
+            $css .= $cssHelper->generateStyle('.sppb-form-builder-steps-indicator, .sppb-form-builder-progress', $settings, ['step_indicator_spacing' => 'margin-bottom']);
+            $css .= $cssHelper->generateStyle('.sppb-form-builder-steps-indicator', $settings, ['step_indicator_divider_gap' => '--sppb-step-divider-gap']);
+            $css .= $cssHelper->generateStyle('.sppb-form-builder-steps-indicator', $settings, ['step_indicator_icon_size' => '--sppb-step-icon-size']);
+            $css .= $cssHelper->generateStyle('.sppb-form-builder-steps-indicator', $settings, ['step_indicator_padding' => '--sppb-step-marker-pad']);
+            $css .= $cssHelper->generateStyle('.sppb-form-builder-step-indicator-item::before', $settings, ['step_indicator_divider_width' => 'height']);
+
+            $css .= $cssHelper->typography('.sppb-form-builder-steps-indicator .sppb-step-indicator-label, .sppb-form-builder-progress-text', $settings, 'step_indicator_typography', [
+                'font'           => 'step_indicator_font_family',
+                'size'           => 'step_indicator_fontsize',
+                'letter_spacing' => 'step_indicator_letterspace',
+                'weight'         => 'step_indicator_font_style.weight',
+                'italic'         => 'step_indicator_font_style.italic',
+                'underline'      => 'step_indicator_font_style.underline',
+                'uppercase'      => 'step_indicator_font_style.uppercase',
+            ]);
+
+            // Inactive state
+            $css .= $cssHelper->generateStyle('.sppb-form-builder-step-indicator-item .sppb-step-indicator-label', $settings, ['step_indicator_inactive_text' => 'color'], ['step_indicator_inactive_text' => false]);
+            $css .= $cssHelper->generateStyle('.sppb-form-builder-step-indicator-item .sppb-step-indicator-marker', $settings, ['step_indicator_inactive_icon' => 'color', 'step_indicator_inactive_border' => 'border-color', 'step_indicator_inactive_bg' => 'background'], ['step_indicator_inactive_icon' => false, 'step_indicator_inactive_border' => false, 'step_indicator_inactive_bg' => false]);
+
+            // Active state
+            $css .= $cssHelper->generateStyle('.sppb-form-builder-step-indicator-item.active .sppb-step-indicator-label', $settings, ['step_indicator_active_text' => 'color'], ['step_indicator_active_text' => false]);
+            $css .= $cssHelper->generateStyle('.sppb-form-builder-step-indicator-item.active .sppb-step-indicator-marker', $settings, ['step_indicator_active_icon' => 'color', 'step_indicator_active_border' => 'border-color', 'step_indicator_active_bg' => 'background'], ['step_indicator_active_icon' => false, 'step_indicator_active_border' => false, 'step_indicator_active_bg' => false]);
+
+            // Completed state
+            $css .= $cssHelper->generateStyle('.sppb-form-builder-step-indicator-item.completed .sppb-step-indicator-label', $settings, ['step_indicator_completed_text' => 'color'], ['step_indicator_completed_text' => false]);
+            $css .= $cssHelper->generateStyle('.sppb-form-builder-step-indicator-item.completed .sppb-step-indicator-marker', $settings, ['step_indicator_completed_icon' => 'color', 'step_indicator_completed_border' => 'border-color', 'step_indicator_completed_bg' => 'background'], ['step_indicator_completed_icon' => false, 'step_indicator_completed_border' => false, 'step_indicator_completed_bg' => false]);
+
+            // Progress bar
+            $css .= $cssHelper->generateStyle('.sppb-form-builder-progress-text', $settings, ['step_indicator_progress_text' => 'color'], ['step_indicator_progress_text' => false]);
+            $css .= $cssHelper->generateStyle('.sppb-form-builder-progress-fill', $settings, ['step_indicator_progress_color' => 'background'], ['step_indicator_progress_color' => false]);
+            $css .= $cssHelper->generateStyle('.sppb-form-builder-progress-track', $settings, ['step_indicator_progress_bg' => 'background'], ['step_indicator_progress_bg' => false]);
+            $css .= $cssHelper->generateStyle('.sppb-form-builder-progress-track', $settings, ['step_indicator_progress_height' => 'height']);
+            $css .= $cssHelper->generateStyle('.sppb-form-builder-progress-track, .sppb-form-builder-progress-fill', $settings, ['step_indicator_progress_radius' => 'border-radius']);
+        }
+
+        $btn_size = (isset($settings->btn_size) && $settings->btn_size) ? $settings->btn_size : '';
+        if ((! empty($btn_size) && $btn_size === "custom")) {
+            $btnPadding = $cssHelper->generateStyle('.sppb-form-builder-btn button', $settings, ['btn_padding' => 'padding'], [], ['btn_padding' => 'spacing']);
+            $css .= $btnPadding;
+        }
+
+        $btnMargin = $cssHelper->generateStyle('.sppb-form-builder-btn button', $settings, ['btn_margin' => 'margin'], [], ['btn_margin' => 'spacing']);
+        $css .= $btnMargin;
+
+        $transformCss = $cssHelper->generateTransformStyle('.sppb-addon-form-builder-form', $settings, 'transform');
+        $css .= $transformCss;
+
+        return $css;
+    }
+
+    public static function verifyAddon($pageContent, $addonId)
+    {
+        return self::getAddonById($pageContent, $addonId) !== null;
+    }
+
+    /**
+     * Locate a form_builder addon by id within the stored page content and return its object.
+     * The stored content is the trusted source of the addon's settings (e.g. the captcha
+     * answer), so security-sensitive values must be read from here, never from the request.
+     *
+     * @param   string  $pageContent  The stored page/module content JSON.
+     * @param   mixed   $addonId      The addon id to find.
+     * @return  object|null           The addon object, or null if not found.
+     */
+    public static function getAddonById($pageContent, $addonId)
+    {
+        $pageContent = json_decode($pageContent);
+
+        if (! is_array($pageContent)) {
+            return null;
+        }
+
+        foreach ($pageContent as $row) {
+            foreach ($row->columns as $column) {
+                foreach ($column->addons as $addon) {
+
+                    // if direct addon
+                    if (($addon->id == $addonId) && ($addon->name == 'form_builder')) {
+                        return $addon;
+                    }
+
+                    // if has inner array
+                    if (isset($addon->columns) && count($addon->columns) && $addon->columns) {
+                        foreach ($addon->columns as $inner_column) {
+                            foreach ($inner_column->addons as $inner_addon) {
+                                if (($inner_addon->id == $addonId) && ($inner_addon->name == 'form_builder')) {
+                                    return $inner_addon;
+                                }
+                            }
+                        }
+                    } // END:: has inner columns
+
+                    // if repeatable addon (tab, accordion)
+                    $inner_items = 'sp_' . $addon->name . '_item';
+                    if (isset($addon->settings->$inner_items) && count($addon->settings->$inner_items) && $addon->settings->$inner_items) {
+                        foreach ($addon->settings->$inner_items as $inner_item) {
+                            if (isset($inner_item->content) && is_array($inner_item->content) && ! empty($inner_item->content)) {
+                                foreach ($inner_item->content as $inner_addon) {
+                                    if (($inner_addon->id == $addonId) && ($inner_addon->name == 'form_builder')) {
+                                        return $inner_addon;
+                                    }
+                                }
+                            }
+                        }
+                    } // END:: repeatable addon (tab, accordion)
+
+                }
+            }
+        }
+        return null;
+    }
+
+
+    /**
+     * Generate the lodash template string for the frontend editor.
+     *
+     * @return     string     The lodash template string.
+     * @since     1.0.0
+     */
+    public static function getTemplate()
+    {
+
+        $lodash = new Lodash('#sppb-addon-{{ data.id }}');
+
+        $output = '
+        <#
+            var classList = "";
+            classList += " sppb-btn-"+data.btn_type;
+            classList += " sppb-btn-"+data.btn_size;
+            classList += " sppb-btn-"+data.btn_shape;
+			classList += data.btn_block ? " " + data.btn_block : "";
+            if(!_.isEmpty(data.btn_appearance)){
+                classList += " sppb-btn-"+data.btn_appearance;
+            }
+            var modern_font_style = false;
+            var btn_fontstyle = data.btn_fontstyle || "";
+            var btn_font_style = data.btn_font_style || "";
+
+			var hide_label = data.hide_label ?? false;
+			var hidden_label_class = hide_label ? " class=sppb-form-label-visually-hidden " : "";
+        #>
+
+        <style type="text/css">';
+        // field
+        $fieldTypographyFallbacks = ['size' => 'data.field_font_size'];
+        $output .= $lodash->typography('.sppb-form-control', 'data.field_typography', $fieldTypographyFallbacks);
+
+        // label
+        $labelTypographyFallbacks = [
+            'size'      => 'data.label_font_size',
+            'weight'    => 'data.label_font_style?.weight',
+            'italic'    => 'data.label_font_style?.italic',
+            'underline' => 'data.label_font_style?.underline',
+            'uppercase' => 'data.label_font_style?.uppercase',
+        ];
+
+        $output .= $lodash->typography('.sppb-addon-form-builder-form .sppb-form-group label:not(.form-builder-radio-label):not(.form-builder-checkbox-label)', 'data.label_typography', $labelTypographyFallbacks);
+        $output .= $lodash->spacing('margin', '.sppb-addon-form-builder-form .sppb-form-group label:not(.form-builder-radio-label):not(.form-builder-checkbox-label)', 'data.label_margin');
+        $output .= $lodash->color('color', '.sppb-addon-form-builder-form .sppb-form-group label:not(.form-builder-radio-label):not(.form-builder-checkbox-label)', 'data.label_color');
+
+        // Button
+        $btnTypographyFallbacks = [
+            'font'           => 'data.btn_font_family',
+            'size'           => 'data.btn_fontsize',
+            'letter_spacing' => 'data.btn_letterspace',
+            'weight'         => 'data.btn_font_style?.weight',
+            'italic'         => 'data.btn_font_style?.italic',
+            'underline'      => 'data.btn_font_style?.underline',
+            'uppercase'      => 'data.btn_font_style?.uppercase',
+        ];
+
+        $output .= $lodash->typography('#btn-{{ data.id }}.sppb-btn-{{ data.btn_type }}', 'data.btn_typography', $btnTypographyFallbacks);
+
+        $output .= $lodash->unit('margin-left', '.sppb-addon-form-builder-form', 'data.field_gutter', 'px');
+        $output .= $lodash->unit('margin-right', '.sppb-addon-form-builder-form', 'data.field_gutter', 'px');
+        $output .= $lodash->unit('margin-left', '.sppb-form-check, .sppb-form-builder-btn', 'data.field_gutter', 'px');
+        $output .= $lodash->unit('margin-right', '.sppb-form-check, .sppb-form-builder-btn', 'data.field_gutter', 'px');
+        $output .= $lodash->unit('padding-left', '.sppb-form-builder-recaptcha, .sppb-form-builder-invisible-recaptcha,.sppb-addon-form-builder-form .sppb-form-group', 'data.field_gutter', 'px');
+        $output .= $lodash->unit('padding-right', '.sppb-form-builder-recaptcha, .sppb-form-builder-invisible-recaptcha,.sppb-addon-form-builder-form .sppb-form-group', 'data.field_gutter', 'px');
+        $output .= $lodash->unit('margin-bottom', '.sppb-addon-form-builder-form .sppb-form-group', 'data.field_horizontal_space', 'px');
+
+        $output .= $lodash->color('background-color', '.sppb-addon-form-builder-form .sppb-form-group select, .sppb-addon-form-builder-form .sppb-form-group input:not([type="checkbox"]):not([type="radio"])', 'data.field_bg_color');
+        $output .= $lodash->color('color', '.sppb-addon-form-builder-form .sppb-form-group select, .sppb-addon-form-builder-form .sppb-form-group input:not([type="checkbox"]):not([type="radio"])', 'data.field_color');
+        $output .= $lodash->border('border-width', '.sppb-addon-form-builder-form .sppb-form-group select, .sppb-addon-form-builder-form .sppb-form-group input:not([type="checkbox"]):not([type="radio"])', 'data.field_border_width');
+        $output .= $lodash->border('border-color', '.sppb-addon-form-builder-form .sppb-form-group select, .sppb-addon-form-builder-form .sppb-form-group input:not([type="checkbox"]):not([type="radio"])', 'data.field_border_color');
+
+        $output .= $lodash->unit('font-size', '.sppb-addon-form-builder-form .sppb-form-group select, .sppb-addon-form-builder-form .sppb-form-group input:not([type="checkbox"]):not([type="radio"])', 'data.field_font_size', 'px');
+        $output .= $lodash->unit('border-radius', '.sppb-addon-form-builder-form .sppb-form-group select, .sppb-addon-form-builder-form .sppb-form-group input:not([type="checkbox"]):not([type="radio"])', 'data.field_border_radius', 'px', false);
+        $output .= $lodash->unit('padding', '.sppb-addon-form-builder-form .sppb-form-group select, .sppb-addon-form-builder-form .sppb-form-group input:not([type="checkbox"]):not([type="radio"])', 'data.field_padding');
+        $output .= $lodash->unit('height', '.sppb-addon-form-builder-form .sppb-form-group select, .sppb-addon-form-builder-form .sppb-form-group input:not([type="checkbox"]):not([type="radio"])', 'data.input_height', 'px');
+
+        $output .= $lodash->color('background-color', '.sppb-addon-form-builder-form .sppb-form-group textarea', 'data.field_bg_color');
+        $output .= $lodash->color('color', '.sppb-addon-form-builder-form .sppb-form-group textarea', 'data.field_color');
+
+        $output .= $lodash->unit('font-size', '.sppb-addon-form-builder-form .sppb-form-group textarea', 'data.field_font_size', 'px');
+        $output .= $lodash->unit('border-radius', '.sppb-addon-form-builder-form .sppb-form-group textarea', 'data.field_border_radius', 'px', false);
+        $output .= $lodash->unit('height', '.sppb-addon-form-builder-form .sppb-form-group textarea', 'data.textarea_height', 'px');
+        $output .= $lodash->unit('padding', '.sppb-addon-form-builder-form .sppb-form-group textarea', 'data.field_padding', 'px');
+        $output .= $lodash->border('border-width', '.sppb-addon-form-builder-form .sppb-form-group textarea', 'data.field_border_width');
+        $output .= $lodash->border('border-color', '.sppb-addon-form-builder-form .sppb-form-group textarea', 'data.field_border_color');
+
+        $output .= '<# if (data.checkbox_color) { #>';
+        $output .= $lodash->border('border-color', '.sppb-addon-form-builder .sppb-form-check-label::before, .form-builder-checkbox-item label::before', 'data.checkbox_color');
+        $output .= $lodash->color('background-color', '.sppb-addon-form-builder .sppb-form-check-input:checked + label::before, .form-builder-checkbox-item input:checked + label::before', 'data.checkbox_color');
+        $output .= '<# } #>';
+
+        $output .= '<# if (data.radio_color) { #>';
+        $output .= $lodash->border('border-color', '.form-builder-radio-item label::before', 'data.radio_color');
+        $output .= $lodash->color('background-color', '.form-builder-radio-item input:checked + label::before', 'data.radio_color');
+        $output .= '<# } #>';
+
+        $output .= '<# if (data.btn_type == "link") { #>';
+        $output .= $lodash->color('color', '.sppb-form-builder-btn button.sppb-btn-link', 'data.link_button_color');
+        $output .= $lodash->border('border-color', '.sppb-form-builder-btn button.sppb-btn-link', 'data.link_border_color');
+        $output .= $lodash->unit('border-bottom-width', '.sppb-form-builder-btn button.sppb-btn-link', 'data.link_button_border_width', 'px', false);
+        $output .= $lodash->unit('padding-bottom', '.sppb-form-builder-btn button.sppb-btn-link', 'data.link_button_padding_bottom', 'px', false);
+        $output .= '<# } #>';
+
+        $output .= '
+        <#
+            var __cssSteps = (_.isArray(data.sp_form_builder_steps) && data.sp_form_builder_steps.length) ? data.sp_form_builder_steps : [{ sp_form_builder_item: (data.sp_form_builder_item || []) }];
+            var __cssFields = [];
+            _.each(__cssSteps, function(__s){ _.each((_.isArray(__s.sp_form_builder_item) ? __s.sp_form_builder_item : []), function(__f){ __cssFields.push(__f); }); });
+        #>
+        <# if(__cssFields.length > 0){
+
+            _.each (__cssFields, function(item_value, item_key) {
+                let field_type = (!_.isEmpty(item_value.field_type) && item_value.field_type) ? item_value.field_type : "text";
+                let item_name_id = field_type ? "sppb-form-builder-field-"+item_key : "";
+                if(_.isObject(item_value.field_width)){ '
+        . $lodash->generateMissingBreakPoints('item_value.field_width') . '
+
+			if(field_type === "heading") {
+				let item_unique_class = ".sppb-form-builder-heading-" + item_key;
+			#>';
+
+        $output .= $lodash->alignment('text-align', '{{item_unique_class}}', 'item_value.alignment');
+        $output .= $lodash->unit('width', '.sppb-addon-title{{item_unique_class}}', 'item_value.field_width', '%');
+        $output .= $lodash->typography('.sppb-addon-title{{item_unique_class}}', 'item_value.heading_typography');
+        $output .= $lodash->textShadow('.sppb-addon-title{{item_unique_class}}', 'item_value.title_text_shadow');
+        $output .= $lodash->color('color', '.sppb-addon-title{{item_unique_class}}', 'data.label_color');
+        $output .= $lodash->spacing('margin', '.sppb-addon-title{{item_unique_class}}', 'item_value.title_margin');
+        $output .= $lodash->spacing('padding', '.sppb-addon-title{{item_unique_class}}', 'item_value.title_padding');
+
+        $output .= '<# } else { #>';
+        $output .= $lodash->unit('width', '.sppb-form-group.{{item_name_id}}', 'item_value.field_width', '%');
+        $output .= '
+        <# }} }) } #>
+        #sppb-addon-{{ data.id }} .sppb-addon-form-builder-form .sppb-form-group select,
+        #sppb-addon-{{ data.id }} .sppb-addon-form-builder-form .sppb-form-group input:not([type="checkbox"]):not([type="radio"]) {
+            <# if(data.field_border_width){ #>
+                border-style:solid;
+            <# } #>
+            transition:.35s;
+        }
+
+        #sppb-addon-{{ data.id }} .sppb-addon-form-builder-form .sppb-form-group textarea {
+            <# if(data.field_border_width){ #>
+                border-style:solid;
+            <# } #>
+            transition:.35s;
+        }
+
+        #sppb-addon-{{ data.id }} .sppb-addon-form-builder-form .sppb-form-group input:not([type="checkbox"]):not([type="radio"]):hover,
+        #sppb-addon-{{ data.id }} .sppb-addon-form-builder-form .sppb-form-group input:not([type="checkbox"]):not([type="radio"]):active,
+        #sppb-addon-{{ data.id }} .sppb-addon-form-builder-form .sppb-form-group input:not([type="checkbox"]):not([type="radio"]):focus,
+        #sppb-addon-{{ data.id }} .sppb-addon-form-builder-form .sppb-form-group textarea:hover,
+        #sppb-addon-{{ data.id }} .sppb-addon-form-builder-form .sppb-form-group textarea:active,
+        #sppb-addon-{{ data.id }} .sppb-addon-form-builder-form .sppb-form-group textarea:focus{
+            background:{{data.field_hover_bg_color}};
+            border-color:{{data.field_focus_border_color}};
+        }
+
+        #sppb-addon-{{ data.id }} .sppb-addon-form-builder-form .sppb-form-group input::placeholder,
+        #sppb-addon-{{ data.id }} .sppb-addon-form-builder-form .sppb-form-group textarea::placeholder {
+            color:{{data.field_placeholder_color}};
+            opacity: 1;
+            transition:.35s;
+        }
+
+        #sppb-addon-{{ data.id }} .sppb-addon-form-builder-form .sppb-form-group input:not([type="checkbox"]):not([type="radio"]):hover::placeholder,
+        #sppb-addon-{{ data.id }} .sppb-addon-form-builder-form .sppb-form-group textarea:hover::placeholder{
+            color:{{data.field_hover_placeholder_color}};
+            opacity: 1;
+        }
+        <# if(data.btn_type == "link"){ #>
+            #sppb-addon-{{ data.id }} .sppb-form-builder-btn button.sppb-btn-link{
+                text-decoration: none;
+                border-radius: 0;
+            }
+        <# } #>';
+
+        $output .= '<# if (data.btn_type == "custom") { #>';
+        $output .= $lodash->color('color', '#btn-{{ data.id }}.sppb-btn-custom', 'data.btn_color');
+        $output .= $lodash->color('color', '#btn-{{ data.id }}.sppb-btn-custom:hover', 'data.btn_color_hover');
+        $output .= $lodash->color('background-color', '#btn-{{ data.id }}.sppb-btn-custom:hover', 'data.btn_background_color_hover');
+        $output .= $lodash->unit('font-size', '#btn-{{ data.id }}.sppb-btn-custom', 'data.btn_fontsize', 'px');
+        $output .= '<# if (data.btn_appearance == "outline") { #>';
+        $output .= $lodash->border('border-color', '#btn-{{ data.id }}.sppb-btn-custom', 'data.btn_background_color');
+        $output .= $lodash->border('border-color', '#btn-{{ data.id }}.sppb-btn-custom:hover', 'data.btn_background_color_hover');
+        $output .= '#sppb-addon-{{ data.id }} #btn-{{ data.id }}.sppb-btn-custom {background-color:transparent;}';
+        $output .= '<# } else if(data.btn_appearance == "3d") { #>';
+        $output .= $lodash->border('border-bottom-color', '#btn-{{ data.id }}.sppb-btn-custom', 'data.btn_background_color_hover');
+        $output .= $lodash->color('background-color', '#btn-{{ data.id }}.sppb-btn-custom', 'data.btn_background_color');
+        $output .= '<# } else if(data.btn_appearance == "gradient"){ #>';
+        $output .= '#sppb-addon-{{ data.id }} #btn-{{ data.id }}.sppb-btn-custom { border: none; }';
+        $output .= $lodash->color('background-color', '#btn-{{ data.id }}.sppb-btn-custom', 'data.btn_background_gradient');
+        $output .= $lodash->color('background-color', '#btn-{{ data.id }}.sppb-btn-custom:hover', 'data.btn_background_gradient_hover');
+        $output .= '<# } else { #>';
+        $output .= $lodash->color('background-color', '#btn-{{ data.id }}.sppb-btn-custom', 'data.btn_background_color');
+        $output .= '<# } #>';
+        $output .= '<# } #>';
+
+
+        $output .= '<# if (!_.isEmpty(data.btn_padding) && data.btn_size == "custom") { #>';
+        $output .= $lodash->spacing('padding', '#btn-{{ data.id }}.sppb-btn-custom', 'data.btn_padding');
+        $output .= '<# } #>';
+
+        $output .= $lodash->unit('margin', '.sppb-form-builder-btn button', 'data.btn_margin');
+
+        // Step buttons (Previous / Next) custom colors
+        $output .= '<# if (data.step_btn_type == "custom") { #>';
+        $output .= $lodash->color('color', '#btn-next-{{ data.id }}.sppb-btn-custom', 'data.step_next_color');
+        $output .= $lodash->color('color', '#btn-next-{{ data.id }}.sppb-btn-custom:hover', 'data.step_next_color_hover');
+        $output .= $lodash->color('color', '#btn-prev-{{ data.id }}.sppb-btn-custom', 'data.step_prev_color');
+        $output .= $lodash->color('color', '#btn-prev-{{ data.id }}.sppb-btn-custom:hover', 'data.step_prev_color_hover');
+        $output .= $lodash->unit('font-size', '#btn-next-{{ data.id }}.sppb-btn-custom', 'data.step_btn_fontsize', 'px');
+        $output .= $lodash->unit('font-size', '#btn-prev-{{ data.id }}.sppb-btn-custom', 'data.step_btn_fontsize', 'px');
+        $output .= '<# if (data.step_btn_appearance == "outline") { #>';
+        $output .= $lodash->border('border-color', '#btn-next-{{ data.id }}.sppb-btn-custom', 'data.step_next_background_color');
+        $output .= $lodash->border('border-color', '#btn-next-{{ data.id }}.sppb-btn-custom:hover', 'data.step_next_background_color_hover');
+        $output .= $lodash->border('border-color', '#btn-prev-{{ data.id }}.sppb-btn-custom', 'data.step_prev_background_color');
+        $output .= $lodash->border('border-color', '#btn-prev-{{ data.id }}.sppb-btn-custom:hover', 'data.step_prev_background_color_hover');
+        $output .= '#sppb-addon-{{ data.id }} #btn-next-{{ data.id }}.sppb-btn-custom, #sppb-addon-{{ data.id }} #btn-prev-{{ data.id }}.sppb-btn-custom {background-color:transparent;}';
+        $output .= '<# } else if(data.step_btn_appearance == "gradient"){ #>';
+        $output .= '#sppb-addon-{{ data.id }} #btn-next-{{ data.id }}.sppb-btn-custom, #sppb-addon-{{ data.id }} #btn-prev-{{ data.id }}.sppb-btn-custom { border: none; }';
+        $output .= $lodash->color('background-color', '#btn-next-{{ data.id }}.sppb-btn-custom', 'data.step_next_background_gradient');
+        $output .= $lodash->color('background-color', '#btn-next-{{ data.id }}.sppb-btn-custom:hover', 'data.step_next_background_gradient_hover');
+        $output .= $lodash->color('background-color', '#btn-prev-{{ data.id }}.sppb-btn-custom', 'data.step_prev_background_gradient');
+        $output .= $lodash->color('background-color', '#btn-prev-{{ data.id }}.sppb-btn-custom:hover', 'data.step_prev_background_gradient_hover');
+        $output .= '<# } else { #>';
+        $output .= $lodash->color('background-color', '#btn-next-{{ data.id }}.sppb-btn-custom', 'data.step_next_background_color');
+        $output .= $lodash->color('background-color', '#btn-next-{{ data.id }}.sppb-btn-custom:hover', 'data.step_next_background_color_hover');
+        $output .= $lodash->color('background-color', '#btn-prev-{{ data.id }}.sppb-btn-custom', 'data.step_prev_background_color');
+        $output .= $lodash->color('background-color', '#btn-prev-{{ data.id }}.sppb-btn-custom:hover', 'data.step_prev_background_color_hover');
+        $output .= '<# } #>';
+        $output .= '<# } #>';
+
+        // Step buttons padding / margin / gap (gap owned by the parent row)
+        $output .= '<# if (!_.isEmpty(data.step_btn_padding) && data.step_btn_size == "custom") { #>';
+        $output .= $lodash->spacing('padding', '.sppb-form-builder-step-nav .sppb-form-builder-prev button, .sppb-form-builder-step-nav .sppb-form-builder-next button', 'data.step_btn_padding');
+        $output .= '<# } #>';
+        $output .= $lodash->unit('margin', '.sppb-form-builder-step-nav .sppb-form-builder-prev button, .sppb-form-builder-step-nav .sppb-form-builder-next button', 'data.step_btn_margin');
+        $output .= $lodash->unit('gap', '.sppb-form-builder-step-nav', 'data.step_btn_gap', 'px');
+        $output .= '#sppb-addon-{{ data.id }} .sppb-form-builder-step-nav .sppb-form-builder-prev, #sppb-addon-{{ data.id }} .sppb-form-builder-step-nav .sppb-form-builder-prev button{margin-right:0 !important;}';
+        $output .= '#sppb-addon-{{ data.id }} .sppb-form-builder-step-nav .sppb-form-builder-next, #sppb-addon-{{ data.id }} .sppb-form-builder-step-nav .sppb-form-builder-next button, #sppb-addon-{{ data.id }} .sppb-form-builder-step-nav .sppb-form-builder-submit, #sppb-addon-{{ data.id }} .sppb-form-builder-step-nav .sppb-form-builder-submit button{margin-left:0 !important;}';
+
+        // Step indicator. Responsive sliders store { xl, lg, md, sm, xs } where some devices
+        // may be empty, so resolve each value across devices and only emit when present - the
+        // single-device lodash helper would otherwise emit an empty value that drops the rule
+        // (and poisons calc() for the CSS variables, collapsing the marker).
+        $output .= '<#
+            var __sppbStepDev = function(v){ return (v && typeof v === "object") ? (v[window.builderDefaultDevice] || v.xl || v.lg || v.md || v.sm || v.xs) : v; };
+            var __stepSpacing = __sppbStepDev(data.step_indicator_spacing);
+            var __stepDividerGap = __sppbStepDev(data.step_indicator_divider_gap);
+            var __stepDividerWidth = __sppbStepDev(data.step_indicator_divider_width);
+            var __stepIconSize = __sppbStepDev(data.step_indicator_icon_size);
+            var __stepMarkerPad = __sppbStepDev(data.step_indicator_padding);
+            var __stepProgressHeight = __sppbStepDev(data.step_indicator_progress_height);
+            var __stepProgressRadius = __sppbStepDev(data.step_indicator_progress_radius);
+        #>';
+        $output .= '<# if(__stepSpacing || __stepSpacing === 0){ #>#sppb-addon-{{ data.id }} .sppb-form-builder-steps-indicator, #sppb-addon-{{ data.id }} .sppb-form-builder-progress{margin-bottom:{{__stepSpacing}}px;}<# } #>';
+        $output .= '<# if(__stepDividerGap || __stepDividerGap === 0){ #>#sppb-addon-{{ data.id }} .sppb-form-builder-steps-indicator{--sppb-step-divider-gap:{{__stepDividerGap}}px;}<# } #>';
+        $output .= '<# if(__stepIconSize || __stepIconSize === 0){ #>#sppb-addon-{{ data.id }} .sppb-form-builder-steps-indicator{--sppb-step-icon-size:{{__stepIconSize}}px;}<# } #>';
+        $output .= '<# if(__stepMarkerPad || __stepMarkerPad === 0){ #>#sppb-addon-{{ data.id }} .sppb-form-builder-steps-indicator{--sppb-step-marker-pad:{{__stepMarkerPad}}px;}<# } #>';
+        $output .= '<# if(__stepDividerWidth || __stepDividerWidth === 0){ #>#sppb-addon-{{ data.id }} .sppb-form-builder-step-indicator-item::before{height:{{__stepDividerWidth}}px;}<# } #>';
+
+        $stepIndicatorTypoFallbacks = [
+            'font'           => 'data.step_indicator_font_family',
+            'size'           => 'data.step_indicator_fontsize',
+            'letter_spacing' => 'data.step_indicator_letterspace',
+            'weight'         => 'data.step_indicator_font_style?.weight',
+            'italic'         => 'data.step_indicator_font_style?.italic',
+            'underline'      => 'data.step_indicator_font_style?.underline',
+            'uppercase'      => 'data.step_indicator_font_style?.uppercase',
+        ];
+        $output .= $lodash->typography('.sppb-form-builder-steps-indicator .sppb-step-indicator-label, .sppb-form-builder-progress-text', 'data.step_indicator_typography', $stepIndicatorTypoFallbacks);
+
+        $output .= $lodash->color('color', '.sppb-form-builder-step-indicator-item .sppb-step-indicator-label', 'data.step_indicator_inactive_text');
+        $output .= $lodash->color('color', '.sppb-form-builder-step-indicator-item .sppb-step-indicator-marker', 'data.step_indicator_inactive_icon');
+        $output .= $lodash->color('border-color', '.sppb-form-builder-step-indicator-item .sppb-step-indicator-marker', 'data.step_indicator_inactive_border');
+        $output .= $lodash->color('background', '.sppb-form-builder-step-indicator-item .sppb-step-indicator-marker', 'data.step_indicator_inactive_bg');
+
+        $output .= $lodash->color('color', '.sppb-form-builder-step-indicator-item.active .sppb-step-indicator-label', 'data.step_indicator_active_text');
+        $output .= $lodash->color('color', '.sppb-form-builder-step-indicator-item.active .sppb-step-indicator-marker', 'data.step_indicator_active_icon');
+        $output .= $lodash->color('border-color', '.sppb-form-builder-step-indicator-item.active .sppb-step-indicator-marker', 'data.step_indicator_active_border');
+        $output .= $lodash->color('background', '.sppb-form-builder-step-indicator-item.active .sppb-step-indicator-marker', 'data.step_indicator_active_bg');
+
+        $output .= $lodash->color('color', '.sppb-form-builder-step-indicator-item.completed .sppb-step-indicator-label', 'data.step_indicator_completed_text');
+        $output .= $lodash->color('color', '.sppb-form-builder-step-indicator-item.completed .sppb-step-indicator-marker', 'data.step_indicator_completed_icon');
+        $output .= $lodash->color('border-color', '.sppb-form-builder-step-indicator-item.completed .sppb-step-indicator-marker', 'data.step_indicator_completed_border');
+        $output .= $lodash->color('background', '.sppb-form-builder-step-indicator-item.completed .sppb-step-indicator-marker', 'data.step_indicator_completed_bg');
+
+        $output .= $lodash->color('color', '.sppb-form-builder-progress-text', 'data.step_indicator_progress_text');
+        $output .= $lodash->color('background', '.sppb-form-builder-progress-fill', 'data.step_indicator_progress_color');
+        $output .= $lodash->color('background', '.sppb-form-builder-progress-track', 'data.step_indicator_progress_bg');
+        $output .= '<# if(__stepProgressHeight || __stepProgressHeight === 0){ #>#sppb-addon-{{ data.id }} .sppb-form-builder-progress-track{height:{{__stepProgressHeight}}px;}<# } #>';
+        $output .= '<# if(__stepProgressRadius || __stepProgressRadius === 0){ #>#sppb-addon-{{ data.id }} .sppb-form-builder-progress-track, #sppb-addon-{{ data.id }} .sppb-form-builder-progress-fill{border-radius:{{__stepProgressRadius}}px;}<# } #>';
+
+        $output .= $lodash->generateTransformCss('.sppb-addon-form-builder-form', 'data.transform');
+
+        $output .= '
+        </style>
+
+        <#
+            let required_field_message = (!_.isEmpty(data.required_field_message) && data.required_field_message) ? data.required_field_message : "Please fill the required field.";
+
+            let enable_redirect = (typeof data.enable_redirect === "undefined" && data.enable_redirect) ? data.enable_redirect : 0;
+            let redirect_url = (!_.isEmpty(data.redirect_url) && data.redirect_url) ? data.redirect_url : "";
+            let redirect_url_attr = "";
+            if(enable_redirect && redirect_url !== ""){
+                redirect_url_attr = `data-redirect="yes" data-redirect-url="${redirect_url}"`;
+            }
+
+        #>
+
+        <div class="sppb-addon sppb-addon-form-builder {{data.class}}">
+        <div class="sppb-addon-content">
+        <form class="sppb-addon-form-builder-form" {{{redirect_url_attr}}}>
+
+            <#
+            var __steps = (_.isArray(data.sp_form_builder_steps) && data.sp_form_builder_steps.length) ? data.sp_form_builder_steps : [{ step_title: "Step 1", sp_form_builder_item: (data.sp_form_builder_item || []) }];
+            var isMultiStep = __steps.length > 1;
+            var total_steps = __steps.length;
+            var step_indicator_type = data.step_indicator_type || "number_text";
+            var step_indicator_shape = data.step_indicator_shape || "circle";
+            var step_prev_text = data.step_prev_label || "Previous";
+            var step_next_text = data.step_next_label || "Next";
+            var globalKey = 0;
+
+            var progress_value = total_steps ? Math.round(100 / total_steps) : 0;
+            var has_marker = step_indicator_type !== "text";
+            var has_label = (step_indicator_type === "text" || step_indicator_type === "number_text" || step_indicator_type === "icon_text");
+            var is_icon = (step_indicator_type === "icon" || step_indicator_type === "icon_text");
+
+            var step_btn_class = data.step_btn_type ? (" sppb-btn-" + data.step_btn_type) : " sppb-btn-primary";
+            step_btn_class += data.step_btn_size ? (" sppb-btn-" + data.step_btn_size) : "";
+            step_btn_class += data.step_btn_shape ? (" sppb-btn-" + data.step_btn_shape) : " sppb-btn-rounded";
+            step_btn_class += data.step_btn_appearance ? (" sppb-btn-" + data.step_btn_appearance) : "";
+            step_btn_class += data.step_btn_block ? (" " + data.step_btn_block) : "";
+            var step_next_position = data.step_next_position ? (" sppb-text-" + data.step_next_position) : " sppb-text-left";
+            var step_prev_position = data.step_prev_position ? (" sppb-text-" + data.step_prev_position) : " sppb-text-left";
+            #>
+
+            <# if(isMultiStep && step_indicator_type === "progress_bar"){ #>
+                <div class="sppb-form-builder-progress">
+                    <div class="sppb-form-builder-progress-text"><span class="sppb-form-builder-progress-percent">{{progress_value}}%</span></div>
+                    <div class="sppb-form-builder-progress-track">
+                        <span class="sppb-form-builder-progress-fill" style="width:{{progress_value}}%;"></span>
+                    </div>
+                </div>
+            <# } else if(isMultiStep && step_indicator_type !== "none"){ #>
+                <ol class="sppb-form-builder-steps-indicator sppb-step-shape-{{step_indicator_shape}} sppb-step-type-{{step_indicator_type}}">
+                    <# _.each(__steps, function(__step, __stepIndex){
+                        var step_title = (!_.isEmpty(__step.step_title) && __step.step_title) ? __step.step_title : ("Step " + (__stepIndex + 1));
+                    #>
+                        <li class="sppb-form-builder-step-indicator-item <# if(__stepIndex===0){ #>active<# } #>" data-step="{{__stepIndex}}">
+                            <# if(has_marker){ #>
+                                <span class="sppb-step-indicator-marker">
+                                    <# if(is_icon){ #>
+                                        <svg class="sppb-step-indicator-check" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M13.3 4.6 6.4 11.5 2.7 7.8" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                                    <# } else { #>
+                                        <span class="sppb-step-indicator-number">{{__stepIndex + 1}}</span>
+                                    <# } #>
+                                </span>
+                            <# } #>
+                            <# if(has_label){ #>
+                                <span class="sppb-step-indicator-label">{{step_title}}</span>
+                            <# } #>
+                        </li>
+                    <# }) #>
+                </ol>
+            <# } #>
+
+            <#
+            _.each (__steps, function(__step, __stepIndex) {
+                var __stepFields = _.isArray(__step.sp_form_builder_item) ? __step.sp_form_builder_item : [];
+            #>
+                <# if(isMultiStep){ #>
+                    <div class="sppb-form-builder-step" data-step="{{__stepIndex}}" <# if(__stepIndex!==0){ #>style="display:none;"<# } #>>
+                <# } #>
+                <#
+                _.each (__stepFields, function(item_value) {
+                    var item_key = globalKey;
+                    globalKey++;
+                    let label = (!_.isEmpty(item_value.title) && item_value.title) ? item_value.title : "";
+                    let field_name = (!_.isEmpty(item_value.field_name) && item_value.field_name) ? item_value.field_name : "";
+                    let field_placeholder = (!_.isEmpty(item_value.field_placeholder) && item_value.field_placeholder) ? item_value.field_placeholder : "";
+                    let field_type = (!_.isEmpty(item_value.field_type) && item_value.field_type) ? item_value.field_type : "text";
+                    let item_name_id = field_type ? "sppb-form-builder-field-"+item_key : "";
+                    let starField = item_value.field_is_required ? "*" : "";
+
+                    let range_min = (!_.isEmpty(item_value.range_min) && item_value.range_min) ? item_value.range_min : "";
+                    let range_max = (!_.isEmpty(item_value.range_max) && item_value.range_max) ? item_value.range_max : "";
+                    let range_step = (!_.isEmpty(item_value.range_step) && item_value.range_step) ? item_value.range_step : "";
+                    let number_min = (!_.isEmpty(item_value.number_min) && item_value.number_min) ? item_value.number_min : "";
+                    let number_max = (!_.isEmpty(item_value.number_max) && item_value.number_max) ? item_value.number_max : "";
+                    let number_step = (!_.isEmpty(item_value.number_step) && item_value.number_step) ? item_value.number_step : "";
+
+                    if(field_type=="radio"){
+            #>
+                        <div class="sppb-form-group {{item_name_id}}">
+
+                            <# if(label){ #>
+                                <label {{hidden_label_class}}>{{label}}
+                                <# if(item_value.field_required_star && item_value.field_is_required){ #>
+                                    <span class="sppb-field-required"> *</span>
+                                <# } #>
+                                </label>
+                            <# } #>
+
+                            <div class="form-builder-radio-content">
+
+                            <#
+                            let radio_key = "sp_form_builder_inner_item_radio";
+                            if(_.isArray(item_value[radio_key]) && item_value[radio_key].length > 0){
+                                let inner_values = item_value[radio_key];
+                                _.each (inner_values, function(inner_item_value, inner_item_key) {
+                                    if(!_.isEmpty(inner_item_value.title) && inner_item_value.title){
+                            #>
+                                        <div class="form-builder-radio-item">
+                                        <#
+                                            let inner_item_id = `form-${data.id}-radio-${inner_item_key}`;
+                                        #>
+                                            <input type="radio" name="form-builder-item-[{{field_name}}{{starField}}]" id="{{inner_item_id}}" value="{{inner_item_value.title}}" class="sppb-form-control"
+                                            <# if(inner_item_value.is_radio_checked){ #>
+                                                checked
+                                            <# } #>
+                                            >
+                                            <label for="{{inner_item_id}}" class="form-builder-radio-label">{{{inner_item_value.title}}}</label>
+                                        </div>
+                                    <# }
+                                })
+                            } #>
+                            </div>
+
+                            <# if(item_value.field_is_required){ #>
+                                <span class="sppb-form-builder-required">{{required_field_message}}</span>
+                            <# } #>
+
+                        </div>
+                    <# } else if(field_type=="checkbox"){ #>
+                        <div class="sppb-form-group {{item_name_id}}">
+
+                            <# if(label){ #>
+                                <label {{hidden_label_class}}>{{label}}
+                                <# if(item_value.field_required_star){ #>
+                                    <span class="sppb-field-required"> *</span>
+                                <# } #>
+                                </label>
+                            <# } #>
+                            <div class="form-builder-checkbox-content">
+                            <#
+                            let checkboxKey = "sp_form_builder_inner_item_checkbox";
+                            if(_.isArray(item_value[checkboxKey]) && item_value[checkboxKey].length > 0){
+                                let inner_values = item_value[checkboxKey];
+                                _.each (inner_values, function(inner_item_value, inner_item_key) {
+                                    if(!_.isEmpty(inner_item_value.title) && inner_item_value.title){
+                            #>
+                                        <div class="form-builder-checkbox-item">
+                                        <#
+                                            let inner_item_id = `form-${data.id}-checkbox-${inner_item_key}`;
+                                        #>
+
+                                            <input type="checkbox" name="form-builder-item-[{{inner_item_value.checkbox_field_name}}]" id="{{inner_item_id}}" value="{{inner_item_value.title}}" class="sppb-form-control"
+                                            <# if(inner_item_value.is_checkbox_checked){ #>
+                                                checked
+                                            <# } #>
+                                            >
+                                            <label for="{{inner_item_id}}" class="form-builder-checkbox-label">{{inner_item_value.title}}</label>
+                                        </div>
+                                    <# }
+                                })
+                            } #>
+
+                            </div>
+
+                            <# if(item_value.field_is_required){ #>
+                                <span class="sppb-form-builder-required">{{required_field_message}}</span>
+                            <# } #>
+
+                        </div>
+                    <# } else if(field_type=="textarea"){ #>
+                        <div class="sppb-form-group {{item_name_id}}">
+                            <# if(label){ #>
+                                <label {{hidden_label_class}}>{{label}}
+                                <# if(item_value.field_required_star && item_value.field_is_required){ #>
+                                    <span class="sppb-field-required"> *</span>
+                                <# } #>
+                                </label>
+                            <# } #>
+
+                            <textarea name="form-builder-item-[{{field_name}}]" class="sppb-form-control <# if(item_value.is_resize === 0){ #>not-resize<# } #>" placeholder="{{field_placeholder}}" ></textarea>
+                            <# if(item_value.field_is_required){ #>
+                                <span class="sppb-form-builder-required">{{required_field_message}}</span>
+                            <# } #>
+
+                        </div>
+                    <# } else if(field_type=="select"){ #>
+                        <div class="sppb-form-group {{item_name_id}}">
+
+                           <# if(label){ #>
+                                <label {{hidden_label_class}}>{{label}}
+                                <# if(item_value.field_required_star && item_value.field_is_required){ #>
+                                    <span class="sppb-field-required"> *</span>
+                                <# } #>
+                                </label>
+                            <# } #>
+
+                            <#
+                            let selctKey = "sp_form_builder_inner_item_select";
+                            if(_.isArray(item_value[selctKey]) && item_value[selctKey].length > 0){
+                                let inner_values = item_value[selctKey];
+                            #>
+                                <select class="sppb-form-control" name="form-builder-item-[{{field_name}}]">
+                            <#
+                                if(field_placeholder){
+                            #>
+                                 <option value="">{{field_placeholder}}</option>
+                            <#  }
+                                _.each (inner_values, function(inner_item_value, inner_item_key) {
+                                    if(!_.isEmpty(inner_item_value.title) && inner_item_value.title){
+                            #>
+                                            <option value="{{inner_item_value.title}}"
+                                            <# if(inner_item_value.is_selected){ #>
+                                                selected
+                                            <# } #>
+                                            >{{inner_item_value.title}}</option>
+                                    <# }
+                                }) #>
+                                </select>
+                                <# if(item_value.field_is_required){ #>
+                                <span class="sppb-form-builder-required">{{required_field_message}}</span>
+                            <# }
+                            } #>
+
+                        </div>
+                    <# } else if(field_type=="range"){ #>
+                        <div class="sppb-form-group {{item_name_id}}">
+                            <# if(label){ #>
+                                <label {{hidden_label_class}}>{{label}}
+                                <# if(item_value.field_required_star && item_value.field_is_required){ #>
+                                    <span class="sppb-field-required"> *</span>
+                                <# } #>
+                                </label>
+                            <# } #>
+
+                            <input type="range" id="{{item_name_id}}" name="form-builder-item-[{{field_name}}]" class="sppb-form-control" min="{{range_min}}" max="{{range_max}}" step="{{range_step}}">
+                            <# if(item_value.field_is_required){ #>
+                                <span class="sppb-form-builder-required">{{required_field_message}}</span>
+                            <# } #>
+                        </div>
+                    <# } else if(field_type=="number"){ #>
+                        <div class="sppb-form-group {{item_name_id}}">
+                            <# if(label){ #>
+                                <label {{hidden_label_class}}>{{label}}
+                                <# if(item_value.field_required_star && item_value.field_is_required){ #>
+                                    <span class="sppb-field-required"> *</span>
+                                <# } #>
+                                </label>
+                            <# } #>
+
+                            <input type="number" id="{{item_name_id}}" name="form-builder-item-[{{field_name}}]" class="sppb-form-control" min="{{number_min}}" max="{{number_max}}" step="{{number_step}}"  placeholder="{{field_placeholder}}">
+                            <# if(item_value.field_is_required){ #>
+                                <span class="sppb-form-builder-required">{{required_field_message}}</span>
+                            <# } #>
+                        </div>
+                    <# } else if(field_type=="phone"){ #>
+                        <div class="sppb-form-group {{item_name_id}}">
+                            <# if(label){ #>
+                                <label {{hidden_label_class}}>{{label}}
+                                <# if(item_value.field_required_star && item_value.field_is_required){ #>
+                                    <span class="sppb-field-required"> *</span>
+                                <# } #>
+                                </label>
+                            <# } #>
+
+                            <input type="text" id="{{item_name_id}}" name="form-builder-item-[{{field_name}}]" class="sppb-form-control" placeholder="{{field_placeholder}}">
+                            <# if(item_value.field_is_required){ #>
+                                <span class="sppb-form-builder-required">{{required_field_message}}</span>
+                            <# } #>
+                        </div>
+                    <# } else if(field_type === "heading") {
+						let heading_selector = item_value.heading_selector || "h3";
+						let item_unique_class = "sppb-form-builder-heading-" + item_key;
+
+						#>
+
+						<{{ heading_selector }} class="sppb-addon-title {{item_unique_class}}">
+							{{label}}
+						</{{ heading_selector }}>
+
+					<# } else { #>
+                        <div class="sppb-form-group {{item_name_id}}">
+                            <# if(label){ #>
+                                <label {{hidden_label_class}}>{{label}}
+                                <# if(item_value.field_required_star && item_value.field_is_required){ #>
+                                    <span class="sppb-field-required"> *</span>
+                                <# } #>
+                                </label>
+                            <# } #>
+
+                            <input type="{{field_type}}" id="{{item_name_id}}" name="form-builder-item-[{{field_name}}]" class="sppb-form-control" placeholder="{{field_placeholder}}">
+                            <# if(item_value.field_is_required){ #>
+                                <span class="sppb-form-builder-required">{{required_field_message}}</span>
+                            <# } #>
+                        </div>
+                    <# }
+
+                })
+                #>
+                <# if(isMultiStep){ #>
+                    </div>
+                <# } #>
+            <# }) #>
+
+            <# if (data.enable_captcha && data.captcha_type == "default") { #>
+                <div class="sppb-form-group">
+                    <label {{hidden_label_class}}>{{data.captcha_question}}</label>
+                    <input type="text" name="data.captcha_question" class="sppb-form-control" placeholder="{{data.captcha_question}}">
+                </div>
+            <# }
+            if (data.enable_captcha && data.captcha_type == "default") {
+            #>
+                <input type="hidden" name="captcha_answer" value="{{data.captcha_answer}}">
+
+            <# } else if (data.enable_captcha && data.captcha_type == "recaptcha") { #>
+                <div class="sppb-form-builder-recaptcha">
+                    <img src="components/com_sppagebuilder/assets/images/captcha.png" >
+                </div>
+            <# } else if (data.enable_captcha && data.captcha_type == "recaptcha_invisible") { #>
+                <div class="sppb-form-builder-recaptcha">
+                    <img src="components/com_sppagebuilder/assets/images/captcha-2.png" >
+                </div>
+            <# } else { #>
+				<# if (data.enable_captcha) { #>
+				<div class="sppb-form-builder-recaptcha">
+                    <img src="components/com_sppagebuilder/assets/images/custom-captcha.png" >
+                </div>
+				<# } #>
+			<# } #>
+
+            <# if (data.enable_policy) { #>
+                <div class="sppb-form-check">
+                    <input class="sppb-form-check-input" type="checkbox" name="policy" id="policy-{{data.id}}" value="Yes">
+                    <label class="sppb-form-check-label" for="policy-{{data.id}}">{{{data.policy_text}}}</label>
+                </div>
+            <# }
+                let iconLeft = "";
+                let iconRight = "";
+
+                let icon_arr = (typeof data.btn_icon !== "undefined" && data.btn_icon) ? data.btn_icon.split(" ") : "";
+                let icon_name = icon_arr.length === 1 ? "fa "+data.btn_icon : data.btn_icon;
+
+                if(data.btn_icon_position == "left" && !_.isEmpty(data.btn_icon)){
+                    iconLeft = \'<span class="\' + icon_name + \'"></span>\';
+                } else {
+                    iconRight = \'<span class="\' + icon_name + \'"></span>\';
+                }
+            if(data.btn_text && !isMultiStep){
+            #>
+                <div class="sppb-form-builder-btn sppb-text-{{data.btn_position}} {{data.btn_class}}">
+                    <button type="button" id="btn-{{ data.id }}" class="sppb-btn {{classList}}">{{{iconLeft}}} {{ data.btn_text }} {{{iconRight}}}</button>
+                </div>
+            <# } #>
+
+            <# if(isMultiStep){ #>
+                <div class="sppb-form-builder-step-nav">
+                    <div class="sppb-form-builder-btn{{step_prev_position}} sppb-form-builder-prev" style="display:none;">
+                        <button type="button" id="btn-prev-{{data.id}}" class="sppb-btn{{step_btn_class}}">{{step_prev_text}}</button>
+                    </div>
+                    <div class="sppb-form-builder-btn{{step_next_position}} sppb-form-builder-next">
+                        <button type="button" id="btn-next-{{data.id}}" class="sppb-btn{{step_btn_class}}">{{step_next_text}}</button>
+                    </div>
+                    <# if(data.btn_text){ #>
+                        <div class="sppb-form-builder-btn sppb-text-{{data.btn_position}} {{data.btn_class}} sppb-form-builder-submit" style="display:none;">
+                            <button type="button" id="btn-{{data.id}}" class="sppb-btn{{classList}}">{{data.btn_text}}</button>
+                        </div>
+                    <# } #>
+                </div>
+            <# } #>
+
+        </form>
+        </div>
+        </div>';
+
+        return $output;
+    }
+}

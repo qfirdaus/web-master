@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<form>
+    <field name="child_item_title" type="text" label="Enter Title" />
+    <field name="child_item_url" type="text" label="Enter url" />
+    <field name="child_item_url_target" type="list" default="0" label="Select URL Target">
+        <option value="0">MOD_FLOATING_BUTTONS_TARGET_SAME </option>
+        <option value="1">MOD_FLOATING_BUTTONS_TARGET_BLANK</option>
+    </field>
+    <field name="child_item_bgcolor" type="color" default="#4285F4" label="MOD_FLOATING_BUTTONS_CHILD_ITEM_BG" description="MOD_FLOATING_BUTTONS_CHILD_ITEM_BG_DESC"
+				/>
+	<field name="child_item_color" type="color" default="#FFFFFF" label="MOD_FLOATING_BUTTONS_CHILD_ITEM_COLOR" description="MOD_FLOATING_BUTTONS_CHILD_ITEM_COLOR_DESC"	/>
+
+    <field name="child_item_icon" type="radio" default="&#xE88A;" label="MOD_FLOATING_BUTTONS_CHILD_ITEM_ICON" description="MOD_FLOATING_BUTTONS_CHILD_ITEM_ICON_DESC" class="child_item_icon">
+    
+        <option value="&#xE88A;">&#xE88A;</option>
+        <option value="&#xE7FD;">&#xE7FD;</option>
+        <option value="&#xE0CB;">&#xE0CB;</option>
+        <option value="&#xE87E;">&#xE87E;</option>
+        <option value="&#xE85E;">&#xE85E;</option>
+        <option value="&#xE7FE;">&#xE7FE;</option>
+        <option value="&#xE8F8;">&#xE8F8;</option>
+        <option value="&#xE3F4;">&#xE3F4;</option>
+        <option value="&#xE89C;">&#xE89C;</option>
+        <option value="&#xE85C;">&#xE85C;</option>
+        <option value="&#xE867;">&#xE867;</option>
+        <option value="&#xE916;">&#xE916;</option>
+        <option value="&#xE876;">&#xE876;</option>
+        <option value="&#xE87C;">&#xE87C;</option>
+        <option value="&#xE899;">&#xE899;</option>
+        <option value="&#xE8A1;">&#xE8A1;</option>
+        <option value="&#xE8FD;">&#xE8FD;</option>
+        <option value="&#xE88F;">&#xE88F;</option>
+        <option value="&#xE90F;">&#xE90F;</option>
+        <option value="&#xE89E;">&#xE89E;</option>
+        <option value="&#xE8AE;">&#xE8AE;</option>
+        <option value="&#xE8B4;">&#xE8B4;</option>
+        <option value="&#xE8B6;">&#xE8B6;</option>
+        <option value="&#xE8B8;">&#xE8B8;</option>
+        <option value="&#xE8CC;">&#xE8CC;</option>
+        <option value="&#xE8D1;">&#xE8D1;</option>
+        <option value="&#xE8D0;">&#xE8D0;</option>
+        <option value="&#xE8D3;">&#xE8D3;</option>
+        <option value="&#xE922;">&#xE922;</option>
+        <option value="&#xE8DA;">&#xE8DA;</option>
+        <option value="&#xE039;">&#xE039;</option>
+        <option value="&#xE04B;">&#xE04B;</option>
+        <option value="&#xE0AF;">&#xE0AF;</option>
+        <option value="&#xE0E1;">&#xE0E1;</option>
+        <option value="&#xE2C2;">&#xE2C2;</option>
+        <option value="&#xE30B;">&#xE30B;</option>
+        <option value="&#xE61D;">&#xE61D;</option>
+        <option value="&#xEB3C;">&#xEB3C;</option>
+        <option value="&#xE80B;">&#xE80B;</option>
+        <option value="&#xE429;">&#xE429;</option>
+        <option value="&#xE838;">&#xE838;</option>
+        <option value="&#xE316;">&#xE316;</option>
+
+    </field>
+    <field name="child_item_icon_custom" type="media" directory="" label="MOD_FLOATING_BUTTONS_CUSTOM_ICON_LABEL" description="MOD_FLOATING_BUTTONS_CUSTOM_ICON_DESC"/>
+    <field name="access" type="accesslevel"	label="JFIELD_ACCESS_LABEL"	description="JFIELD_ACCESS_DESC" class="span12 small" />
+</form>

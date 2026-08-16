@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<extension type="package" version="3.7" method="upgrade">
+	<name>Arabic</name>
+	<packagename>ar-AA</packagename>
+	<version>3.7.5.1</version>
+	<creationDate>22/08/2017</creationDate>
+	<author>Ashraf Damra</author>
+	<authorEmail>dr.d.ashraf@gmail.com</authorEmail>
+	<authorUrl>https://www.jarabic.com/</authorUrl>
+	<copyright>Joomla! in Arabic</copyright>
+	<license>http://www.gnu.org/licenses/gpl-2.0.html GNU/GPL</license>
+	<url>https://www.jarabic.com/</url>
+	<packager>Dr. Ashraf Damra</packager>
+	<packagerurl>https://www.jarabic.com/</packagerurl>
+	<description><![CDATA[<h3>حزمة اللغة العربية الموحدة لنظام جوملا! 3.7.5 الاصدار 1</h3>]]></description>
+	<blockChildUninstall>true</blockChildUninstall>
+	<files>
+		<file type="language" client="site" id="ar-AA">site_ar-AA.zip</file>
+		<file type="language" client="administrator" id="ar-AA">admin_ar-AA.zip</file>
+	</files>
+	<updateservers>
+		<server type="collection" priority="1" name="Accredited Joomla! Translations">https://update.joomla.org/language/translationlist_3.xml</server>
+	</updateservers>
+</extension>

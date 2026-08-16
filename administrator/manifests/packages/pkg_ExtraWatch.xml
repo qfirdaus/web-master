@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<extension type="package" version="4.2">
+    <name>ExtraWatch</name>
+    <creationDate>2022</creationDate>
+    <author>ExtraWatch by CodeGravity.com - http://www.extrawatch.com</author>
+    <copyright>Copyright 2006-2024 by CodeGravity.com</copyright>
+    <authorEmail>support@extrawatch.com</authorEmail>
+    <authorUrl>http://www.extrawatch.com</authorUrl>
+    <packagename>ExtraWatch</packagename>
+    <version>5.0.1</version>
+    <license>http://www.gnu.org/licenses/gpl-3.0.txt GNU/GPLv3</license>
+    <url>http://www.extrawatch.com</url>
+    <packager>CodeGravity.com - http://www.extrawatch.com</packager>
+    <packagerurl>http://www.extrawatch.com</packagerurl>
+    <description>
+        <b>ExtraWatch component and modules installed successfully</b>
+    </description>
+    <files>
+        <file type="component" id="com_extrawatch" >com_extrawatch.zip</file>
+        <file type="plugin" id="plg_extrawatch_agent" >plg_extrawatch_agent.zip</file>
+    </files>
+	
+   
+    <scriptfile>script.pkg.extrawatch.php</scriptfile>
+</extension>

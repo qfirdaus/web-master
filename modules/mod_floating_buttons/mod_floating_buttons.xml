@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="utf-8"?>
+<extension type="module" method="upgrade" client="site">
+	<name>MOD_FLOATING_BUTTONS</name>
+	<creationDate>2025-01-10</creationDate>
+	<author>TemplatePlazza</author>
+	<authorEmail>support@templateplazza.com</authorEmail>
+	<authorUrl>https://templateplazza.com</authorUrl>
+	<copyright>Copyright © 2025 - All rights reserved.</copyright>
+	<license>GNU General Public License v2.0</license>
+	<version>2.1.0</version>
+	<description>MOD_FLOATING_BUTTONS_DESCRIPTION</description>
+	<files>
+		<filename module="mod_floating_buttons">mod_floating_buttons.php</filename>
+		<filename>mod_floating_buttons.xml</filename>
+		<filename>items.xml</filename>
+		<filename>index.html</filename>
+		<folder>admin</folder>
+		<folder>assets</folder>
+		<folder>tmpl</folder>
+	</files>
+
+	<config>
+		<fields name="params">
+		
+			<fieldset name="basic" addfieldpath="/modules/mod_floating_buttons/admin/elements">
+				<field type="flybtn"></field>
+				<field name="mod_visibility" type="list" default="3" label="MOD_FLOATING_BUTTONS_VISIBILITY" description="MOD_FLOATING_BUTTONS_VISIBILITY_DESC">
+					<option value="1">MOD_FLOATING_BUTTONS_VISIBILITY_1</option>
+					<option value="2">MOD_FLOATING_BUTTONS_VISIBILITY_2</option>
+					<option value="3">MOD_FLOATING_BUTTONS_VISIBILITY_3</option>
+				</field>
+				<field name="main_item_bgcolor" type="color" default="#4285F4" label="MOD_FLOATING_BUTTONS_MAIN_ITEM_BG" description="MOD_FLOATING_BUTTONS_MAIN_ITEM_BG_DESC"
+				/>
+				<field name="main_item_color" type="color" default="#FFFFFF" label="MOD_FLOATING_BUTTONS_MAIN_ITEM_COLOR" description="MOD_FLOATING_BUTTONS_MAIN_ITEM_COLOR_DESC"	/>
+
+				<field name="main_item_icon" type="radio" default="&#xE145;" label="MOD_FLOATING_BUTTONS_MAIN_ITEM_ICON" description="MOD_FLOATING_BUTTONS_MAIN_ITEM_ICON_DESC" class="main_item_icon">
+				<option value="&#xE145;">&#xE145;</option>
+				<option value="&#xE40C;">&#xE40C;</option>
+				<option value="&#xE55A;">&#xE55A;</option>
+				<option value="&#xE5C3;">&#xE5C3;</option>
+				<option value="&#xE5D2;">&#xE5D2;</option>
+				<option value="&#xE5D3;">&#xE5D3;</option>
+				<option value="&#xE5D4;">&#xE5D4;</option>
+				<option value="&#xE625;">&#xE625;</option>
+				<option value="&#xE90D;">&#xE90D;</option>
+				<option value="&#xE87E;">&#xE87E;</option>
+				</field>
+				<field name="main_item_icon_custom" type="media" directory="" label="MOD_FLOATING_BUTTONS_CUSTOM_ICON_LABEL" description="MOD_FLOATING_BUTTONS_CUSTOM_ICON_DESC"/>
+				<field name="main_item_position" type="radio" default="0" label="MOD_FLOATING_BUTTONS_MAIN_ITEM_POSITION_LABEL" description="MOD_FLOATING_BUTTONS_MAIN_ITEM_POSITION_DESC" class="btn-group btn-group-yesno">
+				<option value="1">JLEFT</option>
+				<option value="0">JRIGHT</option>
+				<option value="2">TOPRIGHT</option>
+				<option value="3">TOPLEFT</option>
+				</field>
+
+				<field name="main_item_is_rotated" type="radio" default="true" label="MOD_FLOATING_BUTTONS_MAIN_ITEM_ROTATED" description="MOD_FLOATING_BUTTONS_MAIN_ITEM_ROTATED_DESC" class="btn-group btn-group-yesno">
+				<option value="true">JYES</option>
+				<option value="false">JNO</option>
+				</field>
+				<field name="tooltip_theme" type="radio" default="0" label="MOD_FLOATING_BUTTONS_TOOLTIP_THEME" description="MOD_FLOATING_BUTTONS_TOOLTIP_THEME_DESC" class="btn-group btn-group-yesno">
+				<option value="0">MOD_FLOATING_BUTTONS_TOOLTIP_THEME1</option>
+				<option value="1">MOD_FLOATING_BUTTONS_TOOLTIP_THEME2</option>
+				</field>
+
+				<field name="child_item_items" type="subform" formsource="modules/mod_floating_buttons/items.xml" multiple="true" label="Menu Items" description="Add Menu Item" />
+			</fieldset>
+			<fieldset name="css">
+			<field
+					name="css_adjustment"
+					type="textarea"
+					label="MOD_FLOATING_BUTTONS_CSS_ADJUSTMENT_LABEL"
+					description="MOD_FLOATING_BUTTONS_CSS_ADJUSTMENT_DESC"
+					rows="3"
+					hint="button.jfab_main_btn span{font-size:30px;}"
+				/>
+			</fieldset>
+			<fieldset name="advanced">
+				<field name="layout" type="modulelayout" label="JFIELD_ALT_LAYOUT_LABEL" class="form-select" description="JFIELD_ALT_MODULE_LAYOUT_DESC" />
+				<field name="moduleclass_sfx" type="textarea" rows="3" label="COM_MODULES_FIELD_MODULECLASS_SFX_LABEL" description="COM_MODULES_FIELD_MODULECLASS_SFX_DESC"
+				/>
+				<field name="cache" type="list" default="1" label="COM_MODULES_FIELD_CACHING_LABEL" description="COM_MODULES_FIELD_CACHING_DESC">
+					<option value="1">JGLOBAL_USE_GLOBAL</option>
+					<option value="0">COM_MODULES_FIELD_VALUE_NOCACHING</option>
+				</field>
+				<field name="cache_time" type="text" default="900" label="COM_MODULES_FIELD_CACHE_TIME_LABEL" description="COM_MODULES_FIELD_CACHE_TIME_DESC"
+				/>
+				<field name="cachemode" type="hidden" default="static">
+					<option value="static"></option>
+				</field>
+			</fieldset>
+		</fields>
+	</config>
+	<updateservers>
+        <server type="extension" name="Floating Buttons" priority="1">http://www.templateplazza.com/updates/floatingbuttons.xml</server>
+	</updateservers>
+	<languages folder="language">
+		<language tag="en-GB">en-GB/en-GB.mod_floating_buttons.sys.ini</language>
+		<language tag="en-GB">en-GB/en-GB.mod_floating_buttons.ini</language>
+	</languages>
+</extension>

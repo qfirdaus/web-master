@@ -1,0 +1,165 @@
+<?xml version="1.0" encoding="utf-8"?>
+<extension version="2.5.5" type="plugin" group="djmediatools" method="upgrade">
+	<name>plg_djmediatools_j2store</name>
+	<creationDate>September 2021</creationDate>
+    <author>DJ-Extensions.com</author>
+	<copyright>Copyright (C) 2017 DJ-Extensions.com, All rights reserved.</copyright>
+	<license>http://www.gnu.org/licenses GNU/GPL</license>
+	<authorEmail>contact@dj-extensions.com</authorEmail>
+	<authorUrl>http://dj-extensions.com</authorUrl>
+	<version>2.17.6</version>
+	<description>PLG_DJMEDIATOOLS_J2STORE_DESCRIPTION</description>
+	<files>
+		<filename plugin="j2store">j2store.php</filename>
+		<filename>index.html</filename>
+		<filename>icon.png</filename>
+		<folder>language</folder>
+		<folder>fields</folder>
+		<folder>tmpl</folder>
+	</files>
+
+	<config>
+		<fields name="params">
+
+			<fieldset name="source_settings" addfieldpath="/plugins/djmediatools/j2store/fields">
+
+				<field name="plg_j2store_product_source" type="list" default="category"
+					label="PLG_DJMEDIATOOLS_J2STORE_FIELD_SOURCE_LABEL" description="PLG_DJMEDIATOOLS_J2STORE_FIELD_SOURCE_DESC">
+					<option value="category">PLG_DJMEDIATOOLS_J2STORE_SOURCE_CATEGORIES	</option>
+					<option value="item">PLG_DJMEDIATOOLS_J2STORE_SOURCE_INDIVIDUAL_ITEMS</option>
+				</field>
+
+				<field type="djspacer" class="djtitle" label="PLG_DJMEDIATOOLS_J2STORE_FIELD_GROUP_FILTERING_LABEL" />
+
+				<field name="plg_j2store_category_filtering_type" type="list" default="1"
+					label="PLG_DJMEDIATOOLS_J2STORE_FIELD_CATFILTERINGTYPE_LABEL"
+					description="PLG_DJMEDIATOOLS_J2STORE_FIELD_CATFILTERINGTYPE_DESC">
+					<option value="1">PLG_DJMEDIATOOLS_J2STORE_OPTION_INCLUSIVE_VALUE
+					</option>
+					<option value="0">PLG_DJMEDIATOOLS_J2STORE_OPTION_EXCLUSIVE_VALUE
+					</option>
+				</field>
+
+				<field name="plg_j2store_catid" type="category" extension="com_content"
+					multiple="true" size="5" label="JCATEGORY"
+					description="PLG_DJMEDIATOOLS_J2STORE_FIELD_CATEGORY_DESC">
+					<option value="">JOPTION_ALL_CATEGORIES</option>
+				</field>
+
+				<field name="plg_j2store_show_child_category_articles" type="list"
+					default="0"
+					label="PLG_DJMEDIATOOLS_J2STORE_FIELD_SHOWCHILDCATEGORYARTICLES_LABEL"
+					description="PLG_DJMEDIATOOLS_J2STORE_FIELD_SHOWCHILDCATEGORYARTICLES_DESC">
+					<option value="1">PLG_DJMEDIATOOLS_J2STORE_OPTION_INCLUDE_VALUE
+					</option>
+					<option value="0">PLG_DJMEDIATOOLS_J2STORE_OPTION_EXCLUDE_VALUE
+					</option>
+				</field>
+
+				<field name="plg_j2store_levels" type="text" default="1"
+					label="PLG_DJMEDIATOOLS_J2STORE_FIELD_CATDEPTH_LABEL" description="PLG_DJMEDIATOOLS_J2STORE_FIELD_CATDEPTH_DESC" />
+
+				<field name="plg_j2store_show_front" type="list" default="show"
+					label="PLG_DJMEDIATOOLS_J2STORE_FIELD_SHOWFEATURED_LABEL" description="PLG_DJMEDIATOOLS_J2STORE_FIELD_SHOWFEATURED_DESC">
+					<option value="show">JSHOW
+					</option>
+					<option value="hide">JHIDE
+					</option>
+					<option value="only">PLG_DJMEDIATOOLS_J2STORE_OPTION_ONLYFEATURED_VALUE
+					</option>
+				</field>
+
+				<field name="plg_j2store_article_ordering" type="list" default="a.title"
+					label="PLG_DJMEDIATOOLS_J2STORE_FIELD_ARTICLEORDERING_LABEL"
+					description="PLG_DJMEDIATOOLS_J2STORE_FIELD_ARTICLEORDERING_DESC">
+					<option value="a.ordering">PLG_DJMEDIATOOLS_J2STORE_OPTION_ORDERING_VALUE
+					</option>
+					<option value="fp.ordering">PLG_DJMEDIATOOLS_J2STORE_OPTION_ORDERINGFEATURED_VALUE
+					</option>
+					<option value="a.hits">PLG_DJMEDIATOOLS_J2STORE_OPTION_HITS_VALUE
+					</option>
+					<option value="a.title">JGLOBAL_TITLE
+					</option>
+					<option value="a.id">PLG_DJMEDIATOOLS_J2STORE_OPTION_ID_VALUE
+					</option>
+					<option value="a.alias">JFIELD_ALIAS_LABEL
+					</option>
+					<option value="a.created">PLG_DJMEDIATOOLS_J2STORE_OPTION_CREATED_VALUE
+					</option>
+					<option value="modified">PLG_DJMEDIATOOLS_J2STORE_OPTION_MODIFIED_VALUE
+					</option>
+					<option value="publish_up">PLG_DJMEDIATOOLS_J2STORE_OPTION_STARTPUBLISHING_VALUE
+					</option>
+					<option value="a.publish_down">PLG_DJMEDIATOOLS_J2STORE_OPTION_FINISHPUBLISHING_VALUE
+					</option>
+				</field>
+
+				<field name="plg_j2store_article_ordering_direction" type="list" default="ASC"
+					label="PLG_DJMEDIATOOLS_J2STORE_FIELD_ARTICLEORDERINGDIR_LABEL"
+					description="PLG_DJMEDIATOOLS_J2STORE_FIELD_ARTICLEORDERINGDIR_DESC">
+					<option value="DESC">PLG_DJMEDIATOOLS_J2STORE_OPTION_DESCENDING_VALUE
+					</option>
+					<option value="ASC">PLG_DJMEDIATOOLS_J2STORE_OPTION_ASCENDING_VALUE
+					</option>
+				</field>
+
+
+				<field type="djspacer" class="djtitle" label="PLG_DJMEDIATOOLS_J2STORE_FIELD_GROUP_INDIVIDUAL_ITEMS_LABEL" />
+
+				<field name="plg_j2store_items_list" type="textarea" cols="10" rows="3"
+					label="PLG_DJMEDIATOOLS_J2STORE_FIELD_ITEMS_LIST_LABEL" description="PLG_DJMEDIATOOLS_J2STORE_FIELD_ITEMS_LIST_DESC" />
+
+
+				<field type="djspacer" class="djtitle" label="PLG_DJMEDIATOOLS_J2STORE_FIELD_GROUP_LAYOUT_LABEL" />
+
+				<field name="plg_j2store_show_price" type="list" default="1"
+					label="PLG_DJMEDIATOOLS_J2STORE_FIELD_PRICE_LABEL" description="PLG_DJMEDIATOOLS_J2STORE_FIELD_PRICE_DESC">
+					<option value="1">JSHOW</option>
+					<option value="0">JHIDE</option>
+				</field>
+
+				<field name="plg_j2store_show_cartbutton" type="list" default="1"
+					label="PLG_DJMEDIATOOLS_J2STORE_FIELD_CARTBUTTON_LABEL" description="PLG_DJMEDIATOOLS_J2STORE_FIELD_CARTBUTTON_DESC">
+					<option value="1">JSHOW</option>
+					<option value="0">JHIDE</option>
+				</field>
+
+				<field name="plg_j2store_show_qtyinput" type="list" default="1"
+					label="PLG_DJMEDIATOOLS_J2STORE_FIELD_QUANTITY_INPUT_LABEL" description="PLG_DJMEDIATOOLS_J2STORE_FIELD_QUANTITY_INPUT_DESC">
+					<option value="1">JSHOW</option>
+					<option value="0">JHIDE</option>
+				</field>
+
+				<field name="plg_j2store_list_show_cart" type="list" default="1" class="btn-group" label="PLG_DJMEDIATOOLS_J2STORE_PRODUCT_SHOW_CART_LABEL">
+					<option value="1">PLG_DJMEDIATOOLS_J2STORE_SHOW_CART_WITH_OPTIONS</option>
+					<option value="2">PLG_DJMEDIATOOLS_J2STORE_DO_NOT_SHOW_OPTIONS</option>
+					<option value="3">PLG_DJMEDIATOOLS_J2STORE_ALWAYS_TAKE_TO_DETAIL_PAGE</option>
+				</field>
+
+				<field name="plg_j2store_product_image" type="list" default="j2store"
+					label="PLG_DJMEDIATOOLS_J2STORE_FIELD_GET_PRODUCT_IMAGE_FROM"
+					description="PLG_DJMEDIATOOLS_J2STORE_FIELD_GET_PRODUCT_IMAGE_FROM_DESC">
+					<option value="article">PLG_DJMEDIATOOLS_J2STORE_ARTICLE_INTRO_IMAGE</option>
+					<option value="j2store">PLG_DJMEDIATOOLS_J2STORE_J2STORE_THUMB_IMAGE</option>
+				</field>
+				<field name="plg_j2store_link_j2store_detailproduct" type="list" class="input-xlarge"
+					label="PLG_DJMEDIATOOLS_J2STORE_FIELD_SHOW_PRODUCT_DETAIL_PRODUCTS"
+					description="PLG_DJMEDIATOOLS_J2STORE_FIELD_SHOW_PRODUCT_DETAIL_PRODUCTS_DESC">
+					<option value="article">PLG_DJMEDIATOOLS_J2STORE_ARTICLE_LINK</option>
+					<option value="j2store">PLG_DJMEDIATOOLS_J2STORE_DETAIL_PRODUCT_LINK</option>
+				</field>
+
+				<field name="plg_j2store_menuitem_id" type="j2storemenuitem"
+					 label="PLG_DJMEDIATOOLS_J2STORE_SELECT_MENU_ITEM_LABEL"
+					 description="PLG_DJMEDIATOOLS_J2STORE_SELECT_MENU_ITEM_LABEL_DESC"
+					 required="true">
+					<option value="0">PLG_DJMEDIATOOLS_J2STORE_SELECT_OPTION</option>
+				</field>
+
+				<field name="plg_j2store_image" type="media" label="PLG_DJMEDIATOOLS_J2STORE_DEFAULT_IMAGE" description="PLG_DJMEDIATOOLS_J2STORE_DEFAULT_IMAGE_DESC" />
+			</fieldset>
+
+		</fields>
+	</config>
+
+</extension>

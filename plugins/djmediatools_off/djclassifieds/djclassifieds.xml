@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="utf-8"?>
+<extension version="2.5.5" type="plugin" group="djmediatools" method="upgrade">
+	<name>plg_djmediatools_djclassifieds</name>
+	<creationDate>September 2021</creationDate>
+    <author>DJ-Extensions.com</author>
+	<copyright>Copyright (C) 2017 DJ-Extensions.com, All rights reserved.</copyright>
+	<license>http://www.gnu.org/licenses GNU/GPL</license>
+	<authorEmail>contact@dj-extensions.com</authorEmail>
+	<authorUrl>http://dj-extensions.com</authorUrl>
+	<version>2.17.6</version>
+	<description>PLG_DJMEDIATOOLS_DJCLASSIFIEDS_DESCRIPTION</description>
+	<files>
+		<filename plugin="djclassifieds">djclassifieds.php</filename>
+		<filename>index.html</filename>
+		<filename>icon.png</filename>
+		<folder>language</folder>
+	</files>
+
+	<config>
+		<fields name="params" addfieldpath="/administrator/components/com_djclassifieds/models/fields">
+
+			<fieldset name="source_settings" addfieldpath="/administrator/components/com_djmediatools/models/fields">
+
+				<field name="plg_classifieds_items_source" type="list" default="0" label="MOD_DJCLASSIFIEDS_ITEMS_SOURCE" desc="MOD_DJCLASSIFIEDS_ITEMS_SOURCE_DESC">
+					<option value="0">MOD_DJCLASSIFIEDS_ITEMS_ALL_ADVERTS</option>
+					<option value="1">MOD_DJCLASSIFIEDS_ITEMS_USER_ADVERTS</option>
+					<option value="2">MOD_DJCLASSIFIEDS_ITEMS_FAVOURITE_ADVERTS</option>
+					<option value="3">MOD_DJCLASSIFIEDS_ITEMS_RECENTLY_VIEWED_AVERTS</option>
+					<option value="4">MOD_DJCLASSIFIEDS_CURRENT_ITEM_USER_ADVERTS</option>
+				</field>
+				<field name="plg_classifieds_catid" type="djcfcategory" default="0" parent="false" label="MOD_DJCLASSIFIEDS_ITEMS_CATEGORIES" description="MOD_DJCLASSIFIEDS_ITEMS_CATEGORIES_DESC" multiple="true" size="10" />
+				<field name="plg_classifieds_region_id" type="djcfregion" default="0" parent="false" label="MOD_DJCLASSIFIEDS_ITEMS_REGIONS" description="MOD_DJCLASSIFIEDS_ITEMS_REGIONS_DESC" multiple="true" size="10"/>
+				<field name="plg_classifieds_type_id" type="sql" default="0" label="MOD_DJCLASSIFIEDS_ITEMS_TYPES" description="MOD_DJCLASSIFIEDS_ITEMS_TYPES_DESC" query="SELECT id, CONCAT(name,' (id ',id,') ') as title FROM #__djcf_types ORDER BY name" key_field="id" value_field="title" multiple="true" size="10"  />
+				<field name="plg_classifieds_follow_category" type="list" default="0" label="MOD_DJCLASSIFIEDS_ITEMS_FALLOW_CATEGORY" description="MOD_DJCLASSIFIEDS_ITEMS_FALLOW_CATEGORY_DESC">
+					<option value="0">JNO</option>
+					<option value="1">JYES</option>
+				</field>
+				<field name="plg_classifieds_follow_region" type="list" default="0" label="MOD_DJCLASSIFIEDS_ITEMS_FALLOW_REGION" description="MOD_DJCLASSIFIEDS_ITEMS_FALLOW_REGION_DESC">
+					<option value="0">JNO</option>
+					<option value="1">JYES</option>
+				</field>
+				<field name="plg_classifieds_items_ids" type="text" default="" label="MOD_DJCLASSIFIEDS_ITEMS_IDS" description="MOD_DJCLASSIFIEDS_ITEMS_IDS_DESC"  size="50" />
+				<field name="plg_classifieds_users_ids" type="text" default="" label="MOD_DJCLASSIFIEDS_ITEMS_USERS_IDS" description="MOD_DJCLASSIFIEDS_ITEMS_USERS_IDS_DESC"  size="50" />
+
+				<field name="plg_classifieds_items_ord" type="list" default="0" label="MOD_DJCLASSIFIEDS_ITEMS_ORDERING">
+					<option value="0">MOD_DJCLASSIFIEDS_ITEMS_MOST_RECENT</option>
+					<option value="1">MOD_DJCLASSIFIEDS_ITEMS_POPULAR</option>
+					<option value="3">MOD_DJCLASSIFIEDS_ITEMS_NAME</option>
+					<option value="2">MOD_DJCLASSIFIEDS_ITEMS_RANDOM</option>
+				</field>
+
+				<field name="plg_classifieds_only_promoted" type="list" default="0" multiple="true" size="6" label="PLG_DJMEDIATOOLS_DJCLASSIFIEDS_ONLY_PROMOTED">
+					<option value="" disabled="true">PLG_DJMEDIATOOLS_DJCLASSIFIEDS_MULTIPLE_DESC</option>
+					<option value="p_special">PLG_DJMEDIATOOLS_DJCLASSIFIEDS_ONLY_PROMOTED_SPECIAL</option>
+					<option value="p_first">PLG_DJMEDIATOOLS_DJCLASSIFIEDS_ONLY_PROMOTED_FIRST</option>
+					<option value="p_bold">PLG_DJMEDIATOOLS_DJCLASSIFIEDS_ONLY_PROMOTED_BOLD</option>
+					<option value="p_border">PLG_DJMEDIATOOLS_DJCLASSIFIEDS_ONLY_PROMOTED_BORDER</option>
+					<option value="p_bg">PLG_DJMEDIATOOLS_DJCLASSIFIEDS_ONLY_PROMOTED_BG</option>
+				</field>
+
+				<field name="plg_classifieds_show_date" type="list" default="0" label="MOD_DJCLASSIFIEDS_ITEMS_SHOW_DATE">
+					<option value="0">JNO</option>
+					<option value="1">JYES</option>
+				</field>
+				<field name="plg_classifieds_show_cat" type="list" default="0" label="MOD_DJCLASSIFIEDS_ITEMS_SHOW_CATEGORY">
+					<option value="0">JNO</option>
+					<option value="1">JYES</option>
+				</field>
+				<field name="plg_classifieds_cat_link" type="list" default="1" label="MOD_DJCLASSIFIEDS_ITEMS_CATEGORY_LINKED">
+					<option value="0">JNO</option>
+					<option value="1">JYES</option>
+				</field>
+				<field name="plg_classifieds_show_type" type="list" default="0" label="MOD_DJCLASSIFIEDS_ITEMS_SHOW_TYPE">
+					<option value="0">JNO</option>
+					<option value="1">MOD_DJCLASSIFIEDS_ITEMS_LABEL</option>
+					<option value="2">MOD_DJCLASSIFIEDS_ITEMS_BUTTON</option>
+				</field>
+				<field name="plg_classifieds_show_region" type="list" default="0" label="MOD_DJCLASSIFIEDS_ITEMS_SHOW_REGION">
+					<option value="0">JNO</option>
+					<option value="1">JYES</option>
+				</field>
+				<field name="plg_classifieds_show_price" type="list" default="0" label="MOD_DJCLASSIFIEDS_ITEMS_SHOW_PRICE">
+					<option value="0">JNO</option>
+					<option value="1">JYES</option>
+				</field>
+
+				<field name="plg_classifieds_image"	type="media" label="PLG_DJMEDIATOOLS_DJCLASSIFIEDS_DEFAULT_IMAGE" description="PLG_DJMEDIATOOLS_DJCLASSIFIEDS_DEFAULT_IMAGE_DESC" />
+			</fieldset>
+
+		</fields>
+	</config>
+
+</extension>

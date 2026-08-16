@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="utf-8"?>
+<extension type="module" version="3.0" client="site" method="upgrade">
+	<name>MOD_JM_IMG_CAROUSEL</name>
+	<creationDate>12/01/2022</creationDate>
+	<author>DJ-Extensions.com</author>
+	<copyright>Copyright (C) 2022 DJ-Extensions.com</copyright>
+	<license>GNU/GPLv3 http://www.gnu.org/licenses/gpl-3.0.html</license>
+	<authorEmail>contact@dj-extensions.com</authorEmail>
+	<authorUrl>https://dj-extensions.com</authorUrl>
+	<version>1.06</version>
+	<description>MOD_JM_IMG_CAROUSEL_DESC</description>
+		<files>
+				<filename module="mod_jm_img_carousel">mod_jm_img_carousel.php</filename>
+				<filename>index.html</filename>
+				<filename>license.txt</filename>
+				<folder>assets</folder>
+				<folder>tmpl</folder>
+				<folder>language</folder>
+				<folder>fields</folder>
+		</files>
+
+		<updateservers>
+			<server type="extension" priority="1" name="MOD_JM_IMG_CAROUSEL">https://dj-extensions.com/index.php?option=com_ars&amp;view=update&amp;task=stream&amp;format=xml&amp;id=37</server>
+		</updateservers>
+
+		<config>
+			<fields name="params" addfieldpath="/modules/mod_jm_img_carousel/fields">
+
+			<fieldset name="basic">
+				<field name="slides" type="jmelements" label="MOD_JM_IMG_CAROUSEL_FIELD_SLIDES" description="MOD_JM_IMG_CAROUSEL_FIELD_SLIDES_DESC" element_name="MOD_JM_IMG_CAROUSEL_FIELD_SLIDE" element_fields="title,url,slide_image,alt" element_field="title" filter="raw" />
+
+				<field name="title" type="text" default="" label="MOD_JM_IMG_CAROUSEL_FIELD_TITLE" description="MOD_JM_IMG_CAROUSEL_FIELD_TITLE_DESC" />
+				
+				<field name="url" type="url" default="" label="MOD_JM_IMG_CAROUSEL_FIELD_URL" description="MOD_JM_IMG_CAROUSEL_FIELD_URL_DESC" />
+
+				<field name="slide_image" type="media" directory="" label="MOD_JM_IMG_CAROUSEL_FIELD_IMAGE" />
+
+				<field name="alt" type="text" default="" label="MOD_JM_IMG_CAROUSEL_FIELD_ALT" description="MOD_JM_IMG_CAROUSEL_FIELD_ALT_DESC" />
+
+				<field type="spacer" />
+				
+				<field name="link_target" type="list" default="0" label="MOD_JM_IMG_CAROUSEL_FIELD_LINK_TARGET" description="MOD_JM_IMG_CAROUSEL_FIELD_LINK_TARGET_DESC">
+					<option value="0">MOD_JM_IMG_CAROUSEL_FIELD_LINK_TARGET_SELF</option>
+					<option value="1">MOD_JM_IMG_CAROUSEL_FIELD_LINK_TARGET_BLANK</option>
+				</field>
+
+				<field name="show_indicators" type="radio" class="btn-group" default="0" label="MOD_JM_IMG_CAROUSEL_FIELD_SHOW_INDICATORS" description="MOD_JM_IMG_CAROUSEL_FIELD_SHOW_INDICATORS_DESC">
+					<option value="0">JNO</option>
+					<option value="1">JYES</option>
+				</field>
+
+				<field name="buttons" type="radio" class="btn-group" default="0" label="MOD_JM_IMG_CAROUSEL_FIELD_BUTTONS" description="MOD_JM_IMG_CAROUSEL_FIELD_BUTTONS_DESC">
+					<option value="0">JNO</option>
+					<option value="1">JYES</option>
+				</field>
+
+				<field name="scroll" type="radio" class="btn-group" default="0" label="MOD_JM_IMG_CAROUSEL_FIELD_SCROLL" description="MOD_JM_IMG_CAROUSEL_FIELD_SCROLL_DESC">
+					<option value="0">JNO</option>
+					<option value="1">JYES</option>
+				</field>
+
+				<field name="loop" type="radio" class="btn-group" default="0" label="MOD_JM_IMG_CAROUSEL_FIELD_LOOP" description="MOD_JM_IMG_CAROUSEL_FIELD_LOOP_DESC" showon="buttons:1[OR]scroll:1">
+					<option value="0">JNO</option>
+					<option value="1">JYES</option>
+				</field>
+
+				<field name="carousel_style" type="list" default="1" label="MOD_JM_IMG_CAROUSEL_FIELD_STYLE" description="MOD_JM_IMG_CAROUSEL_FIELD_STYLE_DESC">
+					<option value="1">MOD_JM_IMG_CAROUSEL_FIELD_STYLE_STYLE1</option>
+					<option value="2">MOD_JM_IMG_CAROUSEL_FIELD_STYLE_STYLE2</option>
+					<option value="3">MOD_JM_IMG_CAROUSEL_FIELD_STYLE_STYLE3</option>
+				</field>
+
+			</fieldset>
+
+			<fieldset name="advanced">
+				<field
+					name="layout"
+					type="modulelayout"
+					label="JFIELD_ALT_LAYOUT_LABEL"
+					description="JFIELD_ALT_MODULE_LAYOUT_DESC"
+				/>
+
+				<field
+					name="moduleclass_sfx"
+					type="textarea"
+					label="COM_MODULES_FIELD_MODULECLASS_SFX_LABEL"
+					description="COM_MODULES_FIELD_MODULECLASS_SFX_DESC"
+					rows="3"
+				/>
+
+				<field
+					name="cache"
+					type="list"
+					label="COM_MODULES_FIELD_CACHING_LABEL"
+					description="COM_MODULES_FIELD_CACHING_DESC"
+					default="1"
+					>
+					<option value="1">JGLOBAL_USE_GLOBAL</option>
+					<option value="0">COM_MODULES_FIELD_VALUE_NOCACHING</option>
+				</field>
+
+				<field
+					name="cache_time"
+					type="text"
+					label="COM_MODULES_FIELD_CACHE_TIME_LABEL"
+					description="COM_MODULES_FIELD_CACHE_TIME_DESC"
+					default="900"
+				/>
+
+				<field
+					name="cachemode"
+					type="hidden"
+					default="static"
+					>
+					<option value="static"></option>
+				</field>
+			</fieldset>
+		</fields>
+	</config>
+</extension>

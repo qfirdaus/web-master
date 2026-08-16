@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<extension version="2.5.5" type="plugin" group="djmediatools" method="upgrade">
+	<name>plg_djmediatools_easyblog</name>
+	<creationDate>September 2021</creationDate>
+    <author>DJ-Extensions.com</author>
+	<copyright>Copyright (C) 2017 DJ-Extensions.com, All rights reserved.</copyright>
+	<license>http://www.gnu.org/licenses GNU/GPL</license>
+	<authorEmail>contact@dj-extensions.com</authorEmail>
+	<authorUrl>http://dj-extensions.com</authorUrl>
+	<version>2.17.6</version>
+	<description>PLG_DJMEDIATOOLS_EASYBLOG_DESCRIPTION</description>
+	<files>
+		<filename plugin="easyblog">easyblog.php</filename>
+		<filename>index.html</filename>
+		<filename>icon.png</filename>
+		<folder>language</folder>
+		<folder>fields</folder>
+	</files>
+
+	<config>
+		<fields name="params">
+
+			<fieldset name="source_settings" addfieldpath="/plugins/djmediatools/easyblog/fields">
+
+				<field name="plg_easyblog_catid" type="easyblogcategories" default="all" label="PLG_DJMEDIATOOLS_EASYBLOG_CATEGORIES" description="PLG_DJMEDIATOOLS_EASYBLOG_CATEGORIES_DESC" />
+				<field name="plg_easyblog_includesubcategory" type="list" default="0" label="PLG_DJMEDIATOOLS_EASYBLOG_SUBCATEGORIES">
+					<option value="0">JNO</option>
+					<option value="1">JYES</option>
+				</field>
+				<field name="plg_easyblog_usefeatured" type="list" default="0" label="PLG_DJMEDIATOOLS_EASYBLOG_FEATURED" description="PLG_DJMEDIATOOLS_EASYBLOG_FEATURED_DESC">
+					<option value="0">JNO</option>
+					<option value="1">JYES</option>
+				</field>
+				<field name="plg_easyblog_order" type="list" default="latest" label="PLG_DJMEDIATOOLS_EASYBLOG_ORDER">
+					<option value="latest">PLG_DJMEDIATOOLS_EASYBLOG_CREATED</option>
+					<option value="modified">PLG_DJMEDIATOOLS_EASYBLOG_MODIFIED</option>
+					<option value="published">PLG_DJMEDIATOOLS_EASYBLOG_PUBLISH_UP</option>
+					<option value="active">PLG_DJMEDIATOOLS_EASYBLOG_PUBLISH_DOWN</option>
+					<option value="popular">PLG_DJMEDIATOOLS_EASYBLOG_POPULAR</option>
+					<option value="alphabet">PLG_DJMEDIATOOLS_EASYBLOG_TITLE_ALPHA</option>
+					<option value="random">PLG_DJMEDIATOOLS_EASYBLOG_RANDOM</option>
+				</field>
+				<field name="plg_easyblog_order_dir" type="list" default="DESC" label="PLG_DJMEDIATOOLS_EASYBLOG_ORDER_DIR">
+					<option value="DESC">PLG_DJMEDIATOOLS_EASYBLOG_DESCENDING</option>
+					<option value="ASC">PLG_DJMEDIATOOLS_EASYBLOG_ASCENDING</option>
+				</field>
+
+				<field name="plg_easyblog_image" type="media" label="PLG_DJMEDIATOOLS_EASYBLOG_DEFAULT_IMAGE" description="PLG_DJMEDIATOOLS_EASYBLOG_DEFAULT_IMAGE_DESC" />
+			</fieldset>
+
+		</fields>
+	</config>
+
+</extension>

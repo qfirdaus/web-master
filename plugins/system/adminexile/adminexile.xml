@@ -1,0 +1,145 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<extension type="plugin" group="system" method="upgrade">
+	<name>plg_system_adminexile</name>
+	<author>Michael Richey</author>
+	<creationDate>2025-01-17</creationDate>
+	<copyright>(C) 2020 Michael Richey.</copyright>
+	<license>GNU General Public License version 2 or later; see LICENSE.txt</license>
+	<authorEmail>support@richeyweb.com</authorEmail>
+	<authorUrl>https://www.richeyweb.com</authorUrl>
+	<version>5.1.6</version>
+	<description>PLG_SYSTEM_ADMINEXILE_XML_DESCRIPTION</description>
+	<namespace path="src">Joomla\Plugin\System\Adminexile</namespace>
+	<files>
+		<folder plugin="adminexile">services</folder>
+		<folder>forms</folder>
+		<folder>src</folder>
+	</files>
+    <media destination="plg_system_adminexile" folder="media">
+        <folder>js</folder>
+    </media>
+	<languages>
+		<language tag="en-GB">language/en-GB/plg_system_adminexile.ini</language>
+		<language tag="en-GB">language/en-GB/plg_system_adminexile.sys.ini</language>
+	</languages>
+	<config>
+		<fields name="params">
+			<fieldset name="basic" addfieldprefix="Joomla\Plugin\System\Adminexile\Field">
+                <field name="keyspacer" 
+                    type="spacer" 
+                    class="fw-bold"
+                    label="PLG_SYSTEM_ADMINEXILE_KEYSPACER_LABEL" 
+                />
+                <field name="javascript"
+                    type="javascript"
+                />
+                <field name="key" 
+                    type="text" filter="raw"
+                    default="adminexile" 
+                    label="PLG_SYSTEM_ADMINEXILE_KEY_LABEL" 
+                    description="PLG_SYSTEM_ADMINEXILE_KEY_DESC" 
+                    pattern="^(?!\d+$)(?:[^\u0020\u0023-\u0026\u002B\u002C\u002E\u002F\u003A-\u0040\u005B-\u005E\u0060\u007B-\u007E]+)$"
+                />
+                <field name="keyvalue" 
+                    type="text" default="" filter="raw"
+                    label="PLG_SYSTEM_ADMINEXILE_KEYVALUE_LABEL" 
+                    description="PLG_SYSTEM_ADMINEXILE_KEYVALUE_DESC" 
+                    pattern="^(?:(?![\u0020\u0023-\u0026\u002B\u002C\u002E\u002F\u003A-\u0040\u005B-\u005E\u0060\u007B-\u007E].*$).)*$"
+                />
+                <field name="keyusage" 
+                    type="betterspacer" 
+                    class="fst-italic keyusage"
+                    label="PLG_SYSTEM_ADMINEXILE_KEYUSAGE_LABEL" 
+                    description="abc"
+                />
+			</fieldset>
+            <fieldset name="actions">
+                <field name="logoutaction" 
+                    type="spacer" 
+                    class="fw-bold"
+                    label="PLG_SYSTEM_ADMINEXILE_LOGOUTACTION_LABEL"
+                />
+                <field name="graceperiod" 
+                    type="integer" 
+                    default="0" 
+                    label="PLG_SYSTEM_ADMINEXILE_GRACEPERIOD_LABEL" 
+                    description="PLG_SYSTEM_ADMINEXILE_GRACEPERIOD_DESC" 
+                    first="0" 
+                    last="60" 
+                    step="1"
+                />
+                <field name="failaction" 
+                    type="spacer" 
+                    class="fw-bold"
+                    label="PLG_SYSTEM_ADMINEXILE_FAILACTION_LABEL"
+                />
+                <field name="faillog" 
+                    type="radio" 
+                    default="0" 
+                    class="radio btn-group-yesno"
+                    label="PLG_SYSTEM_ADMINEXILE_FAILLOG_LABEL" 
+                    description="PLG_SYSTEM_ADMINEXILE_FAILLOG_DESC"
+                >
+                    <option value="0">JNO</option>
+                    <option value="1">JYES</option>
+                </field>
+                <field name="redirect" type="radio" class="radio btn-group"
+                       default="404" label="PLG_SYSTEM_ADMINEXILE_REDIRECT_LABEL"
+                       description="PLG_SYSTEM_ADMINEXILE_REDIRECT_DESC">
+                    <option value="HOME">PLG_SYSTEM_ADMINEXILE_REDIRECT_HOME</option>
+                    <option value="404">PLG_SYSTEM_ADMINEXILE_REDIRECT_404</option>
+                    <option value="URL">PLG_SYSTEM_ADMINEXILE_REDIRECT_URL</option>                    
+                </field>
+                <field name="fourofour" type="textarea" showon="redirect:404"
+                       default="&#60;!DOCTYPE HTML PUBLIC &#34;-//IETF//DTD HTML 2.0//EN&#34;&#62;&#13;&#10;&#60;html&#62;&#60;head&#62;&#13;&#10;&#60;title&#62;404 Not Found&#60;/title&#62;&#13;&#10;&#60;/head&#62;&#60;body&#62;&#13;&#10;&#60;h1&#62;Not Found&#60;/h1&#62;&#13;&#10;&#60;p&#62;The requested URL {url} was not found on this server.&#60;/p&#62;&#13;&#10;&#60;hr&#62;&#13;&#10;{serversignature}&#13;&#10;&#60;/body&#62;&#60;/html&#62;" 
+                       label="PLG_SYSTEM_ADMINEXILE_FOUROFOUR_LABEL" 
+                       description="PLG_SYSTEM_ADMINEXILE_FOUROFOUR_DESC" 
+                       filter="raw"
+                />
+                <field name="redirecturl" type="url" showon="redirect:URL" default="https://www.fbi.gov"
+                       label="PLG_SYSTEM_ADMINEXILE_REDIRECTURL_LABEL" 
+                       description="PLG_SYSTEM_ADMINEXILE_REDIRECTURL_DESC"
+                />
+			</fieldset>
+            <fieldset name="ipsecurity">
+                <field name="enableip" type="radio" default="0" class="radio btn-group"
+                       label="PLG_SYSTEM_ADMINEXILE_ENABLEIP_LABEL"
+                       description="PLG_SYSTEM_ADMINEXILE_ENABLEIP_DESC"
+                >
+                    <option value="0">JNo</option>
+                    <option value="1">JYes</option>
+                </field>
+                <field name="ipsecurityspacer" type="spacer" label="PLG_SYSTEM_ADMINEXILE_IPSECURITY_SPACER" showon="enableip:1" />
+                <field name="whitelist" type="subform"
+                       multiple="true" formsource="plugins/system/adminexile/forms/iplist.xml" 
+                       label="PLG_SYSTEM_ADMINEXILE_WHITELIST_LABEL"
+                       description="PLG_SYSTEM_ADMINEXILE_WHITELIST_DESC"
+                       showon="enableip:1"
+                />
+                <field name="blacklist" type="subform"
+                       multiple="true" formsource="plugins/system/adminexile/forms/iplist.xml" 
+                       label="PLG_SYSTEM_ADMINEXILE_BLACKLIST_LABEL"
+                       description="PLG_SYSTEM_ADMINEXILE_BLACKLIST_DESC"
+                       showon="enableip:1"
+                />
+                <field name="tornodesspacer" 
+                    type="betterspacer" 
+                    label="PLG_SYSTEM_ADMINEXILE_TORNODES_SPACER" 
+                    description="PLG_SYSTEM_ADMINEXILE_TORNODES_SPACER_DESC" 
+                    showon="enableip:1" 
+                />
+                <field name="tornodes" type="radio" default="0" class="radio btn-group"
+                       label="PLG_SYSTEM_ADMINEXILE_TORNODES_LABEL"
+                       description="PLG_SYSTEM_ADMINEXILE_TORNODES_DESC"
+                       showon="enableip:1"
+                >
+                    <option value="0">JNo</option>
+                    <option value="1">JYes</option>
+                </field>
+            </fieldset>
+		</fields>
+	</config>
+    <updateservers>
+        <server type="extension" priority="1" name="RicheyWeb Update Site">https://cdn.richeyweb.com/updates/adminexile.xml</server>
+    </updateservers>  
+</extension>

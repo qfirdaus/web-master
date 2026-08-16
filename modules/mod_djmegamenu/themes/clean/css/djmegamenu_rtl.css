@@ -1,0 +1,105 @@
+.dj-megamenu-clean li a.dj-up_a > span.dj-drop {
+  padding: 0 0 0 20px;
+}
+
+.dj-megamenu-clean li a.dj-up_a > span span.name + span {
+  margin-left: 0;
+  margin-right: 10px;
+}
+
+.dj-megamenu-clean li a.dj-up_a .dj-icon + span {
+  margin-left: 0;
+  margin-right: 15px;
+}
+
+.dj-megamenu-clean li div.dj-subwrap {
+  left: auto;
+  right: -9999px;
+}
+
+.dj-megamenu-clean li:hover > div.dj-subwrap, .dj-megamenu-clean li.hover > div.dj-subwrap {
+  left: auto;
+  right: 0;
+}
+
+.dj-megamenu-clean li:hover > div.dj-subwrap li:hover > div.dj-subwrap, .dj-megamenu-clean li:hover > div.dj-subwrap li.hover > div.dj-subwrap, .dj-megamenu-clean li.hover > div.dj-subwrap li:hover > div.dj-subwrap, .dj-megamenu-clean li.hover > div.dj-subwrap li.hover > div.dj-subwrap {
+  left: auto;
+  right: 100%;
+}
+
+.dj-megamenu-clean li ul.dj-submenu > li > a .dj-icon + span {
+  margin-left: 0;
+  margin-right: 15px;
+}
+
+.dj-megamenu-clean li ul.dj-submenu > li > a span.name + span {
+  margin-left: 0;
+  margin-right: 10px;
+}
+
+.dj-megamenu-clean li ul.dj-subtree {
+  margin: 5px 25px 5px 0 !important;
+}
+
+.dj-megamenu-clean li ul.dj-subtree > li > a span.name + span {
+  margin-left: 0;
+  margin-right: 10px;
+}
+
+.dj-megamenu-clean .arrow {
+  right: auto;
+  left: 16px;
+}
+
+.dj-megamenu-clean.dj-fa-no .dj-submenu li.parent:not(.subtree) > a .arrow:before {
+  transform: rotate(135deg);
+  -webkit-transform: rotate(135deg);
+}
+
+.dj-megamenu-clean.dj-fa-0 .dj-submenu li.parent:not(.subtree) > a .arrow:before, .dj-megamenu-clean.dj-fa-1 .dj-submenu li.parent:not(.subtree) > a .arrow:before, .dj-megamenu-clean.dj-fa-5 .dj-submenu li.parent:not(.subtree) > a .arrow:before {
+  content: "\f104";
+}
+
+.dj-megamenu-clean .dj-submenu li.parent > a .arrow {
+  right: auto;
+  left: 16px;
+}
+
+.dj-megamenu-clean .dj-submenu li.parent:not(.subtree):hover > a .arrow, .dj-megamenu-clean .dj-submenu li.parent:not(.subtree):focus > a .arrow {
+  right: auto;
+  left: 14px;
+}
+
+.dj-megamenu-clean .dj-stickylogo.dj-align-left {
+  left: auto;
+  right: 20px;
+}
+
+.dj-megamenu-clean .dj-stickylogo.dj-align-right {
+  right: auto;
+  left: 20px;
+}
+
+.dj-megamenu-clean.dj-megamenu-sticky {
+  left: auto;
+  right: 0;
+}
+
+.dj-megamenu-clean.verticalMenu li:hover div.dj-subwrap,
+.dj-megamenu-clean.verticalMenu li.hover div.dj-subwrap {
+  right: 100% !important;
+  left: auto !important;
+}
+
+.dj-megamenu-clean.verticalMenu li:hover div.dj-subwrap.open-right,
+.dj-megamenu-clean.verticalMenu li.hover div.dj-subwrap.open-right {
+  right: 100% !important;
+  left: auto !important;
+}
+
+.dj-megamenu-clean.verticalMenu li:hover div.dj-subwrap.open-left,
+.dj-megamenu-clean.verticalMenu li.hover div.dj-subwrap.open-left {
+  left: 100% !important;
+  right: auto !important;
+}
+/*# sourceMappingURL=djmegamenu_rtl.css.map */

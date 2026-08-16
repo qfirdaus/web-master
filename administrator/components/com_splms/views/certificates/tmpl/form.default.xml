@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<form type="browse" show_header="1" show_filters="1" show_pagination="1" norows_placeholder="COM_SPLMS_COMMON_NORECORDS">
+	<headerset>
+		<header name="splms_certificate_id" type="rowselect" tdwidth="20" />
+		<header name="enabled" type="published" sortable="true" tdwidth="5%" label="COM_SPLMS_TITLE_STATUS" />
+
+		<header name="userid" type="fieldsearchable" sortable="true" buttons="yes" buttonclass="btn" label="COM_SPLMS_FIELD_STUDENT_NAME" />
+
+		<header name="splms_coursescategory_id" type="fieldsql" translate="false" query="SELECT splms_coursescategory_id, title FROM #__splms_coursescategories ORDER BY ordering ASC" key_field="splms_coursescategory_id" label="COM_SPLMS_FIELD_COURSE_CATEGORYNAME" value_field="title" sortable="true"/>
+
+		<header name="splms_course_id" type="fieldsql" translate="false" query="SELECT splms_course_id, title FROM #__splms_courses ORDER BY ordering ASC" key_field="splms_course_id" label="COM_SPLMS_FIELD_COURSE_NAME" value_field="title" sortable="true"/>
+
+		<header name="instructor" type="field" label="COM_SPLMS_COURSE_INSTRUCTOR" sortable="true" />
+
+		<header name="certificate_no" type="fieldsearchable" label="COM_SPLMS_CERTIFICATE_NO" sortable="true" buttons="yes" buttonclass="btn" />
+
+		<header name="item_id" type="field" label="COM_SPLMS_FIELD_ID" sortable="true" tdwidth="5%"/>
+
+		<header name="ordering" type="ordering" sortable="true" tdwidth="5%" />
+	</headerset>
+
+	<fieldset name="items">
+		<field name="splms_item_id" type="selectrow" />
+		<field name="enabled" type="published"/>
+		
+		<field name="userid" type="sqlurl" translate="false" query="SELECT * FROM #__users" key_field="id" value_field="name" url="index.php?option=com_splms&amp;view=certificate&amp;id=[ITEM:ID]"/>
+
+		<field name="splms_coursescategory_id" type="sql" translate="false" query="SELECT splms_coursescategory_id, title FROM #__splms_coursescategories" key_field="splms_coursescategory_id" value_field="title" />
+
+		<field name="splms_course_id" type="sql" translate="false" query="SELECT splms_course_id, title FROM #__splms_courses" key_field="splms_course_id" value_field="title" />
+
+		<field name="instructor" type="text" />
+		<field name="certificate_no" type="text" />
+
+		<field name="splms_certificate_id" type="text" />
+		<field name="ordering" type="ordering" labelclass="order" />
+	</fieldset>
+</form>

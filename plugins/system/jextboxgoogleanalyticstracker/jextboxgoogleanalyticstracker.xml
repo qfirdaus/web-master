@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<extension version="3.7" type="plugin" group="system" method="upgrade">
+<name>System - JExtBOX Google Analytics Tracker</name>
+<author>Galaa</author>
+<creationDate>2011-08-29</creationDate>
+<copyright>Copyright (C) 2021-2023 Galaa</copyright>
+<license>This extension in released under the GNU/GPL License - http://www.gnu.org/copyleft/gpl.html</license>
+<authorUrl>https://www.galaa.net/</authorUrl>
+<version>3.1.0</version>
+<description>This plugin helps you to put the Google's global site tag (gtag.js) or the Google tag (now) into front-end or back-end webpages and enables the functionality of tracking your users' web-browsing activity with Google Analytics.</description>
+<files>
+	<filename plugin="jextboxgoogleanalyticstracker">jextboxgoogleanalyticstracker.php</filename>
+	<filename>index.html</filename>
+</files>
+<updateservers>
+	<server type="extension" priority="1" name="JExtBOX Google Analytics Tracker - Updates">http://jextbox.com/update/jextboxgoogleanalyticstracker.xml</server>
+</updateservers>
+<config>
+	<fields name="params">
+		<fieldset name="basic">
+			<field name="ga_measurement_id" type="text" default="" label="Google tag (G-XXXXXXXXXX)" description=""></field>
+			<field name="skip_administrator" type="radio" default="1" class="btn-group btn-group-yesno" label="Do not track back-end activities" description="" >
+				<option value="1">Yes</option>
+				<option value="0">No</option>
+			</field>
+			<field name="skip_localhost" type="radio" default="1" class="btn-group btn-group-yesno" label="Do not track activities on the localhost" description="" >
+				<option value="1">Yes</option>
+				<option value="0">No</option>
+			</field>
+		</fieldset>
+	</fields>
+</config>
+</extension>

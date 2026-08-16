@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<extension version="2.5.5" type="plugin" group="djmediatools" method="upgrade">
+	<name>plg_djmediatools_sobipro</name>
+	<creationDate>September 2021</creationDate>
+    <author>DJ-Extensions.com</author>
+	<copyright>Copyright (C) 2017 DJ-Extensions.com, All rights reserved.</copyright>
+	<license>http://www.gnu.org/licenses GNU/GPL</license>
+	<authorEmail>contact@dj-extensions.com</authorEmail>
+	<authorUrl>http://dj-extensions.com</authorUrl>
+	<version>2.17.6</version>
+	<description>PLG_DJMEDIATOOLS_SOBIPRO_DESCRIPTION</description>
+	<files>
+		<filename plugin="sobipro">sobipro.php</filename>
+		<filename>index.html</filename>
+		<filename>icon.png</filename>
+		<folder>language</folder>
+		<folder>fields</folder>
+		<folder>lib</folder>
+	</files>
+
+	<config>
+		<fields name="params">
+			<fieldset name="source_settings" addfieldpath="/plugins/djmediatools/sobipro/fields">
+				<field name="section" label="PLG_DJMEDIATOOLS_SOBIPRO_SELECT_SECTION" type="spform" />
+				<field name="cid" label="PLG_DJMEDIATOOLS_SOBIPRO_ENTRIES_SELECT_CATEGORY" type="spform" />
+				<field name="sid" label="" type="spform" />
+				<field name="plg_sobipro_autoListing" type="list" default="0" label="PLG_DJMEDIATOOLS_SOBIPRO_ENTRIES_AUTO_LISTING">
+					<option value="1">JYES</option>
+					<option value="0">JNO</option>
+				</field>
+				<field name="spOrder" type="spform" label="PLG_DJMEDIATOOLS_SOBIPRO_ORDER_BY" />
+				<field name="spOrderDir" type="list" default="asc" label="PLG_DJMEDIATOOLS_SOBIPRO_ENTRIES_FIELD_ORDER_DIR">
+					<option value="asc">PLG_DJMEDIATOOLS_SOBIPRO_ORDER_BY_FIELD_ASC</option>
+					<option value="desc">PLG_DJMEDIATOOLS_SOBIPRO_ORDER_BY_FIELD_DESC</option>
+					<option value="num.asc">PLG_DJMEDIATOOLS_SOBIPRO_ORDER_BY_FIELD_NASC</option>
+					<option value="num.desc">PLG_DJMEDIATOOLS_SOBIPRO_ORDER_BY_FIELD_NDESC</option>
+				</field>
+				<field name="spLimit" type="spform" label="PLG_DJMEDIATOOLS_SOBIPRO_LIMIT_BY" />
+
+				<field name="plg_sobipro_image_field" type="sql" label="PLG_DJMEDIATOOLS_SOBIPRO_IMAGE_FIELD" description="PLG_DJMEDIATOOLS_SOBIPRO_IMAGE_FIELD_DESC"
+					query="SELECT nid as value, CONCAT(nid, ' (',fid,')') as plg_sobipro_image_field FROM #__sobipro_field WHERE fieldType='image' ORDER BY position ASC" default="field_company_logo" />
+				<field name="plg_sobipro_desc_field" type="sql" label="PLG_DJMEDIATOOLS_SOBIPRO_DESCRIPTION_FIELD" description="PLG_DJMEDIATOOLS_SOBIPRO_DESCRIPTION_FIELD_DESC"
+					query="SELECT nid as value, CONCAT(nid, ' (',fid,')') as plg_sobipro_desc_field FROM #__sobipro_field WHERE fieldType='textarea' ORDER BY position ASC" default="field_short_description" />
+
+				<field name="plg_sobipro_image"	type="media" label="PLG_DJMEDIATOOLS_SOBIPRO_DEFAULT_IMAGE" description="PLG_DJMEDIATOOLS_SOBIPRO_DEFAULT_IMAGE_DESC" />
+			</fieldset>
+		</fields>
+	</config>
+
+</extension>

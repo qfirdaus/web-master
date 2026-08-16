@@ -1,0 +1,2 @@
+<?php
+echo "BTMK V1 TEST OK";

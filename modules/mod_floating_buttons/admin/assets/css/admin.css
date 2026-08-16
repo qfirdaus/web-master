@@ -1,0 +1,60 @@
+/* custom field : slider */
+@import url("https://fonts.googleapis.com/icon?family=Material+Icons");
+.form-check-label {
+	cursor: pointer;
+}
+.main_item_icon .form-check,.child_item_icon .form-check-label {
+	margin-right: 3px;
+	font-family: 'Material Icons';
+    font-size: 40px;
+	padding: 0!important;
+	cursor: pointer;
+}
+
+.form-check input[type="radio"] {
+	visibility:hidden;
+  }
+  .form-check {
+	float: left;
+	cursor: pointer;
+  }
+  .form-check input[type="radio"]:checked + label {
+	background-color: #007bff; 
+	color: #fff!important; 
+  }
+  
+
+
+
+/*.child_item_icon .form-check-label {
+	font-size: 25px;
+	line-height: 25px;
+}
+.main_item_icon .form-check img , .child_item_icon .form-check-label img{
+	width: 200px;
+}
+
+.main_item_icon .form-check:hover, .child_item_icon .form-check-label:hover {
+	opacity: 1;
+}
+
+.main_item_icon>input:checked+label , 
+.child_item_icon>input:checked+label{
+	border: 2px solid red;
+	border-radius: 4px;
+	opacity: 1;
+	font-weight: 700;
+	position: relative;
+}
+
+.main_item_icon>input:checked+.label:before,.child_item_icon>input:checked+.label:before {
+	display: block;
+	position: absolute;
+	border-radius: 50%;
+	content: '';
+	background: red;
+}
+
+.card-body .main_item_icon input, .card-body .child_item_icon input {
+}
+*/

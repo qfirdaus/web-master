@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="utf-8"?>
+<extension version="2.5.5" type="plugin" group="djmediatools" method="upgrade">
+	<name>plg_djmediatools_k2</name>
+	<creationDate>September 2021</creationDate>
+    <author>DJ-Extensions.com</author>
+	<copyright>Copyright (C) 2017 DJ-Extensions.com, All rights reserved.</copyright>
+	<license>http://www.gnu.org/licenses GNU/GPL</license>
+	<authorEmail>contact@dj-extensions.com</authorEmail>
+	<authorUrl>http://dj-extensions.com</authorUrl>
+	<version>2.17.6</version>
+	<description>PLG_DJMEDIATOOLS_K2_DESCRIPTION</description>
+	<files>
+		<filename plugin="k2">k2.php</filename>
+		<filename>index.html</filename>
+		<filename>icon.png</filename>
+		<folder>language</folder>
+	</files>
+
+	<config>
+		<fields name="params">
+
+			<fieldset name="source_settings" addfieldpath="/administrator/components/com_k2/elements/">
+
+				<fields name="source_params">
+
+					<field name="source" type="list" default="filter" label="K2_SOURCE" description="">
+	                    <option value="filter">K2_RETRIEVE_ITEMS_FROM_CATEGORIES</option>
+	                    <option value="specific">K2_SELECT_SPECIFIC_ITEMS</option>
+	                </field>
+	                <field name="" type="header" default="K2_RETRIEVE_ITEMS_FROM_CATEGORIES" label="" description=""/>
+	                <field name="catfilter" type="radio" default="0" label="K2_CATEGORY_FILTER" description="" class="btn-group btn-group-yesno-reverse">
+	                    <option value="0">K2_ALL</option>
+	                    <option value="1">K2_SELECT</option>
+	                </field>
+	                <field name="category_id" type="categoriesmultiple" default="" label="K2_SELECT_ONE_OR_MORE_CATEGORIES" description="K2_SELECT_ONE_ORE_MORE_CATEGORIES_FOR_WHICH_YOU_WANT_TO_FILTER_AN_ITEMS_LIST_SELECT_NONE_TO_FETCH_ITEMS_FROM_ALL_CATEGORIES"/>
+	                <field name="getChildren" type="radio" default="0" label="K2_FETCH_ITEMS_FROM_CHILDREN_CATEGORIES" description="" class="btn-group btn-group-yesno">
+	                    <option value="0">K2_NO</option>
+	                    <option value="1">K2_YES</option>
+	                </field>
+	                <field name="tags" type="k2tags" label="K2_TAGS"/>
+	                <field name="users" type="k2users" label="K2_USERS"/>
+	                <field name="itemsOrdering" type="list" default="" label="K2_ITEM_ORDERING" description="">
+	                    <option value="">K2_DEFAULT</option>
+	                    <option value="date">K2_OLDEST_FIRST</option>
+	                    <option value="rdate">K2_MOST_RECENT_FIRST</option>
+	                    <option value="publishUp">K2_RECENTLY_PUBLISHED</option>
+	                    <option value="alpha">K2_TITLE_ALPHABETICAL</option>
+	                    <option value="ralpha">K2_TITLE_REVERSEALPHABETICAL</option>
+	                    <option value="order">K2_ORDERING</option>
+	                    <option value="rorder">K2_ORDERING_REVERSE</option>
+	                    <option value="hits">K2_MOST_POPULAR</option>
+	                    <option value="best">K2_HIGHEST_RATED</option>
+	                    <option value="comments">K2_MOST_COMMENTED</option>
+	                    <option value="modified">K2_LATEST_MODIFIED</option>
+	                    <option value="rand">K2_RANDOM_ORDERING</option>
+	                </field>
+	                <field name="FeaturedItems" type="list" default="1" label="K2_FEATURED_ITEMS" description="">
+	                    <option value="0">K2_HIDE</option>
+	                    <option value="1">K2_SHOW</option>
+	                    <option value="2">K2_SHOW_ONLY_FEATURED_ITEMS</option>
+	                </field>
+	                <field name="popularityRange" type="list" default="" label="K2_TIME_RANGE_IF_ORDERING_IS_SET_TO_MOST_POPULAR_OR_MOST_COMMENTED" description="">
+	                    <option value="">K2_ALL_TIME</option>
+	                    <option value="1">K2_1_DAY</option>
+	                    <option value="3">K2_3_DAYS</option>
+	                    <option value="7">K2_1_WEEK</option>
+	                    <option value="15">K2_2_WEEKS</option>
+	                    <option value="30">K2_1_MONTH</option>
+	                    <option value="90">K2_3_MONTHS</option>
+	                    <option value="180">K2_6_MONTHS</option>
+	                </field>
+	                <field name="videosOnly" type="radio" default="0" label="K2_FETCH_ONLY_ITEMS_WITH_VIDEOS" description="" class="btn-group btn-group-yesno">
+	                    <option value="0">K2_NO</option>
+	                    <option value="1">K2_YES</option>
+	                </field>
+	                <field name="" type="header" default="K2_SELECT_SPECIFIC_ITEMS" label="" description=""/>
+	                <field name="items" type="k2modalselector" scope="items" default="" label="K2_ITEM_SELECTOR" description=""/>
+
+	                <field name="default_image"	type="media" label="PLG_DJMEDIATOOLS_K2_DEFAULT_IMAGE" description="PLG_DJMEDIATOOLS_K2_DEFAULT_IMAGE_DESC" />
+				</fields>
+
+			</fieldset>
+
+		</fields>
+	</config>
+
+</extension>

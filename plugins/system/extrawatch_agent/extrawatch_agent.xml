@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<extension version="4.2" type="plugin" group="system" method="upgrade">
+
+    <name>ExtraWatch Agent Plugin</name>
+    <creationDate>2020</creationDate>
+    <author>ExtraWatch Agent by CodeGravity.com - http://www.extrawatch.com</author>
+    <copyright>Copyright 2006-2024 by CodeGravity.com</copyright>
+    <authorEmail>into --at-- extrawatch.com</authorEmail>
+    <authorUrl>http://www.extrawatch.com</authorUrl>
+    <version>5.0.1</version>
+    <license>http://www.gnu.org/licenses/gpl-3.0.txt GNU/GPLv3</license>
+    <description>
+        ExtraWatch allows you to watch
+        your website visitors and bots in real-time. Especially
+        their IP addresses, countries they come from, geographical location on a map, which
+        pages they are viewing, their browser and operating system, it creates daily and
+        all-time stats from these information plus unique, pageload and total hits statistics.
+        Furthermore, you can block harmful IP addresses, see blocked attempts stats, evaluate
+        the trend charts, and create goals based on many parameters. In the frontend, it can
+        show the top countries information and visit counts for certain periods of time.
+    </description>
+    <files>
+        <filename plugin="extrawatch_agent">extrawatch_agent.php</filename>
+    </files>
+
+    <scriptfile>install.extrawatch.php</scriptfile>
+
+</extension>

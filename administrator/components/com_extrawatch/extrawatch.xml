@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<extension type="component" version="4.2" method="upgrade">
+
+    <name>com_extrawatch</name>
+    <creationDate>2022</creationDate>
+    <author>ExtraWatch by CodeGravity.com - http://www.extrawatch.com</author>
+    <copyright>Copyright 2006-2024 by CodeGravity.com</copyright>
+    <authorEmail>support@extrawatch.com</authorEmail>
+    <authorUrl>http://www.extrawatch.com</authorUrl>
+    <version>5.0.1</version>
+    <license>http://www.gnu.org/licenses/gpl-3.0.txt GNU/GPLv3</license>
+    <description>
+        ExtraWatch is an AJAX component and module for Joomla CMS that allows you to watch
+        your website visitors and bots in real-time from the administration menu. Specially
+        their IP addresses, countries they come from, geographical location on a map, which
+        pages they are viewing, their browser and operating system, it creates daily and
+        all-time stats from these information plus unique, pageload and total hits statistics.
+        Furthermore, you can block harmful IP addresses, see blocked attempts stats, evaluate
+        the trend charts, and create goals based on many parameters. In the frontend, it can
+        show the top countries information and visit counts for certain periods of time.
+    </description>
+
+    <install>
+        <sql>
+
+            <file driver="mysql">sql/install.mysql.utf8.sql</file>
+            <file driver="mysql" charset="utf8">sql/install.mysql.utf8.sql</file>
+            <file driver="mysqli">sql/install.mysql.utf8.sql</file>
+            <file driver="mysqli" charset="utf8">sql/install.mysql.utf8.sql</file>
+
+        </sql>
+    </install>
+
+    <files folder="site">
+        <filename>extrawatch.php</filename>
+        <filename>index.html</filename>
+        <filename>INSTALL.txt</filename>
+        <filename>LICENSE.txt</filename>
+        <filename>README.txt</filename>
+        <filename>TERMS_AND_CONDITIONS.txt</filename>
+    </files>
+
+
+    <installfile>install.extrawatch.php</installfile>
+    <uninstallfile>uninstall.extrawatch.php</uninstallfile>
+
+    <administration>
+        <menu img="../components/com_extrawatch/ew-plg-common/assets/img/extrawatch-logo-16x16.png">COM_EXTRAWATCH</menu>
+        <submenu>
+            <menu link="option=com_extrawatch&amp;task=default" alt="Extrawatch" task="default">COM_EXTRAWATCH_MAIN</menu>
+            <menu link="option=com_extrawatch&amp;page=extrawatch-settings" alt="Settings">COM_EXTRAWATCH_SETTINGS</menu>
+        </submenu>
+
+        <files folder="admin">
+            <folder>sql</folder>
+            <folder>css</folder>
+            <folder>language</folder>
+            <folder>ew-plg-common</folder>
+            <filename>extrawatch.xml</filename>
+            <filename>extrawatch.php</filename>
+            <filename>script.extrawatch.php</filename>
+            <filename>install.extrawatch.php</filename>
+            <filename>uninstall.extrawatch.php</filename>
+            <filename>admin.extrawatch.php</filename>
+            <filename>index.html</filename>
+            <filename>config.xml</filename>
+            <filename>access.xml</filename>
+        </files>
+
+        <languages folder="admin">
+            <language tag="en-GB">language/en-GB.com_extrawatch.sys.ini</language>
+        </languages>
+
+    </administration>
+
+    <scriptfile>script.extrawatch.php</scriptfile>
+
+    <updateservers>
+        <server type="extension" priority="1" name="ExtraWatch update"><![CDATA[http://www.extrawatch.com/update/extrawatch/extrawatch-update.xml]]></server>
+    </updateservers>
+
+
+</extension>

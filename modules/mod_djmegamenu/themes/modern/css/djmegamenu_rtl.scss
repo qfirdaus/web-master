@@ -1,0 +1,157 @@
+.dj-megamenu-modern {
+
+	li {
+		a.dj-up_a {
+			> span {
+				&.dj-drop {
+					padding: 0 0 0 20px;
+				}
+				span.name {
+					+ span {
+						margin-left: 0;
+						margin-right: 10px;
+					}
+				}
+			}
+
+			.dj-icon {
+				+ span {
+					margin-left: 0;
+					margin-right: 15px;
+				}
+			}
+		}
+
+		div.dj-subwrap {
+			left: auto;
+			right: -9999px;
+		}
+
+		&:hover,
+		&.hover {
+
+			> div.dj-subwrap {
+				left: auto;
+				right: 0;
+				li {
+					&:hover,
+					&.hover {
+						> div.dj-subwrap {
+							left: auto;
+							right: 100%;
+						}
+					}
+				}
+			}
+		}
+
+		ul.dj-submenu {
+			> li {
+				> a {
+					.dj-icon {
+						+ span {
+							margin-left: 0;
+							margin-right: 15px;
+						}
+					}
+					span.name {
+						+ span {
+							margin-left: 0;
+							margin-right: 10px;
+						}
+					}
+				}
+			}
+		}
+
+		ul.dj-subtree {
+			margin: 5px 25px 5px 0 !important;
+
+			> li {
+				> a {
+					span.name {
+						+ span {
+							margin-left: 0;
+							margin-right: 10px;
+						}
+					}
+				}
+			}
+		}
+	}
+
+	//arrows
+	.arrow {
+		right      : auto;
+		left       : 16px;
+	}
+	//css arrows
+	&.dj-fa-no {
+		.dj-submenu li.parent:not(.subtree) > a .arrow {
+			&:before {
+				transform: rotate(135deg);
+				-webkit-transform: rotate(135deg);
+			}
+		}
+	}
+	//font awesome arrows
+  &.dj-fa-0,
+	&.dj-fa-1,
+	&.dj-fa-5 {
+		.dj-submenu li.parent:not(.subtree) > a .arrow {
+			&:before {
+				content: "\f104";
+			}
+		}
+	}
+
+	//submenu
+	.dj-submenu li.parent {
+		> a .arrow {
+			right: auto;
+			left: 16px;
+		}
+		&:not(.subtree):hover,
+		&:not(.subtree):focus {
+			> a .arrow {
+				right: auto;
+				left: 14px;
+			}
+		}
+	}
+
+	.dj-stickylogo.dj-align-left {
+		left: auto;
+		right: 20px;
+	}
+
+	.dj-stickylogo.dj-align-right {
+		right: auto;
+		left: 20px;
+	}
+}
+
+.dj-megamenu-modern.dj-megamenu-sticky {
+	left: auto;
+	right: 0;
+}
+
+.dj-megamenu-modern.verticalMenu {
+	li:hover,
+	li.hover {
+		div.dj-subwrap {
+			right: 100% !important;
+			left: auto !important;
+		}
+
+		div.dj-subwrap.open-right {
+			right: 100% !important;
+			left: auto !important;
+		}
+
+		div.dj-subwrap.open-left {
+			left: 100% !important;
+			right: auto !important;
+		}
+	}
+}

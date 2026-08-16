@@ -1,0 +1,485 @@
+/**
+ * @package Helix Framework
+ * @author JoomShaper http://www.joomshaper.com
+ * @copyright Copyright (c) 2010 - 2025 JoomShaper
+ * @license http://www.gnu.org/licenses/gpl-2.0.html GNU/GPLv2 or later
+*/
+
+@import 'variables';
+@import 'mixins';
+
+
+/* RTL Direction
+ *=======================================*/
+
+body {
+    &.rtl {
+        .body-innerwrapper{
+            display: block;
+        }
+        #sp-top-bar .sp-module {
+            margin: 0 20px 0 0;
+            &.sp-educon-login {
+                float: left;
+            }
+        }
+
+        //top address
+        .sp-contact-info {
+            float: right;
+        }
+
+        // lang switcher
+        .sp-module-content .mod-languages ul.lang-inline li {
+            margin: 0 0 0 5px;
+        }
+
+
+        //Offcanvas
+        #offcanvas-toggler {
+            float: left;
+        }
+        #offcanvas-toggler >i {
+            padding: 0 10px 0 0;
+
+        }
+        .close-offcanvas {
+            right: auto;
+            left: 10px;
+        }
+        .offcanvas-menu {
+            -webkit-transition: all .5s;
+            transition: all .5s;
+        }
+
+        .body-innerwrapper:after {
+            left: 0;
+        }
+
+        .offcanvas-menu {
+            left: -280px;
+        }
+
+        &.offcanvas {
+            .offcanvas-menu {
+                left: 0;
+            }
+        }
+
+        //mega menu
+        .sp-megamenu-parent {
+            float: left;
+        }
+
+        .sp-megamenu-parent >li.sp-has-child>a:after {
+            float: left;
+            margin-right: 2px;
+        }
+
+        .sp-megamenu-parent .sp-dropdown .sp-dropdown-items .sp-has-child>a:after {
+            float: left;
+            content: " \f104";
+        }
+        .sp-dropdown-mega.sp-menu-full{
+            .sp-dropdown-inner{
+                > .row{
+                    margin: 0;
+                }
+            }
+        }
+
+        //module
+        .sp-module ul >li >a:before {
+            margin-right: 0;
+            margin-left: 8px;
+            content: "\f104";
+            float: right;
+        }
+
+        //blog
+        .entry-header.has-post-format {
+            margin-left: 0;
+            margin-right: 68px;
+        }
+        .post-format {
+            left: auto;
+            right: -68px;
+        }
+        .article-info >dt >i, .article-info >dd >i {
+            margin-right: 0;
+            margin-left: 3px;
+        }
+        .entry-link:before {
+            top:auto;
+            left: auto;
+            right: -60px;
+            transform: rotate(-90deg);
+        }
+        .entry-quote:before {
+            left: auto;
+            transform: rotate(-15deg);
+            top:auto;
+            right: -40px;
+        }
+        .categories-list .page-header a.pull-right {
+            float: left !important;
+        }
+        .newsfeed-category .category li .pull-left{
+            float: right !important;
+        }
+
+        //search
+        .search .btn-toolbar .pull-left{
+            float: right !important;
+        }
+
+
+        /******************************************************************/
+        /*** ********************  Shaper Educon  ******************** ***/
+        /****************************************************************/
+
+
+        //Global
+        .text-right {
+            text-align: left;
+        }
+        .sppb-text-right {
+            text-align: left;
+        }
+        .pull-right {
+            float: left !important;
+        }
+        .pull-left {
+            float: right !important;
+        }
+        .fa-angle-right:before {
+            content: "\f104";
+        }
+        .sppb-text-left {
+            text-align: right;
+        }
+
+        //Search
+        .top-search-input-wrap {
+            right: inherit;
+            left: 0;
+        }
+        .top-search-input-wrap .search-wrap .educon-top-search input {
+            padding: 0 40px 0 0;
+        }
+
+        //Top Bar
+        #sp-top-bar .sp-educon-login .sp-educon-login a {
+            float: right;
+        }
+        #sp-top-bar .sp-educon-login .sp-educon-login a.registration {
+            margin-left: 0;
+            margin-right: 15px;
+        }
+
+        //Menu
+        .sp-megamenu-parent .sp-dropdown.sp-dropdown-main.sp-menu-right {
+            left: inherit;
+            right: 0;
+        }
+        .sp-megamenu-parent .sp-dropdown li.sp-menu-item >a:hover {
+            padding-left: 0;
+            padding-right: 45px;
+        }
+        .sp-megamenu-parent .sp-dropdown li.sp-menu-item >a:before {
+            left: inherit;
+            right: 35px;
+            content: "\f0d9";
+            padding-right: 0;
+            padding-left: 10px;
+        }
+        .menu-slide-down .sp-has-child >.sp-dropdown.sp-dropdown-mega {
+            left: 0;
+            right: auto;
+        }
+        .sp-megamenu-parent .sp-dropdown li.sp-menu-item.active>a {
+            padding-left: 0;
+            padding-right: 45px;
+        }
+
+        //Offcanvas
+        .offcanvas-menu .offcanvas-inner .sp-module ul > li .offcanvas-menu-toggler {
+            right: inherit;
+            left: 0;
+        }
+
+        // Take a Tour (Home Page)
+        .take-a-tour {
+            .sppb-text-left {
+                text-align: left;
+            }
+            .sppb-text-right {
+                text-align: left;
+            }
+        }
+
+        //Featured Course (Home-Page)
+        .home-featured-course .sppb-addon-feature .sppb-img-container img {
+            transform: translate3d(40px,0px,0px);
+        }
+        .home-featured-course .sppb-addon-feature:hover .sppb-img-container img {
+            transform: translate3d(0px,0px,0px) !important;
+        }
+        .home-featured-course .sppb-addon-feature .sppb-feature-box-title span:before {
+            margin-right: 0;
+            margin-left: 11px;
+        }
+
+        //Achievments
+        .sppb-addon-animated-number .sppb-addon-content .sppb-icon-inner {
+            right: inherit;
+            left: 5px;
+        }
+
+        //Upcoming Events
+        .home-upcoming-events .upcoming-events-info ul li:before {
+            margin-right: 0;
+            margin-left: 5px;
+        }
+        .home-upcoming-events .upcoming-events-info ul li {
+            margin-right: 0;
+            margin-left: 20px;
+        }
+        .home-upcoming-events .sppb-addon-text-block {
+            padding: 55px 50px 59px 0;
+        }
+
+        //Bottom
+        #sp-bottom .sp-module .sp-module-content .custom ul li p span {
+            padding-right: 0;
+            padding-left: 8px;
+        }
+        .acymailing_fulldiv .acysubbuttons {
+            text-align: right;
+        }
+
+        //Lms Variation
+        .mod-splms-course-search .splms-course-search-icons {
+            right: inherit;
+            left: 25px;
+        }
+
+        //Course Details
+        .course-details-content .sppb-addon-text-block .sppb-addon-title span:before {
+            margin-right: 0;
+            margin-left: 11px;
+        }
+        .course-details-content .sppb-addon-text-block .sppb-addon-content ul {
+            padding-left: 0;
+            padding-right: 16px;
+        }
+        .course-details-content .sppb-addon-button-group {
+            padding-left: 0;
+            padding-right: 75px;
+        }
+
+        //Abot Page
+        .educon-topics-wrapper .sppb-addon-accordion .sppb-panel-default .sppb-panel-heading {
+            padding-left: 0;
+            padding-right: 45px;
+        }
+        .educon-topics-wrapper .sppb-addon-accordion .sppb-panel-default .sppb-panel-heading:before {
+            left: inherit;
+            right: 0;
+        }
+        .educon-topics-wrapper .common-topics li a {
+            padding-left: 0;
+            padding-right: 16px;
+        }
+        .educon-topics-wrapper .common-topics li a:before {
+            left: inherit;
+            right: 2px;
+        }
+
+        //Event Details
+        .event-details-section .sppb-addon-single-image-container .sppb-addon-title {
+            left: inherit;
+            right: 80px;
+        }
+        .event-details-section .sppb-addon-text-block .upcoming-events-info ul li {
+            margin-right: 0;
+            margin-left: 20px;
+        }
+        .event-details-section .sppb-addon-text-block .upcoming-events-info ul li:before {
+            margin-right: 0;
+            margin-left: 5px;
+        }
+        .speaker-social-icon .sppb-social-icons span a {
+            margin-right: 0;
+            margin-left: 24px;
+        }
+        .event-details-section .event-speaker-details .sppb-addon-feature .sppb-media > .pull-left {
+            margin-right: 0;
+            margin-left: 28px;
+        }
+        .event-details-section .sppb-addon-social-share .sppb-social-share .sppb-addon-title {
+            float: right;
+            padding-right: 0;
+            padding-left: 32px;
+        }
+        .event-details-section .sppb-addon-button-group {
+            text-align: left !important;
+        }
+
+        //Notice Board Listing
+        .article-info,
+        .educon-notice-board article.item .educon-notice h2 {
+            float: right;
+        }
+        .educon-notice-board article.item .educon-notice .entry-header {
+            padding-left: 0;
+            padding-right: 20px;
+        }
+        .article-info {
+            margin: 0 -6px 0 15px;
+        }
+        .entry-header h2 {
+            padding-right: 0;
+            padding-left: 30px
+        }
+
+        //Notice Boar Details
+        article.item .content-wrap {
+            padding-left: 0;
+            padding-right: 33px;
+        }
+
+        article.item .article-footer-wrap {
+            float: left;
+        }
+
+        //Contact Page
+        .educon-contact-info .sppb-row .sppb-addon-content ul >li span.fa {
+            margin-right: 0;
+            margin-left: 9px;
+        }
+        .educon-contact-info .sppb-social-icons >span {
+            margin-right: 0;
+            margin-left: 22px;
+        }
+        .sppb-ajaxt-contact-form .sppb-form-group {
+            float: right;
+        }
+        .sppb-ajaxt-contact-form button[type="submit"] {
+            float: right;
+        }
+
+        //Pagination
+        .fa-angle-left:before {
+            content: "\f105";
+        }
+        .pagination >li:nth-child(2) {
+            margin-left: 22px;
+            margin-right: 0;
+        }
+        .pagination >li:nth-last-child(2) {
+            margin-left: 0px;
+            margin-right: 22px;
+        }
+
+        //Blog Details
+        article.item .tags {
+            float: right;
+        }
+
+        //Login Page
+        .reg-login-form-wrap .registration .form-group p,
+        .reg-login-form-wrap .login .form-group p {
+            text-align: right;
+        }
+        .reg-login-form-wrap .form-validate input {
+            padding: 0 20px 0 0;
+        }
+        .reg-login-form-wrap .registration .form-group,
+        .reg-login-form-wrap .login .form-group {
+            text-align: right;
+        }
+        .reg-login-form-wrap .form-links {
+            text-align: right;
+        }
+
+        //Registration Page
+        .reg-login-form-wrap .registration >p {
+            text-align: right;
+        }
+
+        /****** **************** LMS **************** ******/
+
+        // Course Listing
+        .view-splms-courses .splms-course .course-category:before, .view-coursescategory .splms-course .course-category:before {
+            margin-right: 0;
+            margin-left: 11px;
+        }
+        .splms.view-splms-course.course-details .educon-course-deatils-wraper .splms-course-description ul {
+            padding-left: 0;
+            padding-right: 16px;
+        }
+        .splms .splms-common-overlay-wrapper img {
+            transform: translate3d(40px,0,0);
+        }
+
+        //Course Details
+        .splms.view-splms-course.course-details .educon-course-deatils-wraper .course-category:before {
+            margin-right: 0;
+            margin-left: 11px;
+        }
+
+        //Responsive
+        @media screen and (max-width: 767px){
+            #sp-top-bar .sp-contact-info {
+                text-align: right;
+            }
+            &.offcanvas {
+                .offcanvas-menu {
+                    background: #3B3B3B;
+                }
+                .body-wrapper{
+                    -webkit-transform: translateX(0);
+                    transform: translateX(0);
+                }
+            }
+            .home-callto-action{
+                .sppb-col-md-10 .sppb-col-sm-9,
+                .sppb-col-md-10 .sppb-col-sm-3.sppb-text-right {
+                    padding-right: 30px;
+                }
+                .sppb-addon.sppb-addon-cta .sppb-btn.sppb-btn-info {
+                    float: right;
+                }
+            }
+            #sp-bottom ul.social-icons {
+                text-align: right;
+            }
+            .event-details-section .sppb-addon-button-group {
+                text-align: right !important;
+            }
+            .event-details-section .sppb-addon-social-share{
+                padding: 0 70px;
+                .sppb-social-share{
+                    float: right;
+                }
+            }
+        }
+        @media screen and (max-width: 600px){
+            .educon-notice-board article.item .educon-notice .readmore-wrap {
+                float: right;
+                margin-top: 20px;
+            }
+        }
+        @media screen and (max-width: 480px){
+            .course-details-content .sppb-addon-button-group {
+                padding-left: 15px;
+                padding-right: 15px;
+            }
+            article.item .content-wrap {
+                padding-left: 0;
+                padding-right: 15px;
+            }
+        }
+    }
+}

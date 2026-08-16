@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="utf-8"?>
+<extension type="module" version="2.5.5" client="site" method="upgrade">
+	<name>mod_djmediatools_albums</name>
+	<creationDate>September 2021</creationDate>
+    <author>DJ-Extensions.com</author>
+	<copyright>Copyright (C) DJ-Extensions.com, All rights reserved.</copyright>
+	<license>http://www.gnu.org/licenses GNU/GPL</license>
+	<authorEmail>contact@dj-extensions.com</authorEmail>
+	<authorUrl>http://dj-extensions.com</authorUrl>
+    <version>2.17.6</version>
+	<description>MOD_DJMEDIATOOLS_ALBUMS_DESC</description>
+	<files>
+		<filename module="mod_djmediatools_albums">mod_djmediatools_albums.php</filename>
+		<filename>index.html</filename>
+		<filename>helper.php</filename>
+		<folder>assets</folder>
+		<folder>language</folder>
+		<folder>tmpl</folder>
+	</files>
+
+	<config>
+		<fields name="params" addfieldpath="/administrator/components/com_djmediatools/models/fields">
+
+			<fieldset name="basic" label="COM_DJMEDIATOOLS_CATEGORY_OPTIONS">
+
+				<field name="catid"
+					type="modal_djalbum"
+					label="MOD_DJMEDIATOOLS_ALBUMS_CATEGORY"
+					description="MOD_DJMEDIATOOLS_ALBUMS_CATEGORY_DESC"
+					class="inputbox"
+					default=""
+				/>
+
+			</fieldset>
+
+			<fieldset name="advanced">
+
+				<field
+					name="layout"
+					type="modulelayout"
+					label="JFIELD_ALT_LAYOUT_LABEL"
+					description="JFIELD_ALT_MODULE_LAYOUT_DESC"
+					default="_:default" />
+
+				<field
+					name="moduleclass_sfx"
+					type="text"
+					label="COM_MODULES_FIELD_MODULECLASS_SFX_LABEL"
+					description="COM_MODULES_FIELD_MODULECLASS_SFX_DESC" />
+				<field
+					name="cache"
+					type="list"
+					default="1"
+					label="COM_MODULES_FIELD_CACHING_LABEL"
+					description="COM_MODULES_FIELD_CACHING_DESC">
+					<option
+						value="1">JGLOBAL_USE_GLOBAL</option>
+					<option
+						value="0">COM_MODULES_FIELD_VALUE_NOCACHING</option>
+				</field>
+				<field
+					name="cache_time"
+					type="text"
+					default="900"
+					label="COM_MODULES_FIELD_CACHE_TIME_LABEL"
+					description="COM_MODULES_FIELD_CACHE_TIME_DESC" />
+
+			</fieldset>
+		</fields>
+	</config>
+
+</extension>

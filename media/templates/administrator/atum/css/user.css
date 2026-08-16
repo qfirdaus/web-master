@@ -1,0 +1,238 @@
+/*
+ * Administrator branding overrides.
+ * Atum loads user.css as its supported custom stylesheet, so these rules are
+ * kept separate from Joomla's generated template files during updates.
+ */
+
+.header .logo {
+    background: var(--header-bg);
+    border: 0;
+    box-shadow: none;
+    justify-content: center;
+}
+
+.header .logo::before {
+    display: none;
+}
+
+.header .logo img:not(.logo-collapsed) {
+    position: relative;
+    z-index: 1;
+    width: 210px;
+    height: 42px;
+    padding: 3px 7px;
+    background: transparent;
+    border-radius: 0;
+    margin: 0;
+    object-fit: contain;
+    object-position: center;
+}
+
+.header .logo.small img.logo-collapsed {
+    position: relative;
+    z-index: 1;
+    width: 38px;
+    height: 30px;
+    padding: 2px;
+    background: transparent;
+    border-radius: 0;
+    margin: 0;
+    object-fit: contain;
+}
+
+.header .logo.small::before {
+    display: none;
+}
+
+.view-login .login .main-brand.logo img,
+.task-logout .login .main-brand.logo img {
+    width: 247px;
+    max-width: 100%;
+    height: auto;
+    max-height: 66px;
+    object-fit: contain;
+}
+
+/* Login sidebar: subtle contrast against Atum's solid navy top bar. */
+.view-login .sidebar-wrapper,
+.task-logout .sidebar-wrapper {
+    background: linear-gradient(165deg, #294d70 0%, #203b59 58%, #182f49 100%);
+    border-right: 1px solid rgba(255, 255, 255, 0.12);
+    box-shadow: 8px 0 28px rgba(13, 31, 51, 0.12);
+}
+
+.view-login .sidebar-wrapper #main-brand,
+.task-logout .sidebar-wrapper #main-brand {
+    position: relative;
+    padding-bottom: 22px;
+}
+
+.view-login .sidebar-wrapper #main-brand::after,
+.task-logout .sidebar-wrapper #main-brand::after {
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    width: 48px;
+    height: 3px;
+    content: "";
+    background: #e8bd55;
+    border-radius: 999px;
+    transform: translateX(-50%);
+}
+
+.view-login .sidebar-wrapper .card,
+.task-logout .sidebar-wrapper .card {
+    background: rgba(11, 31, 51, 0.35);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    box-shadow: 0 12px 28px rgba(10, 25, 42, 0.18);
+}
+
+.view-login .sidebar-wrapper .card-header,
+.task-logout .sidebar-wrapper .card-header {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Authenticated administrator navigation. */
+.sidebar-wrapper.sidebar-menu {
+    --sidebar-item-color: #edf4fa;
+    --sidebar-item-color-hvr: #ffffff;
+    --sidebar-item-bg-hvr: rgba(255, 255, 255, 0.09);
+    --sidebar-toggle-bg: #315d86;
+    --sidebar-toggle-link: #ffffff;
+    --main-nav-ul-bg: rgba(10, 29, 47, 0.3);
+    --main-nav-divider-bg: rgba(255, 255, 255, 0.09);
+    --main-nav-item-title: #aebfd0;
+    --main-nav-item-title-hvr-bg: #315d86;
+    --main-nav-mm-active-bg: #3c6893;
+    --main-nav-mm-active-quicktask-bg: #345d84;
+    --main-nav-badge: #d3a942;
+    background: linear-gradient(175deg, #294d70 0%, #203b59 52%, #182f49 100%);
+    border-right: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 7px 0 24px rgba(13, 31, 51, 0.1);
+    align-self: stretch;
+    display: flex;
+    flex-direction: column;
+}
+
+.sidebar-wrapper.sidebar-menu .sidebar-toggle {
+    margin-bottom: 8px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 5px 16px rgba(10, 28, 45, 0.12);
+}
+
+.sidebar-wrapper.sidebar-menu .main-nav > .item > a {
+    min-height: 44px;
+    margin: 3px 8px;
+    border-radius: 7px;
+    transition: background-color 0.18s ease, color 0.18s ease,
+        transform 0.18s ease;
+}
+
+.sidebar-wrapper.sidebar-menu .main-nav > .item > a:hover {
+    transform: translateX(2px);
+}
+
+.sidebar-wrapper.sidebar-menu .main-nav > .item > a.mm-active {
+    color: #ffffff;
+    background: linear-gradient(90deg, #3d6f9d 0%, #345f89 100%);
+    box-shadow: 0 5px 14px rgba(8, 27, 45, 0.2);
+}
+
+.sidebar-wrapper.sidebar-menu .main-nav > .item > a.mm-active::before {
+    position: absolute;
+    top: 9px;
+    bottom: 9px;
+    left: 0;
+    width: 3px;
+    content: "";
+    background: #e8bd55;
+    border-radius: 0 4px 4px 0;
+}
+
+.sidebar-wrapper.sidebar-menu .main-nav .mm-collapse {
+    padding: 5px 0 7px;
+    background: rgba(9, 27, 44, 0.28);
+}
+
+.sidebar-wrapper.sidebar-menu .main-nav .item-level-2 > a,
+.sidebar-wrapper.sidebar-menu .main-nav .item-level-3 > a {
+    min-height: 38px;
+    margin: 2px 8px;
+    border-radius: 6px;
+}
+
+.sidebar-wrapper.sidebar-menu .main-nav .divider {
+    margin: 5px 14px;
+}
+
+.closed .sidebar-wrapper.sidebar-menu .main-nav > .item > a {
+    margin-right: 4px;
+    margin-left: 4px;
+}
+
+.closed .sidebar-wrapper.sidebar-menu .main-nav > .item > a:hover {
+    transform: none;
+}
+
+/* Support card shown at the bottom of the authenticated sidebar. */
+.sidebar-wrapper.sidebar-menu .sidebar-sticky {
+    position: relative;
+    top: auto;
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+    min-height: calc(100vh - 66px);
+}
+
+.sidebar-wrapper.sidebar-menu .sidebar-sticky > .mod-custom.custom {
+    margin-top: auto;
+}
+
+.admin-sidebar-support {
+    margin: 18px 12px 14px;
+    padding: 15px 14px;
+    color: #edf4fa;
+    text-align: center;
+    background: rgba(8, 25, 42, 0.38);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 9px;
+    box-shadow: 0 10px 24px rgba(8, 23, 39, 0.18);
+}
+
+.admin-sidebar-support h3 {
+    margin: 0 0 9px;
+    color: #ffffff;
+    font-size: 0.9rem;
+    font-weight: 600;
+}
+
+.admin-sidebar-support p {
+    margin: 0;
+    font-size: 0.78rem;
+    line-height: 1.55;
+}
+
+.admin-sidebar-support a {
+    display: inline-flex;
+    gap: 6px;
+    align-items: center;
+    margin-top: 5px;
+    color: #f3cc6b;
+    font-weight: 500;
+    text-decoration: none;
+}
+
+.admin-sidebar-support a:hover,
+.admin-sidebar-support a:focus {
+    color: #ffffff;
+    text-decoration: underline;
+}
+
+.closed .admin-sidebar-support {
+    display: none;
+}
+
+.closed .sidebar-wrapper.sidebar-menu .sidebar-sticky > .mod-custom.custom {
+    display: none;
+}

@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<extension version="2.5.5" type="plugin" group="editors-xtd" method="upgrade">
+	<name>plg_editors-xtd_djmediatools</name>
+	<creationDate>September 2021</creationDate>
+    <author>DJ-Extensions.com</author>
+	<copyright>Copyright (C) 2017 DJ-Extensions.com, All rights reserved.</copyright>
+	<license>http://www.gnu.org/licenses GNU/GPL</license>
+	<authorEmail>contact@dj-extensions.com</authorEmail>
+	<authorUrl>http://dj-extensions.com</authorUrl>
+	<version>2.17.6</version>
+	<description>PLG_EDITORSXTD_DJMEDIATOOLS_DESCRIPTION</description>
+	<files>
+		<filename plugin="djmediatools">djmediatools.php</filename>
+		<filename>index.html</filename>
+		<folder>language</folder>
+	</files>
+</extension>

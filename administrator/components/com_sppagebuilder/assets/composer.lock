@@ -1,0 +1,75 @@
+{
+    "_readme": [
+        "This file locks the dependencies of your project to a known state",
+        "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
+        "This file is @generated automatically"
+    ],
+    "content-hash": "5c3eba6fbf759cd2fa8ea57c04223d2c",
+    "packages": [
+        {
+            "name": "nickdnk/graph-sdk",
+            "version": "8.0.1",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/nickdnk/php-graph-sdk.git",
+                "reference": "6ba3e5c66ffbe1a725d5822dc7dd4c1fb013ff00"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/nickdnk/php-graph-sdk/zipball/6ba3e5c66ffbe1a725d5822dc7dd4c1fb013ff00",
+                "reference": "6ba3e5c66ffbe1a725d5822dc7dd4c1fb013ff00",
+                "shasum": ""
+            },
+            "require": {
+                "php": "^8.1"
+            },
+            "conflict": {
+                "guzzlehttp/guzzle": "<6.0"
+            },
+            "replace": {
+                "facebook/graph-sdk": ">=5.7.0"
+            },
+            "require-dev": {
+                "guzzlehttp/guzzle": "^7.9.2",
+                "mockery/mockery": "^1.6.12",
+                "phpunit/phpunit": "^9.5"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "Facebook\\": "src/Facebook/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "proprietary"
+            ],
+            "authors": [
+                {
+                    "name": "Facebook",
+                    "homepage": "https://github.com/facebook/php-graph-sdk/contributors"
+                }
+            ],
+            "description": "Facebook SDK for PHP 8+",
+            "homepage": "https://github.com/nickdnk/php-graph-sdk",
+            "keywords": [
+                "facebook",
+                "sdk"
+            ],
+            "support": {
+                "issues": "https://github.com/nickdnk/php-graph-sdk/issues",
+                "source": "https://github.com/nickdnk/php-graph-sdk/tree/8.0.1"
+            },
+            "time": "2025-08-22T23:48:30+00:00"
+        }
+    ],
+    "packages-dev": [],
+    "aliases": [],
+    "minimum-stability": "stable",
+    "stability-flags": {},
+    "prefer-stable": false,
+    "prefer-lowest": false,
+    "platform": {},
+    "platform-dev": {},
+    "plugin-api-version": "2.9.0"
+}

@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<form validate="true" serverside_validate="true">
+	<fieldset name="basic_configuration" label="COM_SPLMS_TEACHER_TOP_TITLE" addfieldpath="/administrator/components/com_splms/fields">
+
+		<field name="splms_order_id"
+		 	type="readonly"
+		 	readonly="true"
+			class="inputbox"
+			label="COM_SPLMS_ORDER_FIELD_ID"
+			
+			rows="5"
+			cols="5"
+		 />
+
+		<field name="order_user_id"
+		 	label="COM_SPLMS_FIELD_STUDENT_NAME"
+        	type="user"
+        />
+
+        <field name="splms_course_id"
+		 	label="COM_SPLMS_ORDER_FIELD_ORDER_COURSE_ID"
+        	type="sql"
+        	translate="false"
+        	query="SELECT splms_course_id, title FROM #__splms_courses WHERE enabled = 1"
+        	key_field="splms_course_id"
+        	value_field="title"
+        />
+
+		 <field name="order_price"
+		 	type="inputbox"
+			class="inputbox"
+			label="COM_SPLMS_ORDER_FIELD_ORDER_PRICE"
+			
+			required="true"
+			rows="5"
+			cols="5"
+			filter="raw"
+		 />
+
+		<field name="order_payment_id"
+		 	type="inputbox"
+			class="inputbox"
+			label="COM_SPLMS_ORDER_FIELD_PAYMENT_ID"
+			
+			required="true"
+			rows="5"
+			cols="5"
+			filter="raw"
+		 />
+
+		 <field name="invoice_id"
+		 	type="inputbox"
+			class="inputbox"
+			label="COM_SPLMS_ORDER_FIELD_ORDER_INVOICE_ID"
+			
+			required="true"
+			rows="5"
+			cols="5"
+			filter="raw"
+		 />
+
+		 <field name="order_payment_method"
+		 	type="inputbox"
+			class="inputbox"
+			label="COM_SPLMS_ORDER_FIELD_ORDER_PAYMENT_METHOD"
+			
+			required="true"
+		 />
+
+		 <field name="order_payment_price"
+		 	type="inputbox"
+			class="inputbox"
+			label="COM_SPLMS_ORDER_FIELD_PAYMENT_PRICE"
+			
+			required="true"
+		 />
+
+		 <field name="payment_note"
+			type="textarea"
+			label="COM_SPLMS_TITLE_PAYMENT_NOTE"
+			required="true"
+			cols="30"
+			rows="7"
+			filter="raw"
+		 />
+
+		 <!-- <field name="created_on"
+		 	type="calendar"
+			label="COM_SPLMS_ORDER_FIELD_ORDER_CREATED"
+			
+		 /> -->
+
+
+		 <!-- field name="order_discount_code"
+		 	type="inputbox"
+			class="inputbox"
+			label="COM_SPLMS_ORDER_FIELD_ORDER_DISCOUNT_CODE"
+			
+			rows="5"
+			cols="5"
+			filter="raw"
+		 />
+
+		 <field name="order_discount_price"
+		 	type="inputbox"
+			class="inputbox"
+			label="COM_SPLMS_ORDER_FIELD_ORDER_DISCOUNT_PRICE"
+			
+			rows="5"
+			cols="5"
+			filter="raw"
+		 />
+
+		 <field name="order_discount_tax"
+		 	type="inputbox"
+			class="inputbox"
+			label="COM_SPLMS_ORDER_FIELD_ORDER_DISCOUNT_TAX"
+			
+			rows="5"
+			cols="5"
+			filter="raw"
+		 / -->
+
+		 <field name="enabled" type="list" label="COM_SPLMS_TITLE_STATUS" class="inputbox" filter="intval" default="0">
+			<option value="1">JPUBLISHED</option>
+			<option value="0">JUNPUBLISHED</option>
+		</field>
+
+	</fieldset>
+</form>

@@ -1,0 +1,21 @@
+
+ExtraWatch Installation instructions for Joomla 4.x
+=========================================================
+
+1. Log into the joomla administration
+
+2. From the main menu choose: Extensions -> Manage -> Install -> Upload Package File
+
+3. Click "Choose File"
+
+4. Choose the pkg_ExtraWatch-Live-Joomla-*.zip you've downloaded
+
+5. Click "Upload File & Install"
+
+6. You should see the Installation procedure and the "Installation finished".
+
+Enjoy,
+
+CodeGravity.com team
+
+www.extrawatch.com

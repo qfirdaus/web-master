@@ -1,0 +1,31 @@
+# Joomla runtime configuration (contains environment credentials)
+/configuration.php
+/configuration.php.*
+
+# Runtime-generated files
+/cache/*
+!/cache/index.html
+/administrator/cache/*
+!/administrator/cache/index.html
+/administrator/logs/*
+!/administrator/logs/index.html
+/tmp/*
+!/tmp/index.html
+/logs/*
+!/logs/index.html
+
+# Local editor and OS files
+/.idea/
+/.vscode/
+.DS_Store
+Thumbs.db
+
+# Local environment files and archives
+.env
+.env.*
+*.log
+/*.sql
+/*.sql.gz
+/*.zip
+/*.tar
+/*.tar.gz

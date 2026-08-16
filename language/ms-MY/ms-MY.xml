@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<metafile version="3.4" client="site">
+	<tag>ms-MY</tag>
+	<name>Bahasa Melayu </name>
+	<version>3.4.1.2</version>
+	<creationDate>2015-06-03</creationDate>
+	<author>Sam SK | Joomla Community Malaysia</author>
+	<authorEmail>sam@mu.my</authorEmail>
+	<authorUrl>http://joomla.org.my</authorUrl>
+	<copyright>Copyright (C) 2005 - 2015 Open Source Matters. All rights reserved.</copyright>
+	<license>GNU General Public License version 2 or later; see LICENSE.txt</license>
+	<description>Bahasa Melayu language for Joomla 3.4. Untuk memperbaiki sila layari http://joomla.org.my</description>
+	<metadata>
+		<name>Bahasa Melayu </name>
+		<tag>ms-MY</tag>
+		<rtl>0</rtl>
+		<locale>ms_MY.utf8, ms_MY.UTF-8, ms_MY, ms-MY, ms, malay, bahasa melayu, bahasa malaysia</locale>
+		<firstDay>1</firstDay>
+		<weekEnd>0,6</weekEnd>
+	</metadata>
+	<params />
+</metafile>

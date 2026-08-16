@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<extension version="2.5.5" type="plugin" group="djmediatools" method="upgrade">
+	<name>plg_djmediatools_djcatalog2</name>
+	<creationDate>September 2021</creationDate>
+    <author>DJ-Extensions.com</author>
+	<copyright>Copyright (C) 2017 DJ-Extensions.com, All rights reserved.</copyright>
+	<license>http://www.gnu.org/licenses GNU/GPL</license>
+	<authorEmail>contact@dj-extensions.com</authorEmail>
+	<authorUrl>http://dj-extensions.com</authorUrl>
+	<version>2.17.6</version>
+	<description>PLG_DJMEDIATOOLS_DJCATALOG2_DESCRIPTION</description>
+	<files>
+		<filename plugin="djcatalog2">djcatalog2.php</filename>
+		<filename>index.html</filename>
+		<filename>icon.png</filename>
+		<folder>language</folder>
+	</files>
+
+	<config>
+		<fields name="params">
+
+			<fieldset name="source_settings" addfieldpath="/administrator/components/com_djcatalog2/models/fields">
+
+				<field name="plg_catalog2_catid" type="djcategory" default="0" parent="false"
+					label="PLG_DJMEDIATOOLS_DJCATALOG2_CATEGORIESSWITCH" description="PLG_DJMEDIATOOLS_DJCATALOG2_CATEGORIESSWITCH_DESC" multiple="true" size="10"/>
+
+				<field name="plg_catalog2_item_ids" type="textarea" default="" label="PLG_DJMEDIATOOLS_DJCATALOG2_ITEM_IDS" description="PLG_DJMEDIATOOLS_DJCATALOG2_ITEM_IDS_DESC" />
+
+				<field name="plg_catalog2_featured_only" type="list" default="0" label="PLG_DJMEDIATOOLS_DJCATALOG2_FEATURED_ONLY" >
+					<option value="0">JNO</option>
+					<option value="1">JYES</option>
+				</field>
+				<field name="plg_catalog2_featured_first" type="list" default="0" label="PLG_DJMEDIATOOLS_DJCATALOG2_FEATURED_FIRST" >
+					<option value="0">JNO</option>
+					<option value="1">JYES</option>
+				</field>
+				<field name="plg_catalog2_orderby" type="list" default="0" label="PLG_DJMEDIATOOLS_DJCATALOG2_ORDERBY">
+					<option value="i.ordering">PLG_DJMEDIATOOLS_DJCATALOG2_DEFAULTORDER</option>
+					<option value="i.name">PLG_DJMEDIATOOLS_DJCATALOG2_NAME</option>
+					<option value="i.price">PLG_DJMEDIATOOLS_DJCATALOG2_PRICE</option>
+					<option value="i.created">PLG_DJMEDIATOOLS_DJCATALOG2_DATE</option>
+					<option value="i.hits">PLG_DJMEDIATOOLS_DJCATALOG2_HITS</option>
+					<option value="producer">PLG_DJMEDIATOOLS_DJCATALOG2_PRODUCER</option>
+					<option value="rand()">PLG_DJMEDIATOOLS_DJCATALOG2_RANDOM</option>
+				</field>
+				<field name="plg_catalog2_orderdir" type="list" default="0" label="PLG_DJMEDIATOOLS_DJCATALOG2_ORDERDIR">
+					<option value="asc">PLG_DJMEDIATOOLS_DJCATALOG2_ASC</option>
+					<option value="desc">PLG_DJMEDIATOOLS_DJCATALOG2_DESC</option>
+				</field>
+				<field name="plg_catalog2_display_labels" type="list" default="0" label="PLG_DJMEDIATOOLS_DJCATALOG2_DISPLAY_LABELS" >
+					<option value="0">JNO</option>
+					<option value="1">JYES</option>
+				</field>
+				<field name="plg_catalog2_display_preview" type="list" default="0" label="PLG_DJMEDIATOOLS_DJCATALOG2_DISPLAY_PREVIEW" >
+					<option value="0">JNO</option>
+					<option value="1">JYES</option>
+				</field>
+
+				<field name="plg_catalog2_image" type="media" label="PLG_DJMEDIATOOLS_DJCATALOG2_DEFAULT_IMAGE" description="PLG_DJMEDIATOOLS_DJCATALOG2_DEFAULT_IMAGE_DESC" />
+
+			</fieldset>
+
+		</fields>
+	</config>
+
+</extension>

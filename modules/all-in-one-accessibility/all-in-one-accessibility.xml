@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="utf-8"?>
+<extension type="module" version="3.9" method="upgrade" client="site">
+	<name>All in One Accessibility</name>
+	<author>Skynet Technologies USA LLC.</author>
+	<creationDate>September 2022</creationDate>
+	<copyright>Copyright (c) 2024 skynettechnologies.com</copyright>
+	<license>GNU General Public License version 2 or later</license>
+	<authorEmail>hello@skynettechnologies.com</authorEmail>
+	<authorUrl>https://www.skynettechnologies.com</authorUrl>
+	<version>1.4.0</version>
+	<updateservers>
+		<server type="plugin" priority="1" name="All in One Accessibility">https://www.skynettechnologies.com/add-ons/reports/setup/joomla/all-in-one-accessibility.xml</server>
+	</updateservers>
+	<description>
+	<![CDATA[
+		All in One Accessibility Extension
+		<br>
+		All in One Accessibility widget improves Joomla website ADA compliance and browser experience for ADA, WCAG 2.1 & 2.2, Section 508, California Unruh Act, Australian DDA, European EAA EN 301 549, UK Equality Act (EA), Israeli Standard 5568, Ontario AODA, Canada ACA, German BITV, France RGAA, Brazilian Inclusion Law (LBI 13.146/2015), Spain UNE 139803:2012, JIS X 8341 (Japan), Italian Stanca Act and Switzerland DDA Standards.
+		<br>
+		<br>
+		1. Navigate to Extensions -> Modules, Press 'New' and choose 'All in One Accessibility' module from the list.
+		   Open All in One Accessibility module settings.
+		<br>
+		2. Sign up for 10 days free trial and get widget settings:
+		3. Set other module settings to:
+			<ul>
+				<li>Status: <i>Published</i>.</li>
+				<li>Position: choose <i>Top</i> or <i>Footer</i>.</li>
+				<li>Menu assignment -> Module Assignment: <i>On all pages</i>.</li>
+			</ul>
+		<script>
+
+				 var url = 'https://ada.skynettechnologies.us/check-website'; // Replace 'your_api_endpoint' with your actual API endpoint
+
+				// Data to be sent in the request body
+				var data = {
+					domain: window.location.host
+				};
+
+				// Options for the fetch request
+				var options = {
+					method: 'POST',
+					headers: {
+						'Content-Type': 'application/json'
+					},
+					body: JSON.stringify(data)
+				};
+
+				// Make the fetch request
+				fetch(url, options)
+					.then(response => {
+						if (!response.ok) {
+							throw new Error('Network response was not ok');
+						}
+						return response.json();
+					})
+					.then(data => {
+						// Handle the JSON response data
+						switch(data.status)
+						{
+							case 0:
+								document.querySelector(".cst-container").parentElement.style.width = '100%';
+								document.querySelector(".cst-container").innerHTML = '<iframe width="100%" style="max-width: 1920px;" src="https://ada.skynettechnologies.us/trial-subscription?isframe=true&website='+window.location.host+'&platform=joomla&utm_source=joomla-extension&utm_medium=create-account&utm_campaign=trial-subscription" height="1100px;" style="border: none;"></iframe>';
+							break;
+							case 1:
+							case 2:
+								document.querySelector(".cst-container").parentElement.style.width = '100%';
+								document.querySelector(".cst-container").innerHTML = `
+									<h2>Widget Preferences:</h2>
+									<div style="text-align: right; width:100%; padding-bottom: 10px;"><a target="_blank" class="button-apply btn btn-success aioa-cancel-button"  href="`+data.manage_domain+`">Manage Subscription</a></div>
+									<iframe id="aioamyIframe" width="100%" style="max-width: 1920px;" height="1100px"  src="`+data.settinglink+`"></iframe>`;
+							break;
+							case 3:
+								document.querySelector(".cst-container").parentElement.style.width = '100%';
+								document.querySelector(".cst-container").innerHTML = `
+								<h3 style="color: #aa1111">It appears that you have already registered! Please click on the "Manage Subscription" button to renew your subscription.<br> Once your plan is renewed, please refresh the page.</h3>
+                                <div style="text-align: left; width:100%; padding-bottom: 10px;"><a target="_blank" class="button-cancel btn btn-danger aioa-cancel-button"  href="`+data.settinglink+`">Manage Subscription</a></div>`;
+							break
+						}
+
+					})
+			</script>
+		]]>
+	</description>
+	<files>
+		<filename>all-in-one-accessibility.xml</filename>
+		<filename module="all-in-one-accessibility">all-in-one-accessibility.php</filename>
+		<folder>tmpl</folder>
+	</files>
+	<positions>
+        <position>footer</position>
+    </positions>
+	<config>
+		<fields name="params">
+			<fieldset name="basic">
+				<field
+					name="containerArea"
+					type="note"
+					label=""
+					description="&lt;div width='80%' height='1000px' class='cst-container'&gt;	&lt;/div&gt;"
+				/>
+			</fieldset>
+		</fields>
+	</config>
+
+</extension>

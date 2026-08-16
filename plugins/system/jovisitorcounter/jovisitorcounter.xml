@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="utf-8"?>
+<extension type="plugin" group="system" method="upgrade">
+    <name>System - JO Visitor Counter</name>
+    <author>JewelOsman.Com</author>
+    <creationDate>May 2025</creationDate>
+    <copyright>Copyright (C) 2025 jewelosman.com.</copyright>
+    <license>GNU/GPL v2 or later http://www.gnu.org/licenses/gpl-2.0.html</license>
+    <authorEmail>jewelosman@gmail.com</authorEmail>
+    <authorUrl>www.jewelosman.com</authorUrl>
+    <version>2.0.3</version>
+    <description>PLG_SYSTEM_JOVISITORCOUNTER_DESC</description>
+	
+	<scriptfile>jovisitorcounter.install.php</scriptfile>
+	
+	<updateservers>
+        <server type="extension" priority="1" name="JO Visitor Counter Plugin">https://jewelosman.com/downloads/pkg_jo_visitor_counter.xml</server>
+    </updateservers>
+	
+    <files>
+        <filename plugin="jovisitorcounter">jovisitorcounter.php</filename>
+        <folder>helpers</folder>
+    </files>
+	
+	<languages>
+        <language tag="en-GB">language/en-GB/en-GB.plg_system_jovisitorcounter.ini</language>
+        <language tag="en-GB">language/en-GB/en-GB.plg_system_jovisitorcounter.sys.ini</language>
+    </languages>
+
+	 <config>
+		<fields name="params">
+			<fieldset name="basic">
+				<field
+					name="enable_tracking"
+					type="radio"
+					label="MOD_JOVISITORCOUNTER_ENABLE_TRACKING"
+					description="MOD_JOVISITORCOUNTER_ENABLE_TRACKING_DESC"
+					default="1"
+					class="btn-group btn-group-yesno">
+					<option value="1">JYES</option>
+					<option value="0">JNO</option>
+				</field>
+				<field
+					name="tracking_time_frame"
+					type="number"
+					label="MOD_JOVISITORCOUNTER_RECOUNT_AFTER_HOURS"
+					description="MOD_JOVISITORCOUNTER_CHECK_DUPLICATE_VISITS_DESC"
+					default="24"
+					min="1"
+					max="72"
+				/>
+				<field
+					name="assign_to_menu_items"
+					type="text"
+					label="MOD_JOVISITORCOUNTER_ASSIGN_TO_MENU_ITEMS"
+					description="MOD_JOVISITORCOUNTER_ASSIGN_TO_MENU_ITEMS_DESC"
+					default=""
+				/>
+                <field 
+                    name="spacer1" 
+                    type="spacer" 
+                    label="" />
+				<field
+					name="fix_unknown_visitors"
+					type="radio"
+					label="PLG_SYSTEM_JOVISITORCOUNTER_FIX_UNKNOWN_VISITORS"
+					description="PLG_SYSTEM_JOVISITORCOUNTER_FIX_UNKNOWN_VISITORS_DESC"
+					default="0"
+					class="btn-group btn-group-yesno">
+					<option value="1">JYES</option>
+					<option value="0">JNO</option>
+				</field>
+                <field 
+                    name="unknown_visitors_note" 
+                    type="note" 
+                    label="" 
+                    description="PLG_SYSTEM_JOVISITORCOUNTER_NOTE_UNKNOWN_VISITORS" />
+				<field
+					name="re_calculate_visitors"
+					type="radio"
+					label="PLG_SYSTEM_JOVISITORCOUNTER_RE_CALCULATE_VISITORS"
+					description="PLG_SYSTEM_JOVISITORCOUNTER_RE_CALCULATE_VISITORS_DESC"
+					default="0"
+					class="btn-group btn-group-yesno">
+					<option value="1">JYES</option>
+					<option value="0">JNO</option>
+				</field>
+                <field 
+                    name="recalculate_visitors_note" 
+                    type="note" 
+                    label="" 
+                    description="PLG_SYSTEM_JOVISITORCOUNTER_NOTE_RE_CALCULATE_VISITORS" />
+                <field 
+                    name="spacer2" 
+                    type="spacer" 
+                    label="" />
+				<field
+					name="debug_mode"
+					type="radio"
+					label="MOD_JOVISITORCOUNTER_DEBUG_MODE"
+					description="MOD_JOVISITORCOUNTER_DEBUG_MODE_DESC"
+					default="0"
+					class="btn-group btn-group-yesno">
+					<option value="1">JYES</option>
+					<option value="0">JNO</option>
+				</field>
+			</fieldset>
+		</fields>
+	</config>
+</extension>
