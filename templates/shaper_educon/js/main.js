@@ -285,6 +285,30 @@ jQuery(function ($) {
             });
         });
     }
+
+    // Keep the form-download accordion exclusive and open only its first panel initially.
+    var $formAccordion = $('#sppb-addon-89zp51s408QHv8JQCHPsj .accordion-borang');
+    if ($formAccordion.length) {
+        $formAccordion.on('click.formAccordionState', '.sppb-panel-heading', function () {
+            setTimeout(function () {
+                $formAccordion.find('.sppb-panel-heading').each(function () {
+                    var $heading = $(this);
+                    $heading.attr('aria-expanded', $heading.hasClass('active') ? 'true' : 'false');
+                });
+            }, 0);
+        });
+
+        setTimeout(function () {
+            var $headings = $formAccordion.find('.sppb-panel-heading');
+            var $panels = $formAccordion.find('.sppb-panel-collapse');
+
+            $headings.removeClass('active').attr('aria-expanded', 'false');
+            $panels.stop(true, true).hide();
+
+            $headings.first().addClass('active').attr('aria-expanded', 'true');
+            $headings.first().next('.sppb-panel-collapse').show();
+        }, 0);
+    }
     // **************   END:: EDUCON SCRIPT   *************** //
     // **************************************************** //
 });
