@@ -4,7 +4,7 @@
  * @package   OSMap
  * @contact   www.joomlashack.com, help@joomlashack.com
  * @copyright 2007-2014 XMap - Joomla! Vargas - Guillermo Vargas. All rights reserved.
- * @copyright 2016-2025 Joomlashack.com. All rights reserved.
+ * @copyright 2016-2026 Joomlashack.com. All rights reserved.
  * @license   https://www.gnu.org/licenses/gpl.html GNU/GPL
  *
  * This file is part of OSMap.
@@ -114,11 +114,13 @@ $formAction = [
                                 $this->escape($item->name),
                                 [
                                     'style'   => 'cursor: pointer;',
+
+                                    // Encode the sitemap name as a valid JavaScript string.
                                     'onclick' => sprintf(
-                                        "if (window.parent) window.parent.%s('%s', '%s');",
+                                        "if (window.parent) window.parent.%s('%s', %s);",
                                         $function,
                                         $item->id,
-                                        $this->escape($item->name)
+                                        json_encode($item->name)
                                     )
                                 ]
                             );
