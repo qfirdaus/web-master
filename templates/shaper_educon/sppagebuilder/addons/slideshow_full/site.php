@@ -19,7 +19,10 @@ class SppagebuilderAddonSlideshow_full extends SppagebuilderAddons
 
     public function render()
     {
-        $autoplay = (isset($this->addon->settings->autoplay) && $this->addon->settings->autoplay) ? $this->addon->settings->autoplay : '';
+        $slide_items = isset($this->addon->settings->sp_slideshow_full_item)
+            ? $this->addon->settings->sp_slideshow_full_item
+            : array();
+        $autoplay = count($slide_items) > 1;
         $controllers = (isset($this->addon->settings->controllers) && $this->addon->settings->controllers) ? $this->addon->settings->controllers : '';
         $arrows = (isset($this->addon->settings->arrows) && $this->addon->settings->arrows) ? $this->addon->settings->arrows : '';
         $class = (isset($this->addon->settings->class) && $this->addon->settings->class) ? $this->addon->settings->class : '';
@@ -35,7 +38,7 @@ class SppagebuilderAddonSlideshow_full extends SppagebuilderAddons
         $output .= '<div class="sppb-slider-item-wrapper">';
         $output .= '<div id="slide-fullwidth" class="owl-carousel" ' . $slide_controllers . ' ' . $slide_autoplay . ' >';
 
-        foreach ($this->addon->settings->sp_slideshow_full_item as $key => $slide_item) {
+        foreach ($slide_items as $key => $slide_item) {
 
             $bg_image = "";
             if (isset($slide_item->bg)) {

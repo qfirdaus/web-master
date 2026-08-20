@@ -1337,19 +1337,17 @@ div.mod-languages img {
     padding-bottom: 0;
 }
 
-/* Static SP Page Builder hero for the Malay department homepage. */
+/* Keep the Malay department hero responsive while allowing SP Page Builder
+   to supply and rotate the configured banner images. */
 @media (min-width: 768px) {
-    #section-id-686b406d-bde0-4f05-97ef-5eab6610efb5 .sppb-slider-item-wrapper {
-        background-image: url("/web-master/images/2026/05/15/banner_btmkv2.png");
-        background-position: center center;
-        background-repeat: no-repeat;
-        background-size: cover;
-        min-height: min(36.6vw, 650px);
-    }
-
     #sppb-addon-ced596e7-5986-4729-a080-f263055a6a9a #slide-fullwidth,
-    #sppb-addon-ced596e7-5986-4729-a080-f263055a6a9a .sppb-slider-wrapper > .owl-dots {
-        display: none !important;
+    #sppb-addon-ced596e7-5986-4729-a080-f263055a6a9a .owl-stage-outer,
+    #sppb-addon-ced596e7-5986-4729-a080-f263055a6a9a .owl-stage,
+    #sppb-addon-ced596e7-5986-4729-a080-f263055a6a9a .owl-item,
+    #sppb-addon-ced596e7-5986-4729-a080-f263055a6a9a .sppb-slideshow-fullwidth-item,
+    #sppb-addon-ced596e7-5986-4729-a080-f263055a6a9a .sppb-slideshow-fullwidth-item-bg {
+        height: min(36.6vw, 650px) !important;
+        min-height: min(36.6vw, 650px) !important;
     }
 }
 
