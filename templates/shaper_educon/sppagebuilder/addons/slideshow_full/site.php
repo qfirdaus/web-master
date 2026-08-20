@@ -55,7 +55,7 @@ class SppagebuilderAddonSlideshow_full extends SppagebuilderAddons
             }
 
             // if have bg
-            $bg_image = ($slide_item->bg) ? 'style="background-image: url(' . $bg_image . '); background-repeat: no-repeat;
+            $bg_image = ($slide_item->bg) ? 'style="background-image: url(\'' . htmlspecialchars($bg_image, ENT_QUOTES, 'UTF-8') . '\'); background-repeat: no-repeat;
             background-size: cover; background-position: center center;"' : '';
 
             // *** animation *** //
