@@ -175,7 +175,7 @@ class SppagebuilderAddonSlideshow_full extends SppagebuilderAddons
     {
         $app = Factory::getApplication();
         $base_path = Uri::base() . '/templates/' . $app->getTemplate() . '/js/';
-        return array($base_path . 'owl.carousel.min.js', $base_path . 'addon.slider.js');
+        return array($base_path . 'owl.carousel.min.js', $base_path . 'addon.slider.js?v=20260820-banner-watchdog-2');
     }
 
     public function js()
@@ -240,6 +240,9 @@ class SppagebuilderAddonSlideshow_full extends SppagebuilderAddons
         $addont_styles .= (isset($this->addon->settings->color) && $this->addon->settings->color) ? 'color: ' . $this->addon->settings->color . '; ' : '';
 
         $css = '';
+        $css .= 'body.itemid-1138 #sp-page-title{display:none!important;}';
+        $css .= 'body.itemid-1138 #sp-main-body,body.itemid-1138 #sp-page-builder,body.itemid-1138 #sp-page-builder>.page-content{margin-top:0!important;padding-top:0!important;}';
+        $css .= 'body.itemid-1138 #section-id-686b406d-bde0-4f05-97ef-5eab6610efb5{margin-top:-15px!important;padding-top:0!important;}';
         if ($addont_styles) {
             $css .= $addon_id . ' .sppb-slider-fullwidth-wrapper .sppb-slider-item-wrapper {';
             $css .= $addont_styles;

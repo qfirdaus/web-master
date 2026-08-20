@@ -1328,6 +1328,22 @@ div.mod-languages img {
     #sppb-addon-2eb510d0-e04a-49a6-8b57-8bc6c55f5689 .sppb-slider-wrapper > .owl-dots {
         display: none !important;
     }
+
+    /* Owl hides the carousel until it initializes. Keep a functional fallback
+       so a script error never leaves the hero blank. */
+    #sppb-addon-ced596e7-5986-4729-a080-f263055a6a9a #slide-fullwidth:not(.owl-loaded) {
+        display: block !important;
+        overflow: hidden;
+    }
+
+    #sppb-addon-ced596e7-5986-4729-a080-f263055a6a9a #slide-fullwidth:not(.owl-loaded) > .sppb-slideshow-fullwidth-item {
+        display: none;
+    }
+
+    #sppb-addon-ced596e7-5986-4729-a080-f263055a6a9a #slide-fullwidth:not(.owl-loaded):not(.has-fallback-slider) > .sppb-slideshow-fullwidth-item:first-child,
+    #sppb-addon-ced596e7-5986-4729-a080-f263055a6a9a #slide-fullwidth:not(.owl-loaded).has-fallback-slider > .sppb-slideshow-fullwidth-item.is-fallback-active {
+        display: block;
+    }
 }
 
 /* Match the original title-first layout for the academic programme cards. */
@@ -1339,6 +1355,22 @@ div.mod-languages img {
 
 /* Keep the Malay department hero responsive while allowing SP Page Builder
    to supply and rotate the configured banner images. */
+body.itemid-1138 #sp-page-title {
+    display: none;
+}
+
+body.itemid-1138 #sp-main-body,
+body.itemid-1138 #sp-page-builder,
+body.itemid-1138 #sp-page-builder > .page-content,
+body.itemid-1138 #section-id-686b406d-bde0-4f05-97ef-5eab6610efb5 {
+    margin-top: 0 !important;
+    padding-top: 0 !important;
+}
+
+body.itemid-1138 #section-id-686b406d-bde0-4f05-97ef-5eab6610efb5 {
+    margin-top: -15px !important;
+}
+
 @media (min-width: 768px) {
     #sppb-addon-ced596e7-5986-4729-a080-f263055a6a9a #slide-fullwidth,
     #sppb-addon-ced596e7-5986-4729-a080-f263055a6a9a .owl-stage-outer,

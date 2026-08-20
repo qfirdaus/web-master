@@ -8,6 +8,51 @@
 //For react template
 jQuery(function ($) {
     'use strict';
+
+    function initializeFallbackSlider($slider) {
+        if ($slider.hasClass('owl-loaded')) {
+            if (!$slider.data('rotation-watchdog')) {
+                var owlSlideCount = $slider.find('.owl-item:not(.cloned)').length;
+                if (owlSlideCount > 1) {
+                    $slider.data('rotation-watchdog', true);
+                    window.setInterval(function () {
+                        $slider.trigger('next.owl.carousel', [600]);
+                    }, 5000);
+                }
+            }
+            return;
+        }
+
+        if ($slider.data('fallback-slider')) {
+            return;
+        }
+
+        var $slides = $slider.children('.sppb-slideshow-fullwidth-item');
+        if (!$slides.length) {
+            return;
+        }
+
+        var activeIndex = 0;
+        $slider.data('fallback-slider', true);
+        $slider.addClass('has-fallback-slider');
+        $slides.removeClass('is-fallback-active').eq(activeIndex).addClass('is-fallback-active');
+
+        if ($slides.length > 1) {
+            window.setInterval(function () {
+                activeIndex = (activeIndex + 1) % $slides.length;
+                $slides.removeClass('is-fallback-active').eq(activeIndex).addClass('is-fallback-active');
+            }, 5000);
+        }
+    }
+
+    // The legacy Owl bundle can fail before adding `owl-loaded`. Run this
+    // after its normal document-ready handler and provide a safe fallback.
+    window.setTimeout(function () {
+        $('.sppb-slider-fullwidth-wrapper #slide-fullwidth').each(function () {
+            initializeFallbackSlider($(this));
+        });
+    }, 250);
+
     var observer = new MutationObserver(function (mutations) {
         mutations.forEach(function (mutation) {
             var newNodes = mutation.addedNodes;
@@ -59,6 +104,10 @@ jQuery(function ($) {
                             dots: $controllers,
                         });
 
+                        window.setTimeout(function () {
+                            initializeFallbackSlider($slideFullwidth);
+                        }, 250);
+
                     });
                 });
             }
@@ -72,4 +121,3 @@ jQuery(function ($) {
     // Pass in the target node, as well as the observer options
     observer.observe(document.body, config);
 });
-
