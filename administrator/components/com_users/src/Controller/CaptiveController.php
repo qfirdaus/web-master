@@ -53,6 +53,7 @@ class CaptiveController extends BaseController implements UserFactoryAwareInterf
         parent::__construct($config, $factory, $app, $input);
 
         $this->registerTask('captive', 'display');
+        $this->registerTask('select', 'display');
     }
 
     /**

@@ -3,7 +3,7 @@
 /**
  * @package SP Page Builder
  * @author JoomShaper http://www.joomshaper.com
- * @copyright Copyright (c) 2010 - 2025 JoomShaper
+ * @copyright Copyright (c) 2010 - 2026 JoomShaper
  * @license http://www.gnu.org/licenses/gpl-2.0.html GNU/GPLv2 or later
  */
 
@@ -13,6 +13,7 @@ use Joomla\CMS\Helper\MediaHelper;
 use Joomla\CMS\Component\ComponentHelper;
 use Joomla\CMS\Layout\FileLayout;
 use Joomla\CMS\Filesystem\File;
+use Joomla\CMS\Filter\InputFilter;
 use Joomla\CMS\Filesystem\Path;
 use Joomla\CMS\HTML\HTMLHelper;
 use Joomla\CMS\Filesystem\Folder;
@@ -388,7 +389,10 @@ trait ImportTrait
 
 							$folder = $folder_root . HTMLHelper::_('date', $date, 'Y') . '/' . HTMLHelper::_('date', $date, 'm') . '/' . HTMLHelper::_('date', $date, 'd');
 
-							if ($dir != '')
+							// $dir comes from JSON inside the uploaded zip, so it is attacker-controlled
+							// and never passed through the PATH input filter. Keep the dated default
+							// folder rather than aborting the import when it points somewhere else.
+							if ($dir != '' && SecurityHelper::isWritableMediaFolder($dir))
 							{
 								$folder = ltrim($dir, '/');
 							}
@@ -422,6 +426,22 @@ trait ImportTrait
 
 							$src = $folder . '/' . $media_name;
 
+							// File::copy has no safety check of its own, so run the core one before the file lands in a public folder.
+							$isSafe = InputFilter::isSafeFile([
+								'name'     => $media_name,
+								'tmp_name' => $path,
+								'type'     => '',
+								'error'    => '',
+								'size'     => '',
+							]);
+
+							if (!$isSafe)
+							{
+								$report['status'] = false;
+								$report['message'] = Text::_('COM_SPPAGEBUILDER_MEDIA_MANAGER_FILE_NOT_SUPPORTED');
+								$this->sendResponse($report, 400);
+							}
+
 							if (File::copy($path, $dest, false, true))
 							{
 								$media_attr = [];
@@ -431,6 +451,15 @@ trait ImportTrait
 								{
 									if (strtolower($ext) === 'svg')
 									{
+										if (!BuilderMediaHelper::sanitizeSvgFile($dest))
+										{
+											File::delete($dest);
+
+											$report['status'] = false;
+											$report['message'] = Text::_('COM_SPPAGEBUILDER_MEDIA_MANAGER_FILE_NOT_SUPPORTED');
+											$this->sendResponse($report, 400);
+										}
+
 										$report['src'] = Uri::root(true) . '/' . $src;
 									}
 									else if ($ext !== 'avif')

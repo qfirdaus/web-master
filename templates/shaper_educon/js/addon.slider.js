@@ -9,11 +9,68 @@
 jQuery(function ($) {
     'use strict';
 
+    function setupSliderControls($slider) {
+        if ($slider.data('navigation-ready')) {
+            return;
+        }
+
+        var $addon = $slider.closest('[id^="sppb-addon-"]');
+        var $dots = $addon.children('.owl-dots');
+        var $slides = $slider.children('.sppb-slideshow-fullwidth-item');
+
+        function showFallbackSlide(index) {
+            var slideCount = $slides.length;
+            if (!slideCount) {
+                return;
+            }
+
+            index = (index + slideCount) % slideCount;
+            $slider.data('fallback-active-index', index);
+            $slides.removeClass('is-fallback-active').eq(index).addClass('is-fallback-active');
+            $dots.children('.owl-dot').removeClass('active').eq(index).addClass('active');
+        }
+
+        $slider.data('navigation-ready', true);
+        $addon.find('.sppbSlidePrev').off('click.bannerNavigation').on('click.bannerNavigation', function (event) {
+            event.preventDefault();
+            if ($slider.hasClass('owl-loaded')) {
+                $slider.trigger('prev.owl.carousel', [400]);
+            } else {
+                showFallbackSlide(($slider.data('fallback-active-index') || 0) - 1);
+            }
+        });
+        $addon.find('.sppbSlideNext').off('click.bannerNavigation').on('click.bannerNavigation', function (event) {
+            event.preventDefault();
+            if ($slider.hasClass('owl-loaded')) {
+                $slider.trigger('next.owl.carousel', [400]);
+            } else {
+                showFallbackSlide(($slider.data('fallback-active-index') || 0) + 1);
+            }
+        });
+        $dots.children('.owl-dot').off('click.bannerNavigation').on('click.bannerNavigation', function (event) {
+            event.preventDefault();
+            var index = $(this).index();
+            if ($slider.hasClass('owl-loaded')) {
+                $slider.trigger('to.owl.carousel', [index, 400, true]);
+            } else {
+                showFallbackSlide(index);
+            }
+        });
+        $slider.on('changed.owl.carousel.bannerNavigation', function (event) {
+            if (event.page && typeof event.page.index !== 'undefined') {
+                $dots.children('.owl-dot').removeClass('active').eq(event.page.index).addClass('active');
+            }
+        });
+    }
+
     function initializeFallbackSlider($slider) {
+        var autoplayEnabled = $slider.attr('data-sppb-slide-ride') === 'true';
+        setupSliderControls($slider);
+
         if ($slider.hasClass('owl-loaded')) {
             if (!$slider.data('rotation-watchdog')) {
                 var owlSlideCount = $slider.find('.owl-item:not(.cloned)').length;
-                if (owlSlideCount > 1) {
+                if (autoplayEnabled && owlSlideCount > 1) {
                     $slider.data('rotation-watchdog', true);
                     window.setInterval(function () {
                         $slider.trigger('next.owl.carousel', [600]);
@@ -34,13 +91,17 @@ jQuery(function ($) {
 
         var activeIndex = 0;
         $slider.data('fallback-slider', true);
+        $slider.data('fallback-active-index', activeIndex);
         $slider.addClass('has-fallback-slider');
         $slides.removeClass('is-fallback-active').eq(activeIndex).addClass('is-fallback-active');
 
-        if ($slides.length > 1) {
+        if (autoplayEnabled && $slides.length > 1) {
             window.setInterval(function () {
-                activeIndex = (activeIndex + 1) % $slides.length;
+                activeIndex = (($slider.data('fallback-active-index') || 0) + 1) % $slides.length;
+                $slider.data('fallback-active-index', activeIndex);
                 $slides.removeClass('is-fallback-active').eq(activeIndex).addClass('is-fallback-active');
+                $slider.closest('[id^="sppb-addon-"]').children('.owl-dots').children('.owl-dot')
+                    .removeClass('active').eq(activeIndex).addClass('active');
             }, 5000);
         }
     }

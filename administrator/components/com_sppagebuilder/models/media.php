@@ -3,7 +3,7 @@
 /**
  * @package SP Page Builder
  * @author JoomShaper http://www.joomshaper.com
- * @copyright Copyright (c) 2010 - 2025 JoomShaper
+ * @copyright Copyright (c) 2010 - 2026 JoomShaper
  * @license http://www.gnu.org/licenses/gpl-2.0.html GNU/GPLv2 or later
  */
 
@@ -375,7 +375,7 @@ class SppagebuilderModelMedia extends ListModel
 			return $output;
 		}
 
-		$items = Folder::files($directory, '.png|.jpg|.jpeg|.gif|.svg|.pdf|.webp', false, true);
+		$items = Folder::files($directory, '.png|.jpg|.jpeg|.gif|.svg|.pdf|.webp|.avif|.mp4|.mov|.wmv|.avi|.mpg|.ogv|.3gp|.3g2|.mp3|.m4a|.ogg|.wav|.doc|.docx|.key|.ppt|.pptx|.pps|.ppsx|.odt|.xls|.xlsx|.zip|.json', false, true);
 		$folders_list = Folder::folders($directory, '.', false, false, array('.svn', 'CVS', '.DS_Store', '__MACOSX', '_spmedia_thumbs'));
 		$folders = self::listFolderTree(JPATH_ROOT . '/' . $rootPath, '.');
 

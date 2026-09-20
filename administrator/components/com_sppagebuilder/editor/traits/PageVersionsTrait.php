@@ -3,7 +3,7 @@
 /**
  * @package SP Page Builder
  * @author JoomShaper http://www.joomshaper.com
- * @copyright Copyright (c) 2010 - 2025 JoomShaper
+ * @copyright Copyright (c) 2010 - 2026 JoomShaper
  * @license http://www.gnu.org/licenses/gpl-2.0.html GNU/GPLv2 or later
  */
 
@@ -14,6 +14,7 @@ use Joomla\CMS\Table\Table;
 use Joomla\CMS\Uri\Uri;
 use Joomla\CMS\Component\ComponentHelper;
 use Joomla\CMS\Plugin\PluginHelper;
+use Joomla\CMS\Language\Text;
 
 trait PageVersionsTrait
 {
@@ -258,6 +259,53 @@ trait PageVersionsTrait
 					'failed' => 0,
 				],
 			];
+		}
+
+		$this->sendResponse($response);
+	}
+
+	/**
+	 * Permanently delete every page version for every page, site-wide.
+	 *
+	 * @return void
+	 * @since 6.8.0
+	 */
+	public function purgeVersions()
+	{
+		$method = $this->getInputMethod();
+		$this->checkNotAllowedMethods(['GET', 'PUT', 'DELETE', 'PATCH'], $method);
+
+		// This wipes version history for every page site-wide and can't be undone, so it
+		// requires full admin access rather than the core.manage bar the rest of the
+		// editor's endpoints share.
+		if (!Factory::getUser()->authorise('core.admin', 'com_sppagebuilder'))
+		{
+			$response = [
+				'status' => false,
+				'message' => Text::_('COM_SPPAGEBUILDER_EDITOR_ADMIN_ACCESS_REQUIRED'),
+			];
+			$this->sendResponse($response, 403);
+			return;
+		}
+
+		try
+		{
+			$db = Factory::getDbo();
+			$db->truncateTable('#__sppagebuilder_versions');
+
+			$response = [
+				'status' => true,
+				'message' => 'All page versions purged successfully',
+			];
+		}
+		catch (Exception $e)
+		{
+			$response = [
+				'status' => false,
+				'message' => $e->getMessage(),
+			];
+			$this->sendResponse($response, 500);
+			return;
 		}
 
 		$this->sendResponse($response);

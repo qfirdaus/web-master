@@ -2,7 +2,7 @@
 
 /**
  * @author JoomShaper https://www.joomshaper.com
- * @copyright Copyright (c) 2010 - 2025 JoomShaper
+ * @copyright Copyright (c) 2010 - 2026 JoomShaper
  * @license https://www.gnu.org/licenses/gpl-2.0.html GNU/GPLv2 or later
  */
 //no direct access

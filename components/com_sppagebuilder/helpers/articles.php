@@ -2,7 +2,7 @@
 /**
  * @package SP Page Builder
  * @author JoomShaper http://www.joomshaper.com
- * @copyright Copyright (c) 2010 - 2025 JoomShaper
+ * @copyright Copyright (c) 2010 - 2026 JoomShaper
  * @license http://www.gnu.org/licenses/gpl-2.0.html GNU/GPLv2 or later
 */
 //no direct access
@@ -193,7 +193,7 @@ abstract class SppagebuilderHelperArticles
 		}
 		return true;
 	}
-	public static function getArticles( $count = 5, $ordering = 'latest', $catid = '', $include_subcategories = true, $post_format = '', $tagids = array(), $state = 1, $currentPage = 1) {
+	public static function getArticles( $count = 5, $ordering = 'latest', $catid = '', $include_subcategories = true, $post_format = '', $tagids = array(), $state = 1, $currentPage = 1, $language = null) {
 
 		$authorised = Access::getAuthorisedViewLevels(Factory::getUser()->get('id'));
 
@@ -306,8 +306,12 @@ abstract class SppagebuilderHelperArticles
 			$query->order($db->quoteName('a.publish_up') . ' DESC');
 		}
 
-		// Language filter
-		if ($app->isClient('site') && $app->getLanguageFilter()) {
+		// Language filter. Callers resolving a specific language's sample item (e.g. the
+		// editor's preview link) can pass $language explicitly instead of relying on the
+		// site's currently active language.
+		if (!empty($language)) {
+			$query->where('a.language IN (' . $db->Quote($language) . ',' . $db->Quote('*') . ')');
+		} elseif ($app->isClient('site') && $app->getLanguageFilter()) {
 			$query->where('a.language IN (' . $db->Quote(Factory::getLanguage()->getTag()) . ',' . $db->Quote('*') . ')');
 		}
 

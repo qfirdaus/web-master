@@ -2,7 +2,7 @@
 /**
  * @package SP Page Builder
  * @author JoomShaper https://www.joomshaper.com
- * @copyright Copyright (c) 2010 - 2025 JoomShaper
+ * @copyright Copyright (c) 2010 - 2026 JoomShaper
  * @license http://www.gnu.org/licenses/gpl-2.0.html GNU/GPLv2 or later
  */
 //no direct access
@@ -119,10 +119,11 @@ SpAddonsConfig::addonConfig([
                 'image_shape_scale' => [
                     'type' => 'slider',
                     'title' => 'Scale Shape',
-                    'min' => 0,
-                    'max' => 10,
-                    'step' => 0.1,
-                    'std' => 1.2,
+                    'responsive' => true,
+                    'min' => '0',
+                    'max' => '10',
+                    'step' => '0.1',
+                    'std' => '1.2',
                     'depends' => [
                         ['is_image_shape_enabled', '=', 1],
                         ['image_shape', '!=', ''],

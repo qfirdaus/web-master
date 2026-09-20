@@ -9,7 +9,7 @@ use Joomla\CMS\MVC\Model\BaseDatabaseModel;
 /**
  * @package SP Page Builder
  * @author JoomShaper http://www.joomshaper.com
- * @copyright Copyright (c) 2010 - 2025 JoomShaper
+ * @copyright Copyright (c) 2010 - 2026 JoomShaper
  * @license http://www.gnu.org/licenses/gpl-2.0.html GNU/GPLv2 or later
  */
 
@@ -45,6 +45,11 @@ trait AddToMenuTrait
         $menuOrdering = $this->getInput('ordering', 0, 'INT');
 
         $componentId = ComponentHelper::getComponent('com_sppagebuilder')->id;
+
+        if (!SecurityHelper::canManageMenuItem($menuId, $menuType))
+        {
+            $this->sendResponse(['message' => Text::_('JERROR_ALERTNOAUTHOR')], 403);
+        }
 
         $menu = $model->getMenuById($menuId);
         $home = (isset($menu->home) && $menu->home) ? $menu->home : 0;

@@ -3,7 +3,7 @@
 /**
  * @package SP Page Builder
  * @author JoomShaper http://www.joomshaper.com
- * @copyright Copyright (c) 2010 - 2025 JoomShaper
+ * @copyright Copyright (c) 2010 - 2026 JoomShaper
  * @license http://www.gnu.org/licenses/gpl-2.0.html GNU/GPLv2 or later
  */
 //no direct access
@@ -184,6 +184,27 @@ class SppagebuilderModelPage extends AdminModel
         $result = $db->loadObject();
 
         return $result;
+    }
+
+    public function getPageCreatorId($pageId)
+    {
+        $db = Factory::getDbo();
+        $query = $db->getQuery(true);
+
+        $query->select('created_by')
+            ->from($db->quoteName('#__sppagebuilder'))
+            ->where($db->quoteName('id') . ' = ' . (int)$pageId);
+
+        $db->setQuery($query);
+
+        try
+        {
+            return $db->loadResult();
+        }
+        catch (\Exception $e)
+        {
+            return 0;
+        }
     }
 
     public function getMySections()

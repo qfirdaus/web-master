@@ -3,7 +3,7 @@
 /**
  * @package SP Page Builder
  * @author JoomShaper http://www.joomshaper.com
- * @copyright Copyright (c) 2010 - 2025 JoomShaper
+ * @copyright Copyright (c) 2010 - 2026 JoomShaper
  * @license http://www.gnu.org/licenses/gpl-2.0.html GNU/GPLv2 or later
  */
 
@@ -11,8 +11,10 @@ use Joomla\CMS\Factory;
 use Joomla\CMS\Table\Table;
 use Joomla\CMS\Language\Text;
 use Joomla\CMS\HTML\HTMLHelper;
+use Joomla\CMS\Language\LanguageHelper;
 use Joomla\CMS\MVC\Model\ItemModel;
 use Joomla\CMS\Plugin\PluginHelper;
+use Joomla\Database\ParameterType;
 use JoomShaper\SPPageBuilder\DynamicContent\Models\Collection;
 use JoomShaper\SPPageBuilder\DynamicContent\Models\CollectionItem;
 use JoomShaper\SPPageBuilder\DynamicContent\Models\Page;
@@ -63,22 +65,63 @@ class SppagebuilderModelDynamic extends ItemModel
 	{
 		$itemId = CollectionHelper::getCollectionItemIdFromUrl();
 		$collectionItem = CollectionItem::where('id', $itemId)->first(['collection_id']);
+		$languageInput = Factory::getLanguage()->getTag() ?? '*';
+		$language = $languageInput;
+
+		if ($languageInput !== '*') {
+			$languages = LanguageHelper::getLanguages('lang_code');
+			foreach ($languages as $lang) {
+				if ($lang->lang_code === $languageInput || $lang->sef === $languageInput) {
+					$language = $lang->lang_code;
+					break;
+				}
+			}
+		}
 
 		if ($collectionItem->isEmpty()) {
 			return null;
 		}
 		$collectionId = $collectionItem->collection_id;
 
-		$page = Page::where('extension', 'com_sppagebuilder')
+		$pages = Page::where('extension', 'com_sppagebuilder')
 			->where('extension_view', 'dynamic_content:detail')
 			->where('view_id', $collectionId)
-			->first(['id']);
+			->whereIn('language', [$language, '*'], ParameterType::STRING)
+			->where('published', 1)
+			->get(['id', 'language']);
 
-		if ($page->isEmpty()) {
-			return null;
+		if (empty($pages)) {
+			$pages = Page::where('extension', 'com_sppagebuilder')
+				->where('extension_view', 'dynamic_content:detail')
+				->where('view_id', $collectionId)
+				->where('published', 1)
+				->get(['id', 'language']);
+
+			if (!empty($pages)) {
+				return $pages[0]->id ?? null;
+			}
 		}
 
+		$page = $this->getPreferredLanguagePage($pages, $language);
+
 		return $page->id ?? null;
+	}
+
+	private function getPreferredLanguagePage($pages, $language)
+	{
+		foreach ($pages as $page) {
+			if ($page->language === $language) {
+				return $page;
+			}
+		}
+
+		foreach ($pages as $page) {
+			if ($page->language === '*') {
+				return $page;
+			}
+		}
+
+		return null;
 	}
 
 	protected function populateState()

@@ -3,7 +3,7 @@
 /**
  * @package SP Page Builder
  * @author JoomShaper http://www.joomshaper.com
- * @copyright Copyright (c) 2010 - 2025 JoomShaper
+ * @copyright Copyright (c) 2010 - 2026 JoomShaper
  * @license http://www.gnu.org/licenses/gpl-2.0.html GNU/GPLv2 or later
  */
 
@@ -435,10 +435,18 @@ class SppagebuilderAddonAjax_contact extends SppagebuilderAddons
         $output['gcaptchaId'] = '';
 
         // Match has addon id
-        if (self::verifyAddon($item_data->content ?? $item_data->text, $addon_id) == false) {
+        $captchaAddon = self::getAddonById($item_data->content ?? $item_data->text, $addon_id);
+
+        if ($captchaAddon === null) {
             $output['content'] = '<span class="sppb-text-danger">' . Text::_('COM_SPPAGEBUILDER_ADDON_AJAX_CONTACT_FAILED') . '</span>';
             return json_encode($output);
         }
+
+        // Read the captcha type from the stored addon, never from the request, so a form
+        // configured for reCAPTCHA cannot be downgraded to the simple question captcha.
+        $captcha_type = (isset($captchaAddon->settings->captcha_type) && $captchaAddon->settings->captcha_type)
+            ? $captchaAddon->settings->captcha_type
+            : 'default';
 
         if ($showcaptcha) {
             if ($captcha_type == 'recaptcha' || $captcha_type == 'recaptcha_invisible' || $captcha_type == 'gcaptcha' || $captcha_type == 'igcaptcha') {
@@ -456,11 +464,12 @@ class SppagebuilderAddonAjax_contact extends SppagebuilderAddons
                         $output['gcaptchaType'] = 'dynamic';
                     }
 
+                    // The captcha plugin's verdict is authoritative in every render context.
+                    // $view_type comes from the request, and the module branch that used to sit
+                    // here replaced this result with a non-empty test, so posting view_type=module
+                    // passed any token at all.
                     $res = Factory::getApplication()->triggerEvent('onCheckAnswer', [$gcaptcha]);
-                    // if module then verify gcaptcha
-                    if ($view_type == 'module') {
-                        $res = ($gcaptcha != null || strlen($gcaptcha) != 0) ? [true] : [false];
-                    }
+
                     if (empty($res[0])) {
                         $output['content'] = '<span class="sppb-text-danger">' . Text::_('COM_SPPAGEBUILDER_ADDON_AJAX_CONTACT_INVALID_CAPTCHA') . '</span>';
                         return json_encode($output);
@@ -468,8 +477,7 @@ class SppagebuilderAddonAjax_contact extends SppagebuilderAddons
                 }
             } else if ($captcha_type == 'default') {
                 // Read the expected answer from the stored addon, never from the request.
-                $captchaAddon   = self::getAddonById($item_data->content ?? $item_data->text, $addon_id);
-                $expectedAnswer = ($captchaAddon && isset($captchaAddon->settings->captcha_answer)) ? (string) $captchaAddon->settings->captcha_answer : '';
+                $expectedAnswer = isset($captchaAddon->settings->captcha_answer) ? (string) $captchaAddon->settings->captcha_answer : '';
 
                 if ($expectedAnswer === '' || trim((string) $captcha_question) !== trim($expectedAnswer)) {
                     $output['content'] = '<span class="sppb-text-danger">' . Text::_('COM_SPPAGEBUILDER_ADDON_AJAX_CONTACT_WRONG_CAPTCHA') . '</span>';
@@ -711,11 +719,6 @@ class SppagebuilderAddonAjax_contact extends SppagebuilderAddons
         $css .= $transformCss;
 
         return $css;
-    }
-
-    public static function verifyAddon($pageContent, $addonId)
-    {
-        return self::getAddonById($pageContent, $addonId) !== null;
     }
 
     /**

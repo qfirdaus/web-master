@@ -44,7 +44,7 @@ class ModSPagebuilderHelper
 		$query->from($db->quoteName('#__sppagebuilder'));
 		$query->where($db->quoteName('extension') . ' = ' . $db->quote('mod_sppagebuilder'));
 		$query->where($db->quoteName('extension_view') . ' = ' . $db->quote('module'));
-		$query->where($db->quoteName('view_id') . ' = ' . $db->quote($id));
+		$query->where($db->quoteName('view_id') . ' = ' . $db->quote((int)$id));
 		$db->setQuery($query);
 		$item = $db->loadObject();
 

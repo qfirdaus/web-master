@@ -3,7 +3,7 @@
 /**
  * @package SP Page Builder
  * @author JoomShaper http://www.joomshaper.com
- * @copyright Copyright (c) 2010 - 2025 JoomShaper
+ * @copyright Copyright (c) 2010 - 2026 JoomShaper
  * @license http://www.gnu.org/licenses/gpl-2.0.html GNU/GPLv2 or later
  */
 //no direct access
@@ -59,6 +59,11 @@ class SppagebuilderAddonImage extends SppagebuilderAddons
 		$is_image_shape_enabled = isset($settings->is_image_shape_enabled) ? $settings->is_image_shape_enabled : 0;
 		$image_shape = !empty($settings->image_shape) ? $settings->image_shape : 0;
 		$image_shape_scale = !empty($settings->image_shape_scale) ? $settings->image_shape_scale : 1;
+		$image_shape_scale_xl = (!empty($settings->image_shape_scale_xl) && isset($settings->image_shape_scale_xl)) ? $settings->image_shape_scale_xl : $image_shape_scale;
+		$image_shape_scale_lg = (!empty($settings->image_shape_scale_lg) && isset($settings->image_shape_scale_lg)) ? $settings->image_shape_scale_lg : $image_shape_scale_xl;
+		$image_shape_scale_md = (!empty($settings->image_shape_scale_md) && isset($settings->image_shape_scale_md)) ? $settings->image_shape_scale_md : $image_shape_scale_lg;
+		$image_shape_scale_sm = (!empty($settings->image_shape_scale_sm) && isset($settings->image_shape_scale_sm)) ? $settings->image_shape_scale_sm : $image_shape_scale_md;
+		$image_shape_scale_xs = (!empty($settings->image_shape_scale_xs) && isset($settings->image_shape_scale_xs)) ? $settings->image_shape_scale_xs : $image_shape_scale_sm;
 
 		list($link, $target) = AddonHelper::parseLink($settings, 'link', ['url' => 'link', 'new_tab' => 'target']);
 
@@ -128,7 +133,7 @@ class SppagebuilderAddonImage extends SppagebuilderAddons
 
 					if(preg_match($pattern, $decoded_shape, $matches)) {
 						$shape_data = $matches[1];
-						$output .= '<img ' .$fetch_priority. ' data-scale="'. $image_shape_scale .'" style="clip-path: url(#svg-shape-' . $this->addon->id . '); visibility: hidden;" class="sppb-img-responsive' . ($placeholder ? ' sppb-element-lazy ' : '') . ' " src="' . ($placeholder ? $placeholder : $image_src)  . '" ' . $image2x . ($placeholder ? 'data-large="' . $image_src . '"' : '') . ' alt="' . $alt_text . '" title="' . $final_image_title . '" ' . ($noCustomImageDimension ? 'width="' . $image_width . '"' : '') . ' ' . ($noCustomImageDimension ? 'height="' . $image_height . '"' : '') . ($placeholder ? 'loading="lazy"' : '') . ' ' . $dimension . ($image_fit ? ('style="object-fit: ' . $image_fit . ';"') : '') . '/>';
+						$output .= '<img ' .$fetch_priority. ' data-scale=\'{"xl":' . $image_shape_scale_xl . ',"lg":' . $image_shape_scale_lg . ',"md":' . $image_shape_scale_md . ',"sm":' . $image_shape_scale_sm . ',"xs":' . $image_shape_scale_xs . '}\'' . ' style="clip-path: url(#svg-shape-' . $this->addon->id . '); visibility: hidden;" class="sppb-img-responsive' . ($placeholder ? ' sppb-element-lazy ' : '') . ' " src="' . ($placeholder ? $placeholder : $image_src)  . '" ' . $image2x . ($placeholder ? 'data-large="' . $image_src . '"' : '') . ' alt="' . $alt_text . '" title="' . $final_image_title . '" ' . ($noCustomImageDimension ? 'width="' . $image_width . '"' : '') . ' ' . ($noCustomImageDimension ? 'height="' . $image_height . '"' : '') . ($placeholder ? 'loading="lazy"' : '') . ' ' . $dimension . ($image_fit ? ('style="object-fit: ' . $image_fit . ';"') : '') . '/>';
 						$output .= '<svg>
 							<defs>
 							<clipPath id="svg-shape-' . $this->addon->id . '">
@@ -489,7 +494,40 @@ class SppagebuilderAddonImage extends SppagebuilderAddons
 			let is_effects_enabled = data.is_effects_enabled;
 			let is_image_shape_enabled = data.is_image_shape_enabled;
 			let image_shape = _.isString(data.image_shape) && !_.isEmpty(data.image_shape) ? data.image_shape : "";
-			let image_shape_scale = !_.isEmpty(data.image_shape_scale) ? data.image_shape_scale : 1;
+			let image_shape_scale = data.image_shape_scale;
+
+			if (_.isEmpty(image_shape_scale)) {
+				image_shape_scale = 1;
+			}
+
+			if (_.isString(image_shape_scale)) {
+				try {
+					image_shape_scale = JSON.parse(image_shape_scale);
+				} catch (e) {
+					image_shape_scale = Number(image_shape_scale) || 1;
+				}
+			}
+
+			if (_.isNumber(image_shape_scale)) {
+				image_shape_scale = {
+					xl: image_shape_scale,
+					lg: image_shape_scale,
+					md: image_shape_scale,
+					sm: image_shape_scale,
+					xs: image_shape_scale
+				};
+			}
+
+			if (!_.isObject(image_shape_scale) || _.isArray(image_shape_scale)) {
+				image_shape_scale = {
+					xl: 1,
+					lg: 1,
+					md: 1,
+					sm: 1,
+					xs: 1
+				};
+			}
+
 			
 			let image_shape_class = "";
 			let clip_path_url = null;
@@ -642,9 +680,9 @@ class SppagebuilderAddonImage extends SppagebuilderAddons
 						
 						  <# if(is_image_shape_enabled && image_shape && !default_shapes.includes(image_shape)) { #>
 							<# if(media.src.indexOf("http://") == -1 && media.src.indexOf("https://") == -1){ #>
-								<img data-scale="{{{image_shape_scale}}}" style="clip-path: url(#svg-shape-{{{data.id}}}); visibility: hidden;" class="sppb-img-responsive" src=\'{{ pagebuilder_base + media.src }}\' alt="{{ alt_text }}" title="{{ final_image_title }}" style="{{object_fit}}">
+								<img data-scale=\'{{ JSON.stringify(image_shape_scale) }}\' style="clip-path: url(#svg-shape-{{{data.id}}}); visibility: hidden;" class="sppb-img-responsive" src=\'{{ pagebuilder_base + media.src }}\' alt="{{ alt_text }}" title="{{ final_image_title }}" style="{{object_fit}}">
 							<# } else { #>
-								<img data-scale="{{{image_shape_scale}}}" style="clip-path: url(#svg-shape-{{{data.id}}}); visibility: hidden;" class="sppb-img-responsive" src=\'{{ media.src }}\' alt="{{ alt_text }}" title="{{ final_image_title }}" style="{{object_fit}}">
+								<img data-scale=\'{{ JSON.stringify(image_shape_scale) }}\' style="clip-path: url(#svg-shape-{{{data.id}}}); visibility: hidden;" class="sppb-img-responsive" src=\'{{ media.src }}\' alt="{{ alt_text }}" title="{{ final_image_title }}" style="{{object_fit}}">
 							<# } #>
 
 							<svg>

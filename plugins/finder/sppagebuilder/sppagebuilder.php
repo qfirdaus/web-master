@@ -221,17 +221,22 @@ class PlgFinderSppagebuilder extends FinderIndexerAdapter
 		{
 			$input = Factory::getApplication()->input;
 			$viewId = $item->view_id;
-			$itemIds = CollectionItemsService::fetchItemIdsByCollectionId($viewId);
+			$dynamicItems = CollectionItemsService::fetchItemIdsByCollectionId($viewId);
 			
-			foreach($itemIds as $itemId)
+			foreach($dynamicItems as $itemData)
 			{
+				if($itemData['language'] !== $item->language)
+				{
+					continue;
+				}
+
 				$itemClone = clone $item;
-				$input->set('collection_item_id', [$itemId]);
+				$input->set('collection_item_id', [$itemData['id']]);
 
 				$itemClone->summary = SppagebuilderHelperSite::getPrettyText($itemClone->body);
 				$itemClone->body = SppagebuilderHelperSite::getPrettyText($itemClone->body);
 				$linkObject = (object) ['type' => 'page', 'page' => $itemClone->id]; 
-				$itemClone->url = $this->generateDynamicContentLink($linkObject, ['id' => $itemId]);
+				$itemClone->url = $this->generateDynamicContentLink($linkObject, ['id' => $itemData['id']]);
 				$itemClone->route = $itemClone->url;
 				$itemClone->path = $itemClone->route;
 
@@ -239,7 +244,7 @@ class PlgFinderSppagebuilder extends FinderIndexerAdapter
 				{
 					$itemClone->title = $menuItem->title;
 				} else {
-					$itemClone->title = CollectionDataService::getItemTitleById($itemId, $viewId) ?? $itemClone->title;
+					$itemClone->title = CollectionDataService::getItemTitleById($itemData['id'], $viewId) ?? $itemClone->title;
 				}
 
 				$itemClone->addInstruction(Indexer::META_CONTEXT, 'user');
@@ -332,7 +337,7 @@ class PlgFinderSppagebuilder extends FinderIndexerAdapter
 		$query = $db->getQuery(true);
 		$query->select(array('title, id'));
 		$query->from($db->quoteName('#__menu'));
-		$query->where($db->quoteName('link') . ' LIKE '. $db->quote('%option=com_sppagebuilder&view=page&id='. $pageId .'%'));
+		$query->where($db->quoteName('link') . ' LIKE '. $db->quote('%option=com_sppagebuilder&view=page&id='. (int)$pageId .'%'));
 		$query->where($db->quoteName('published') . ' = '. $db->quote('1'));
 		$db->setQuery($query);
 		$item = $db->loadObject();
@@ -355,11 +360,12 @@ class PlgFinderSppagebuilder extends FinderIndexerAdapter
         switch ($linkType) {
             case 'page':
                 $pageId = $link->page ?? null;
+                $pageId = (int) $pageId;
                 if ($pageId === CollectionIds::ARTICLES_COLLECTION_ID) {
                     return CollectionHelper::getJoomlaSingleArticleRoute($item);
                 }
                 $page = !empty($pageId)
-                    ? Page::where('id', $pageId)->first(['extension_view', 'view_id', 'id'])
+                    ? Page::where('id', (int)$pageId)->first(['extension_view', 'view_id', 'id', 'language'])
                     : null;
 
                 if (empty($page) || $page->isEmpty()) {
@@ -379,15 +385,18 @@ class PlgFinderSppagebuilder extends FinderIndexerAdapter
                         }
                         return Route::_(CollectionHelper::buildRouteWithTagItemId($routeUrl, $item['id']), false);
                     } else {
-                        $menuItemId = CollectionHelper::getCurrentMenuItemId($page->view_id);
+                        $menuItemId = CollectionHelper::getCurrentMenuItemId((int) $page->view_id);
                         if (!empty($menuItemId)) {
                             $routeUrl .= '&Itemid=' . $menuItemId;
                         }
+						if (!empty($page->language)) {
+							$routeUrl .= '&lang=' . $page->language;
+						}
                         return Route::_(CollectionHelper::buildRouteWithCollectionItemId($routeUrl, $item['id']), false);
                     }
                 }
 
-                $routeUrl = '/index.php?option=com_sppagebuilder&view=page&id=' . $page->id;
+                $routeUrl = '/index.php?option=com_sppagebuilder&view=page&id=' . (int) $page->id;
                 return Route::_($routeUrl, false);
             case 'url':
                 return $link->url ?? null;

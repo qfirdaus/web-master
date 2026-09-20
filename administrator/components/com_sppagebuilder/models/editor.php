@@ -3,7 +3,7 @@
 /**
  * @package SP Page Builder
  * @author JoomShaper http://www.joomshaper.com
- * @copyright Copyright (c) 2010 - 2025 JoomShaper
+ * @copyright Copyright (c) 2010 - 2026 JoomShaper
  * @license http://www.gnu.org/licenses/gpl-2.0.html GNU/GPLv2 or later
  */
 
@@ -14,7 +14,9 @@ use Joomla\CMS\Application\CMSApplication;
 use Joomla\CMS\Component\ComponentHelper;
 use Joomla\CMS\Dispatcher\Dispatcher as DispatcherDispatcher;
 use Joomla\CMS\Factory;
+use Joomla\CMS\HTML\HTMLHelper;
 use Joomla\CMS\Installer\Installer;
+use Joomla\CMS\Language\LanguageHelper;
 use Joomla\CMS\Language\Multilanguage;
 use Joomla\CMS\Language\Text;
 use Joomla\CMS\MVC\Model\AdminModel;
@@ -265,6 +267,7 @@ class SppagebuilderModelEditor extends AdminModel
                 $db->quoteName('p.language'),
                 $db->quoteName('p.hits'),
                 $db->quoteName('p.checked_out'),
+                $db->quoteName('p.checked_out_time'),
                 $db->quoteName('p.css'),
                 $db->quoteName('p.attribs'),
                 $db->quoteName('p.og_title'),
@@ -273,6 +276,7 @@ class SppagebuilderModelEditor extends AdminModel
                 $db->quoteName('c.title', 'category'),
                 $db->quoteName('l.title', 'language_title'),
                 $db->quoteName('ug.title', 'access_title'),
+                $db->quoteName('co.name', 'checked_out_by'),
             ]);
 
             $query->from($db->quoteName('#__sppagebuilder', 'p'))
@@ -281,7 +285,9 @@ class SppagebuilderModelEditor extends AdminModel
                 ->join('LEFT', $db->quoteName('#__languages', 'l'),
                     $db->quoteName('l.lang_code') . ' = ' . $db->quoteName('p.language'))
                 ->join('LEFT', $db->quoteName('#__viewlevels', 'ug'),
-                    $db->quoteName('ug.id') . ' = ' . $db->quoteName('p.access'));
+                    $db->quoteName('ug.id') . ' = ' . $db->quoteName('p.access'))
+                ->join('LEFT', $db->quoteName('#__users', 'co'),
+                    $db->quoteName('co.id') . ' = ' . $db->quoteName('p.checked_out'));
 
             $query->where($db->quoteName('p.extension') . ' = :extension')
                 ->bind(':extension', $extension);
@@ -353,6 +359,13 @@ class SppagebuilderModelEditor extends AdminModel
                         $result->author = Factory::getUser($result->created_by)->name;
                     }
 
+                    // Timezone-aware, matching how jgrid.checkedout formats it elsewhere -
+                    // the column is stored in UTC, so a plain string pass-through would
+                    // render the wrong local time for anyone outside that timezone.
+                    if (! empty($result->checked_out_time)) {
+                        $result->checked_out_time = HTMLHelper::_('date', $result->checked_out_time, 'DATE_FORMAT_LC2');
+                    }
+
                     if (empty($result->category)) {
                         $result->category = '-';
                     }
@@ -372,18 +385,19 @@ class SppagebuilderModelEditor extends AdminModel
 
                     $result->url       = SppagebuilderHelperRoute::getFormRoute($result->id, $result->language, 0, null, $extensionView === 'popup');
                     $result->preview   = $this->getPreviewUrl($result->id, $result->language)['url'] ?? '';
-                    $result->page_type = static::getReadablePageType($result->extension_view, $result->view_id);
+                    $result->page_type = static::getReadablePageType($result->extension_view, $result->view_id, $result->language);
+                    $langPrefix = static::getLanguageSefPrefix($result->language);
                     if ($result->view_id === CollectionIds::ARTICLES_COLLECTION_ID) {
                         if ($result->extension_view === 'dynamic_content:index') {
-                            $result->page_type = sprintf(Text::_('COM_SPPAGEBUILDER_EDITOR_PAGE_LIST_PAGE_TYPE_DYNAMIC_CONTENT_INDEX'), 'articles');
+                            $result->page_type = sprintf(Text::_('COM_SPPAGEBUILDER_EDITOR_PAGE_LIST_PAGE_TYPE_DYNAMIC_CONTENT_INDEX'), $langPrefix . 'articles');
                         } else if ($result->extension_view === 'dynamic_content:detail') {
-                            $result->page_type = sprintf(Text::_('COM_SPPAGEBUILDER_EDITOR_PAGE_LIST_PAGE_TYPE_DYNAMIC_CONTENT_DETAIL'), 'articles');
+                            $result->page_type = sprintf(Text::_('COM_SPPAGEBUILDER_EDITOR_PAGE_LIST_PAGE_TYPE_DYNAMIC_CONTENT_DETAIL'), $langPrefix . 'articles');
                         }
                     } else if ($result->view_id === CollectionIds::TAGS_COLLECTION_ID) {
                         if ($result->extension_view === 'dynamic_content:index') {
-                            $result->page_type = sprintf(Text::_('COM_SPPAGEBUILDER_EDITOR_PAGE_LIST_PAGE_TYPE_DYNAMIC_CONTENT_INDEX'), 'tags');
+                            $result->page_type = sprintf(Text::_('COM_SPPAGEBUILDER_EDITOR_PAGE_LIST_PAGE_TYPE_DYNAMIC_CONTENT_INDEX'), $langPrefix . 'tags');
                         } else if ($result->extension_view === 'dynamic_content:detail') {
-                            $result->page_type = sprintf(Text::_('COM_SPPAGEBUILDER_EDITOR_PAGE_LIST_PAGE_TYPE_DYNAMIC_CONTENT_DETAIL'), 'tags');
+                            $result->page_type = sprintf(Text::_('COM_SPPAGEBUILDER_EDITOR_PAGE_LIST_PAGE_TYPE_DYNAMIC_CONTENT_DETAIL'), $langPrefix . 'tags');
                         }
                     }
                 }
@@ -425,6 +439,9 @@ class SppagebuilderModelEditor extends AdminModel
      */
     public function getPreviewUrl($pageId, $language = null)
     {
+        if (!empty($language)) {
+            $language_org = explode('-', $language)[0];
+        }
         if (empty($pageId)) {
             return ['url' => ''];
         }
@@ -440,22 +457,28 @@ class SppagebuilderModelEditor extends AdminModel
         $menuItemId = $itemId ? '&Itemid=' . $itemId : '';
         $pageType = $page->extension_view;
 
+        // Appended to the query string before routing - Route::_()/Route::link() need lang
+        // as part of the input to fold it into a SEF path correctly. Appending it to an
+        // already-routed URL (as this used to do, once for every case below via a shared
+        // block after the switch) corrupts SEF URLs, since "&lang=xx" isn't valid tacked
+        // onto a path that no longer has a "?" query string.
+        $langQuery = '';
+        if (Multilanguage::isEnabled() && ! empty($language) && $language !== '*') {
+            $langQuery = '&lang=' . $language_org;
+        }
+
         switch ($pageType) {
             case Page::PAGE_TYPE_DYNAMIC_CONTENT_DETAIL:
-                $firstItemId = CollectionHelper::getFirstCollectionItemId($page->view_id);
-                $url         = Route::_(Uri::root() . 'index.php?option=com_sppagebuilder&view=dynamic&collection_item_id[0]=' . $firstItemId . '&collection_type=' . ($page->view_id === CollectionIds::ARTICLES_COLLECTION_ID ? 'articles' : ($page->view_id === CollectionIds::TAGS_COLLECTION_ID ? 'tags' : 'normal-source')), false);
+                $firstItemId = CollectionHelper::getFirstCollectionItemId($page->view_id, $language);
+                $url         = Route::_(Uri::root() . 'index.php?option=com_sppagebuilder&view=dynamic&collection_item_id[0]=' . $firstItemId . '&collection_type=' . ($page->view_id === CollectionIds::ARTICLES_COLLECTION_ID ? 'articles' : ($page->view_id === CollectionIds::TAGS_COLLECTION_ID ? 'tags' : 'normal-source')) . $langQuery, false);
                 break;
             case Page::PAGE_TYPE_EASYSTORE_STOREFRONT:
-                $url = Route::_(Uri::root() . 'index.php?option=com_easystore&view=products', false);
+                $url = Route::_(Uri::root() . 'index.php?option=com_easystore&view=products' . $langQuery, false);
                 break;
             case Page::PAGE_TYPE_DYNAMIC_CONTENT_INDEX:
             case Page::PAGE_TYPE_REGULAR:
             default:
-                $url = 'index.php?option=com_sppagebuilder&view=page&id=' . $pageId . $menuItemId;
-
-                if (Multilanguage::isEnabled() && ! empty($language) && $language !== '*') {
-                    $url .= '&lang=' . $language;
-                }
+                $url = 'index.php?option=com_sppagebuilder&view=page&id=' . $pageId . $menuItemId . $langQuery;
 
             	$url = $isAdmin ? Route::link('site', $url, false) : Route::_($url, false);
 
@@ -467,13 +490,28 @@ class SppagebuilderModelEditor extends AdminModel
                 break;
         }
 
-        if($pageType === Page::PAGE_TYPE_DYNAMIC_CONTENT_DETAIL || $pageType === Page::PAGE_TYPE_DYNAMIC_CONTENT_INDEX || $pageType === Page::PAGE_TYPE_EASYSTORE_STOREFRONT) {
-             if (Multilanguage::isEnabled() && ! empty($language) && $language !== '*') {
-                $url .= '&lang=' . $language;
-            }
+        return ['url' => $url];
+    }
+
+    /**
+     * Get the "/{sef}/" prefix for a specific-language Dynamic Content page's route-style
+     * type label (e.g. "en/" for "en-GB"), or an empty string for the "All" (*) language
+     * or when multilingual isn't enabled, since those aren't tied to one language's route.
+     *
+     * @param string|null $language
+     *
+     * @return string
+     * @since 6.8.0
+     */
+    private static function getLanguageSefPrefix($language)
+    {
+        if (!Multilanguage::isEnabled() || empty($language) || $language === '*') {
+            return '';
         }
 
-        return ['url' => $url];
+        $languages = LanguageHelper::getLanguages('lang_code');
+
+        return isset($languages[$language]) ? $languages[$language]->sef . '/' : '';
     }
 
     /**
@@ -481,11 +519,12 @@ class SppagebuilderModelEditor extends AdminModel
      *
      * @param string $pageType
      * @param int|null $collectionId
+     * @param string|null $language
      *
      * @return string
      * @since 5.5.0
      */
-    private static function getReadablePageType($pageType, $collectionId = null)
+    private static function getReadablePageType($pageType, $collectionId = null, $language = null)
     {
         switch ($pageType) {
             case Page::PAGE_TYPE_REGULAR:
@@ -498,14 +537,14 @@ class SppagebuilderModelEditor extends AdminModel
                     // @TODO: check this
                     return Text::_('COM_SPPAGEBUILDER_EDITOR_PAGE_LIST_PAGE_TYPE_PAGE');
                 }
-                return Text::sprintf('COM_SPPAGEBUILDER_EDITOR_PAGE_LIST_PAGE_TYPE_DYNAMIC_CONTENT_INDEX', $collection->alias);
+                return Text::sprintf('COM_SPPAGEBUILDER_EDITOR_PAGE_LIST_PAGE_TYPE_DYNAMIC_CONTENT_INDEX', static::getLanguageSefPrefix($language) . $collection->alias);
             case Page::PAGE_TYPE_DYNAMIC_CONTENT_DETAIL:
                 $collection = Collection::find($collectionId);
                 if ($collection->isEmpty()) {
                     // @TODO: check this
                     return Text::_('COM_SPPAGEBUILDER_EDITOR_PAGE_LIST_PAGE_TYPE_PAGE');
                 }
-                return Text::sprintf('COM_SPPAGEBUILDER_EDITOR_PAGE_LIST_PAGE_TYPE_DYNAMIC_CONTENT_DETAIL', $collection->alias);
+                return Text::sprintf('COM_SPPAGEBUILDER_EDITOR_PAGE_LIST_PAGE_TYPE_DYNAMIC_CONTENT_DETAIL', static::getLanguageSefPrefix($language) . $collection->alias);
             default:
                 return $pageType;
         }
@@ -517,13 +556,14 @@ class SppagebuilderModelEditor extends AdminModel
      *
      * @param string   $extensionView
      * @param int|null $viewId
+     * @param string|null $language
      *
      * @return string
      * @since 6.6.1
      */
-    private static function getPageTypeLabel($extensionView, $viewId = null)
+    private static function getPageTypeLabel($extensionView, $viewId = null, $language = null)
     {
-        $label = static::getReadablePageType($extensionView, $viewId);
+        $label = static::getReadablePageType($extensionView, $viewId, $language);
 
         $collectionAlias = null;
         if ((int) $viewId === (int) CollectionIds::ARTICLES_COLLECTION_ID) {
@@ -533,6 +573,8 @@ class SppagebuilderModelEditor extends AdminModel
         }
 
         if (!empty($collectionAlias)) {
+            $collectionAlias = static::getLanguageSefPrefix($language) . $collectionAlias;
+
             if ($extensionView === Page::PAGE_TYPE_DYNAMIC_CONTENT_INDEX) {
                 $label = sprintf(Text::_('COM_SPPAGEBUILDER_EDITOR_PAGE_LIST_PAGE_TYPE_DYNAMIC_CONTENT_INDEX'), $collectionAlias);
             } elseif ($extensionView === Page::PAGE_TYPE_DYNAMIC_CONTENT_DETAIL) {
@@ -636,7 +678,13 @@ class SppagebuilderModelEditor extends AdminModel
         ];
 
         if (! empty($result)) {
-            $result->text     = ! empty($result) ? \json_decode($result->text) : null;
+            // `content` is the real, current state of the page - regular saves (savePage())
+            // only ever write to this column, never `text`, so `text` goes stale the moment
+            // the page is edited (it's only set once, at row creation). Prefer `content`,
+            // falling back to `text` purely for legacy rows where `content` was never
+            // populated at all (NULL) - not merely "falsy", since a deliberately emptied
+            // page must still load as the empty page it actually is.
+            $result->text     = ! is_null($result->content) ? \json_decode($result->content) : \json_decode($result->text);
             $result->attribs  = \json_decode($result->attribs);
             $result->og_image = \json_decode($result->og_image);
 
@@ -665,7 +713,7 @@ class SppagebuilderModelEditor extends AdminModel
             }
 
             // Readable route-style page type (e.g. "/articles" or "/articles/:slug"), same as the page list.
-            $result->page_type = self::getPageTypeLabel($result->extension_view, $result->view_id);
+            $result->page_type = self::getPageTypeLabel($result->extension_view, $result->view_id, $result->language);
         }
 
         return $result;
@@ -793,7 +841,13 @@ class SppagebuilderModelEditor extends AdminModel
         ];
 
         if (! empty($result)) {
-            $result->text     = ! empty($result) ? \json_decode($result->text) : null;
+            // `content` is the real, current state of the page - regular saves (savePage())
+            // only ever write to this column, never `text`, so `text` goes stale the moment
+            // the page is edited (it's only set once, at row creation). Prefer `content`,
+            // falling back to `text` purely for legacy rows where `content` was never
+            // populated at all (NULL) - not merely "falsy", since a deliberately emptied
+            // page must still load as the empty page it actually is.
+            $result->text     = ! is_null($result->content) ? \json_decode($result->content) : \json_decode($result->text);
             $result->attribs  = \json_decode($result->attribs);
             $result->og_image = \json_decode($result->og_image);
 
@@ -1259,17 +1313,20 @@ class SppagebuilderModelEditor extends AdminModel
      */
     private function checkOutItems(string $ids)
     {
-        $idsCasted = implode(',', array_map('intval', explode(',', $ids)));
-        $db    = Factory::getDbo();
-        $query = $db->getQuery(true);
-        $query->update($db->quoteName('#__sppagebuilder'))
-            ->set($db->quoteName('checked_out') . ' = 0')
-            ->where($db->quoteName('id') . ' IN (' . $idsCasted . ')');
-        $db->setQuery($query);
+        $idsCasted = array_map('intval', explode(',', $ids));
 
         try
         {
-            $db->execute();
+            Table::addIncludePath(JPATH_ADMINISTRATOR . '/components/com_sppagebuilder/tables');
+
+            foreach ($idsCasted as $id)
+            {
+                // A fresh instance per row: Table::checkIn() only touches the row matching
+                // whatever primary key is currently bound on the instance.
+                $table = Table::getInstance('Page', 'SppagebuilderTable');
+                $table->checkIn($id);
+            }
+
             return true;
         } catch (\Exception $e) {
             return false;
@@ -1278,6 +1335,9 @@ class SppagebuilderModelEditor extends AdminModel
 
     /**
      * Check in a page by ID.
+     *
+     * Despite the name, this locks the page to the current user - i.e. Joomla's own
+     * "check out" - matching how this method's callers already use it.
      *
      * @param int $id The page ID to check in.
      *
@@ -1290,18 +1350,12 @@ class SppagebuilderModelEditor extends AdminModel
             return;
         }
 
-        $user  = Factory::getUser();
-        $db    = Factory::getDbo();
-        $query = $db->getQuery(true);
-        $query->update($db->quoteName('#__sppagebuilder'))
-            ->set($db->quoteName('checked_out') . ' = ' . (int) $user->id)
-            ->where($db->quoteName('id') . ' = :id')
-            ->bind(':id', $id, ParameterType::INTEGER);
-        $db->setQuery($query);
         try
         {
-            $db->execute();
-            return true;
+            Table::addIncludePath(JPATH_ADMINISTRATOR . '/components/com_sppagebuilder/tables');
+            $table = Table::getInstance('Page', 'SppagebuilderTable');
+
+            return (bool) $table->checkOut(Factory::getUser()->id, $id);
         } catch (\Exception $e) {
             return false;
         }
@@ -1309,6 +1363,9 @@ class SppagebuilderModelEditor extends AdminModel
 
     /**
      * Check out a page by ID.
+     *
+     * Despite the name, this releases the page's lock - i.e. Joomla's own "check in" -
+     * matching how this method's callers already use it.
      *
      * @param int $id The page ID to check out.
      *
@@ -1321,18 +1378,12 @@ class SppagebuilderModelEditor extends AdminModel
             return;
         }
 
-        $db    = Factory::getDbo();
-        $query = $db->getQuery(true);
-        $query->update($db->quoteName('#__sppagebuilder'))
-            ->set($db->quoteName('checked_out') . ' = 0')
-            ->where($db->quoteName('id') . ' = :id')
-            ->bind(':id', $id, ParameterType::INTEGER);
-        $db->setQuery($query);
-
         try
         {
-            $db->execute();
-            return true;
+            Table::addIncludePath(JPATH_ADMINISTRATOR . '/components/com_sppagebuilder/tables');
+            $table = Table::getInstance('Page', 'SppagebuilderTable');
+
+            return (bool) $table->checkIn($id);
         } catch (\Exception $e) {
             return false;
         }

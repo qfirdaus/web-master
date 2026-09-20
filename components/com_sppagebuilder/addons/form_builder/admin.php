@@ -3,7 +3,7 @@
 /**
  * @package SP Page Builder
  * @author JoomShaper http://www.joomshaper.com
- * @copyright Copyright (c) 2010 - 2025 JoomShaper
+ * @copyright Copyright (c) 2010 - 2026 JoomShaper
  * @license http://www.gnu.org/licenses/gpl-2.0.html GNU/GPLv2 or later
  */
 //no direct access
@@ -256,7 +256,7 @@ SpAddonsConfig::addonConfig([
                                     'depends' => [
                                         ['field_type', '=', 'tel'],
                                     ],
-                                    'std'     => '^\+(?:\d{1,3}[-.\s]?)?\(?\d{1,4}\)?[-.\s]?\d{1,10}$',
+                                    'std'     => '^\+(?:\d{1,3}[\-.\s]?)?\(?\d{1,4}\)?[\-.\s]?\d{1,10}$',
                                 ],
                                 'range_min'                           => [
                                     'type'    => 'number',
@@ -476,6 +476,19 @@ SpAddonsConfig::addonConfig([
                     'title' => Text::_('COM_SPPAGEBUILDER_ADDON_FORM_BUILDER_REQUIRED_MESSAGE'),
                     'desc'  => Text::_('COM_SPPAGEBUILDER_ADDON_FORM_BUILDER_REQUIRED_MESSAGE_DESC'),
                     'std'   => 'Please fill the required field.',
+                ],
+
+                'inline_validation'       => [
+                    'type'  => 'checkbox',
+                    'title' => Text::_('COM_SPPAGEBUILDER_ADDON_FORM_BUILDER_INLINE_VALIDATION'),
+                    'desc'  => Text::_('COM_SPPAGEBUILDER_ADDON_FORM_BUILDER_INLINE_VALIDATION_DESC'),
+                    'std'   => 0,
+                ],
+
+                'inline_validation_color' => [
+                    'type'    => 'color',
+                    'title'   => Text::_('COM_SPPAGEBUILDER_ADDON_FORM_BUILDER_INLINE_VALIDATION_COLOR'),
+                    'std'     => '#F44337',
                 ],
 
                 'success_message'        => [

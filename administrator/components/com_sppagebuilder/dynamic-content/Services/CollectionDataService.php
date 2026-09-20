@@ -44,10 +44,10 @@ class CollectionDataService
      *
      * @since 5.5.0
      */
-    public function fetchCollectionItems(int $collectionId, string $direction = 'ASC', ?int $sortingColumn = null)
+    public function fetchCollectionItems(int $collectionId, string $direction = 'ASC', ?int $sortingColumn = null, ?string $language = null)
     {
         try {
-            $items = $this->getCollectionItemsByCollectionId($collectionId, $direction, $sortingColumn);
+            $items = $this->getCollectionItemsByCollectionId($collectionId, $direction, $sortingColumn, $language);
             $items = Arr::make($items);
             return $this->prepareCollectionItems($items);
         } catch (Throwable $error) {
@@ -95,16 +95,19 @@ class CollectionDataService
      *
      * @param array $itemIds The IDs of the items to fetch.
      * @param string $direction The direction of the order.
+     * @param int|null $sortingColumn The collection field id to sort the items by.
      * @return array The fetched items.
      *
      * @since 5.5.0
      */
-    public function fetchCollectionItemsByItemIds(array $itemIds, string $direction = 'ASC')
+    public function fetchCollectionItemsByItemIds(array $itemIds, string $direction = 'ASC', ?int $sortingColumn = null)
     {
-        $items = CollectionItem::whereIn('id', $itemIds)
-            ->where('published', 1)
-            ->orderBy('ordering', $direction)
-            ->with([
+        $query = CollectionItem::whereIn('id', $itemIds)
+            ->where('published', 1);
+
+        $query = $this->applySorting($query, $direction, $sortingColumn);
+
+        $items = $query->with([
                 'values' => function ($query) {
                     $query = $query->select([
                         'field_name' => 'collection_field.name',
@@ -118,7 +121,7 @@ class CollectionDataService
                     );
                 }
             ])->get();
-        
+
         if (empty($items)) {
             return [];
         }
@@ -134,11 +137,12 @@ class CollectionDataService
      * @param array $item The item to get reference items for.
      * @param object $filters The filters to apply.
      * @param string $direction The direction of the order.
+     * @param int|null $sortingColumn The collection field id to sort the items by.
      * @return array The fetched items.
      *
      * @since 5.5.0
      */
-    public function getCollectionReferenceItemsOnDemand($item, $filters, string $direction = 'ASC')
+    public function getCollectionReferenceItemsOnDemand($item, $filters, string $direction = 'ASC', ?int $sortingColumn = null)
     {
         if (empty($item) || empty($filters) || empty($filters->conditions)) {
             return [];
@@ -160,7 +164,7 @@ class CollectionDataService
             return [];
         }
 
-        return $this->fetchCollectionItemsByItemIds($itemIds, $direction);
+        return $this->fetchCollectionItemsByItemIds($itemIds, $direction, $sortingColumn);
     }
 
     /**
@@ -393,6 +397,60 @@ class CollectionDataService
     }
 
     /**
+     * Apply the ordering to a collection item query.
+     *
+     * When a sorting column (a collection field id) is given the items are ordered by that
+     * field's stored value, otherwise the collection's own ordering column is used.
+     *
+     * @param QueryBuilder $query The query to order.
+     * @param string $direction The direction of the order.
+     * @param int|null $sortingColumn The collection field id to sort the items by.
+     * @return QueryBuilder The ordered query.
+     *
+     * @since 6.8.0
+     */
+    protected function applySorting($query, string $direction = 'ASC', ?int $sortingColumn = null)
+    {
+        $direction = strtoupper($direction) === 'DESC' ? 'DESC' : 'ASC';
+
+        if (empty($sortingColumn)) {
+            return $query->orderBy('ordering', $direction);
+        }
+
+        $sortingColumnField = CollectionField::where('id', $sortingColumn)->first(['type']);
+
+        if ($sortingColumnField->isEmpty()) {
+            return $query->orderBy('ordering', $direction);
+        }
+
+        $sortingColumnType = $sortingColumnField->type;
+
+        // The field_id condition must live in the join's ON clause (not a WHERE clause),
+        // otherwise items with no value row for this field would still be excluded after
+        // a LEFT JOIN, since NULL never equals $sortingColumn.
+        $query = $query->rawQuery(function ($query) use ($sortingColumn) {
+            $query->getQuery()->join(
+                'LEFT',
+                $query->quoteName('#__sppagebuilder_collection_item_values', 'collection_item_value') . ' ON (' .
+                $query->quoteNameWithPrefix('collection_item_value.item_id') . ' = ' . $query->quoteNameWithPrefix('collection_item.id') .
+                ' AND ' . $query->quoteNameWithPrefix('collection_item_value.field_id') . ' = ' . (int) $sortingColumn . ')'
+            );
+            return $query;
+        });
+
+        // A secondary sort on 'ordering' keeps ties (including NULLs from the LEFT JOIN)
+        // deterministic across requests instead of falling back to arbitrary storage order.
+        if ($sortingColumnType === FieldTypes::NUMBER) {
+            return $query->rawQuery(function ($query) use ($direction) {
+                $query->getQuery()->order('CAST(collection_item_value.value AS DECIMAL(20,10)) ' . $direction);
+                return $query;
+            })->orderBy('ordering', $direction);
+        }
+
+        return $query->orderBy('collection_item_value.value', $direction)->orderBy('ordering', $direction);
+    }
+
+    /**
      * Get collection items by collection id.
      *
      * @param int $collectionId
@@ -400,44 +458,21 @@ class CollectionDataService
      *
      * @since 5.5.0
      */
-    protected function getCollectionItemsByCollectionId(int $collectionId, string $direction = 'ASC', ?int $sortingColumn = null)
+    protected function getCollectionItemsByCollectionId(int $collectionId, string $direction = 'ASC', ?int $sortingColumn = null, ?string $language = null)
     {
         $user = Factory::getUser();
         $userAccessLevels = $user->getAuthorisedViewLevels();
-        $langTag = Factory::getLanguage()->getTag();
-        $direction = strtoupper($direction) === 'DESC' ? 'DESC' : 'ASC';
-        
-        $sortingColumnType = null;
+        // Callers editing a specific language variant of a page (e.g. the page builder editor)
+        // can pass $language explicitly to filter by that language instead of the site's
+        // currently active one.
+        $langTag = !empty($language) ? $language : Factory::getLanguage()->getTag();
 
-        if($sortingColumn){
-            $sortingColumnField = CollectionField::where('id', $sortingColumn)->first(['type']);
-            $sortingColumnType = $sortingColumnField->isEmpty() ? null : $sortingColumnField->type;
-        }
-        
         $query = CollectionItem::where('collection_id', $collectionId)
             ->where('published', 1)
             ->whereIn('language', [$langTag, '*'])
             ->whereIn('access', $userAccessLevels);
 
-        if (!empty($sortingColumn)) {
-            $query = $query->join(
-                CollectionItemValue::class,
-                'collection_item.id',
-                'collection_item_value.item_id'
-            )
-            ->where('collection_item_value.field_id', $sortingColumn);
-
-            if ($sortingColumnType === FieldTypes::NUMBER) {
-                $query = $query->rawQuery(function ($query) use ($direction) {
-                    $query->getQuery()->order('CAST(collection_item_value.value AS DECIMAL(20,10)) ' . $direction);
-                    return $query;
-                });
-            } else {
-                $query = $query->orderBy('collection_item_value.value', $direction);
-            }
-        } else {
-            $query = $query->orderBy('ordering', $direction);
-        }
+        $query = $this->applySorting($query, $direction, $sortingColumn);
 
         $items = $query->with([
             'values' => function ($query) {

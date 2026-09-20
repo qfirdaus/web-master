@@ -703,6 +703,8 @@ class CollectionRenderer
     {
         $limit = $this->getCollectionLimit($addon->settings);
         $direction = $addon->settings->direction ?? 'ASC';
+        $sortingColumn = (isset($addon->settings->sorting_field_id) && $addon->settings->sorting_field_id) ? $addon->settings->sorting_field_id : null;
+        $sortingColumn = $sortingColumn === 'default' ? null : $sortingColumn;
         [$referenceFilters, $regularFilters, $hasReferenceFilters] = CollectionData::partitionByReferenceFilters($addon->settings->filters);
 
         $collectionId = $addon->settings->source ?? null;
@@ -733,7 +735,7 @@ class CollectionRenderer
         $path = $this->collectPaths($this->addon->child_nodes);
 
         if ($hasReferenceFilters) {
-            $items = (new CollectionDataService)->getCollectionReferenceItemsOnDemand($item, $referenceFilters, $direction);
+            $items = (new CollectionDataService)->getCollectionReferenceItemsOnDemand($item, $referenceFilters, $direction, $sortingColumn);
 
             // Apply the regular filters to the reference filtered data
             $newData = (new CollectionData())
@@ -748,6 +750,7 @@ class CollectionRenderer
             $parentItem = CollectionHelper::getDetailPageData();
             $newData = (new CollectionData())
                 ->setLimit($limit)
+                ->setSortingColumn($sortingColumn)
                 ->setDirection($direction)
                 ->setCurrentItemId($item['id'])
                 ->loadDataBySource($addon->settings->source)
@@ -837,12 +840,11 @@ class CollectionRenderer
         // So we need to get the data for the detail page
         if ($hasReferenceFilters) {
             $parentItem = CollectionHelper::getDetailPageData();
-            $items = (new CollectionDataService)->getCollectionReferenceItemsOnDemand($parentItem, $referenceFilters, $direction);
+            $items = (new CollectionDataService)->getCollectionReferenceItemsOnDemand($parentItem, $referenceFilters, $direction, $sortingColumn);
 
             $data = (new CollectionData())
                 ->setData($items)
                 ->setLimit($limit)
-                ->setSortingColumn($sortingColumn)
                 ->setDirection($direction)
                 ->applyFilters($regularFilters, $allPaths)
                 ->applyUserFilters($allPaths)

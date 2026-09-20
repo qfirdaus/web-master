@@ -48,64 +48,11 @@ trait AppConfig
 		$allowedFileExtensions = array_map('strtolower', $allowedFileExtensions);
 
 		$model = $this->getModel('Appconfig');
-		$pages = $model->getPageList();
-
-		$isAppendArticleDetails = true;
-		$articlesIndex = -1;
-
-		if (!empty($pages))
-		{
-			foreach ($pages as $index => $page)
-			{
-				if (isset($page['label']))
-				{
-					if ($page['label'] === Text::_('COM_SPPAGEBUILDER_PAGE_TYPE_ARTICLES'))
-					{
-						$articlesIndex = $index;
-					}
-				}
-
-				if (isset($page['options']) && is_array($page['options']))
-				{
-					foreach ($page['options'] as $option)
-					{
-						if (isset($option->legend) && $option->legend === '/articles/:slug')
-						{
-							$isAppendArticleDetails = false;
-							break;
-						}
-					}
-				}
-			}
-		}
-
-		if ($isAppendArticleDetails)
-		{
-			if ($articlesIndex === -1)
-			{
-				$pages[] = [
-					'label' => Text::_('COM_SPPAGEBUILDER_PAGE_TYPE_ARTICLES'),
-					'icon' => 'articles',
-					'options' => [
-						(object) [
-							'label' => 'Article Details',
-							'value' => CollectionIds::ARTICLES_COLLECTION_ID,
-							'legend' => '/articles/:slug',
-						]
-					]
-				];
-			}
-			else
-			{
-				array_unshift($pages[$articlesIndex]['options'], (object) [
-					'label' => 'Article Details',
-					'value' => CollectionIds::ARTICLES_COLLECTION_ID,
-					'legend' => '/articles/:slug',
-				]);
-			}
-			
-		}
-
+		$pages = $this->appendArticleDetailsFallback($model->getPageList());
+		// Dynamic Content index/detail pages have one row per language; this variant only
+		// includes the "All" (*) row per collection, so pickers built from it show a page
+		// once instead of once per language.
+		$pagesUnique = $this->appendArticleDetailsFallback($model->getUniquePageList());
 
 		$menus = $model->getMenus();
 		$popups = $model->getPopupList();
@@ -204,9 +151,74 @@ trait AppConfig
 			'is_pro' => ApplicationHelper::isProVersion(),
 			'allowed_file_extensions' => $allowedFileExtensions,
 			'collections' => $model->getCollections(),
+			'pages_unique' => $pagesUnique,
 		];
 
 		$this->sendResponse($response);
+	}
+
+	/**
+	 * Ensure an "Article Details" option is always present under the Articles group,
+	 * since Articles come from Joomla core content rather than a #__sppagebuilder row
+	 * until a Dynamic Content detail page has actually been created for them.
+	 *
+	 * @param array $pages
+	 * @return array
+	 */
+	private function appendArticleDetailsFallback(array $pages)
+	{
+		$isAppendArticleDetails = true;
+		$articlesIndex = -1;
+
+		foreach ($pages as $index => $page)
+		{
+			if (isset($page['label']) && $page['label'] === Text::_('COM_SPPAGEBUILDER_PAGE_TYPE_ARTICLES'))
+			{
+				$articlesIndex = $index;
+			}
+
+			if (isset($page['options']) && is_array($page['options']))
+			{
+				foreach ($page['options'] as $option)
+				{
+					if (isset($option->legend) && $option->legend === '/articles/:slug')
+					{
+						$isAppendArticleDetails = false;
+						break;
+					}
+				}
+			}
+		}
+
+		if (!$isAppendArticleDetails)
+		{
+			return $pages;
+		}
+
+		if ($articlesIndex === -1)
+		{
+			$pages[] = [
+				'label' => Text::_('COM_SPPAGEBUILDER_PAGE_TYPE_ARTICLES'),
+				'icon' => 'articles',
+				'options' => [
+					(object) [
+						'label' => 'Article Details',
+						'value' => CollectionIds::ARTICLES_COLLECTION_ID,
+						'legend' => '/articles/:slug',
+					]
+				]
+			];
+		}
+		else
+		{
+			array_unshift($pages[$articlesIndex]['options'], (object) [
+				'label' => 'Article Details',
+				'value' => CollectionIds::ARTICLES_COLLECTION_ID,
+				'legend' => '/articles/:slug',
+			]);
+		}
+
+		return $pages;
 	}
 
 	public function getPermissions()

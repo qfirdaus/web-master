@@ -22,7 +22,7 @@ class SppagebuilderAddonSlideshow_full extends SppagebuilderAddons
         $slide_items = isset($this->addon->settings->sp_slideshow_full_item)
             ? $this->addon->settings->sp_slideshow_full_item
             : array();
-        $autoplay = count($slide_items) > 1;
+        $autoplay = isset($this->addon->settings->autoplay) && $this->addon->settings->autoplay;
         $controllers = (isset($this->addon->settings->controllers) && $this->addon->settings->controllers) ? $this->addon->settings->controllers : '';
         $arrows = (isset($this->addon->settings->arrows) && $this->addon->settings->arrows) ? $this->addon->settings->arrows : '';
         $class = (isset($this->addon->settings->class) && $this->addon->settings->class) ? $this->addon->settings->class : '';
@@ -162,9 +162,9 @@ class SppagebuilderAddonSlideshow_full extends SppagebuilderAddons
         // has dot controls
         if ($controllers) {
             $output .= '<div class="owl-dots">';
-            $output .= '<div class="owl-dot active"><span></span></div>';
-            $output .= '<div class="owl-dot"><span></span></div>';
-            $output .= '<div class="owl-dot"><span></span></div>';
+            foreach ($slide_items as $key => $slide_item) {
+                $output .= '<div class="owl-dot' . ($key === 0 ? ' active' : '') . '"><span></span></div>';
+            }
             $output .= '</div>';
         }
 
@@ -175,7 +175,7 @@ class SppagebuilderAddonSlideshow_full extends SppagebuilderAddons
     {
         $app = Factory::getApplication();
         $base_path = Uri::base() . '/templates/' . $app->getTemplate() . '/js/';
-        return array($base_path . 'owl.carousel.min.js', $base_path . 'addon.slider.js?v=20260820-banner-watchdog-2');
+        return array($base_path . 'owl.carousel.min.js', $base_path . 'addon.slider.js?v=20260821-navigation-controls');
     }
 
     public function js()
@@ -215,13 +215,6 @@ class SppagebuilderAddonSlideshow_full extends SppagebuilderAddons
                 dots: $controllers,
             });
 
-            $(".sppbSlidePrev").click(function(){
-                $slideFullwidth.trigger("prev.owl.carousel", [400]);
-            });
-
-            $(".sppbSlideNext").click(function(){
-                $slideFullwidth.trigger("next.owl.carousel",[400]);
-            });
         });
         ';
     }
@@ -379,9 +372,9 @@ class SppagebuilderAddonSlideshow_full extends SppagebuilderAddons
 
                 <# if (controllers) { #>
                     <div class="owl-dots">
-                    <div class="owl-dot active"><span></span></div>
-                    <div class="owl-dot"><span></span></div>
-                    <div class="owl-dot"><span></span></div>
+                    <# _.each (data.sp_slideshow_full_item, function(slide_item, item_key) { #>
+                        <div class="owl-dot <# if (item_key === 0) { #>active<# } #>"><span></span></div>
+                    <# }) #>
                     </div>
                 <# } #>
                 ';

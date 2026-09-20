@@ -352,10 +352,8 @@ SpAddonsConfig::addonConfig([
                     'placeholder' => 'e.g. 16/9',
                     'depends' => [
                         ['aspect_ratio', '=', 'custom'],
-                        'depends' => [
-                            ['attribute?.type', '!=', 'video'],
-                            ['attribute?.type', '!=', 'location']
-                        ],
+                        ['attribute?.type', '!=', 'video'],
+                        ['attribute?.type', '!=', 'location']
                     ],
                 ],
                 'map_style' => [

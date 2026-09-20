@@ -3,7 +3,7 @@
 /**
  * @package SP Page Builder
  * @author JoomShaper http://www.joomshaper.com
- * @copyright Copyright (c) 2010 - 2025 JoomShaper
+ * @copyright Copyright (c) 2010 - 2026 JoomShaper
  * @license http://www.gnu.org/licenses/gpl-2.0.html GNU/GPLv2 or later
  */
 //no direct access
@@ -205,6 +205,7 @@ final class SppagebuilderHelper
 		$pageName = $view . '-' . $id;
 
 		$page_content = self::getPageContent($option, $view, $id);
+		$page_css = $page_content->css ?? '';
 
 		if ($page_content)
 		{
@@ -235,7 +236,13 @@ final class SppagebuilderHelper
 			HTMLHelper::_('script', 'components/com_sppagebuilder/assets/js/sppagebuilder.js', ['version' => SppagebuilderHelperSite::getVersion(true)], ['defer' => true]);
 
 			$page_content->text = SppagebuilderHelperSite::sanitizeImportJSON($page_content->text);
-			return '<div id="sp-page-builder" class="sp-page-builder sppb-' . $view . '-page-wrapper"><div class="page-content">' . AddonParser::viewAddons(json_decode($page_content->text), 0, $pageName) . '</div></div>';
+			$output = '';
+			if(!empty($page_css))
+			{
+				$output .= '<style type="text/css">' . $page_css . '</style>';
+			}
+			$output .= '<div id="sp-page-builder" class="sp-page-builder sppb-' . $view . '-page-wrapper"><div class="page-content">' . AddonParser::viewAddons(json_decode($page_content->text), 0, $pageName) . '</div></div>';
+			return $output;
 		}
 
 		return $text;

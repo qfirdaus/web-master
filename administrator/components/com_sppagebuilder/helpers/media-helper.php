@@ -3,7 +3,7 @@
 /**
  * @package SP Page Builder
  * @author JoomShaper http://www.joomshaper.com
- * @copyright Copyright (c) 2010 - 2025 JoomShaper
+ * @copyright Copyright (c) 2010 - 2026 JoomShaper
  * @license http://www.gnu.org/licenses/gpl-2.0.html GNU/GPLv2 or later
  */
 
@@ -175,5 +175,105 @@ class BuilderMediaHelper
 		imagedestroy($newImage);
 
 		return $isSuccess;
+	}
+
+	/**
+	 * Strip every scriptable construct from an SVG file, rewriting it in place.
+	 *
+	 * SVG is an active document format: a stored file served from our own origin can run
+	 * JavaScript when it is opened directly. Every upload path that persists an SVG must
+	 * pass it through here before the file becomes reachable over the web.
+	 *
+	 * @param   string  $path  Absolute path of the SVG file on disk.
+	 *
+	 * @return  boolean  True when the file was parsed and rewritten, false when it is not usable SVG.
+	 *
+	 * @since   6.8.1
+	 */
+	public static function sanitizeSvgFile(string $path): bool
+	{
+		$source = @file_get_contents($path);
+
+		if (empty($source))
+		{
+			return false;
+		}
+
+		$useErrors = libxml_use_internal_errors(true);
+
+		$dom = new \DOMDocument();
+		// LIBXML_NONET blocks network access; without LIBXML_NOENT entities are not substituted.
+		$loaded = $dom->loadXML($source, LIBXML_NONET);
+
+		libxml_clear_errors();
+		libxml_use_internal_errors($useErrors);
+
+		// Anything we cannot parse, or that is not actually an SVG, we cannot vouch for.
+		if (!$loaded || empty($dom->documentElement) || strtolower($dom->documentElement->localName) !== 'svg')
+		{
+			return false;
+		}
+
+		// Custom entities can smuggle markup past the checks below, and processing
+		// instructions can pull in an external stylesheet. Neither is needed in an upload.
+		foreach (iterator_to_array($dom->childNodes) as $node)
+		{
+			if ($node->nodeType === XML_DOCUMENT_TYPE_NODE || $node->nodeType === XML_PI_NODE)
+			{
+				$dom->removeChild($node);
+			}
+		}
+
+		$forbiddenTags = ['script', 'foreignobject', 'iframe', 'embed', 'object', 'handler', 'listener', 'audio', 'video'];
+
+		$xpath = new \DOMXPath($dom);
+
+		foreach (iterator_to_array($xpath->query('//*')) as $element)
+		{
+			// The node may already have been dropped along with an ancestor.
+			if (empty($element->parentNode))
+			{
+				continue;
+			}
+
+			if (in_array(strtolower($element->localName), $forbiddenTags, true))
+			{
+				$element->parentNode->removeChild($element);
+				continue;
+			}
+
+			foreach (iterator_to_array($element->attributes) as $attribute)
+			{
+				$name  = strtolower($attribute->localName);
+				$value = strtolower(preg_replace('/[\s\x00-\x20]+/', '', $attribute->value));
+
+				// Event handlers (onload, onclick, ...) and scripting URLs anywhere in the document.
+				if (strpos($name, 'on') === 0
+					|| strpos($value, 'javascript:') !== false
+					|| strpos($value, 'vbscript:') !== false
+					|| strpos($value, 'data:text/html') !== false)
+				{
+					$element->removeAttributeNode($attribute);
+					continue;
+				}
+
+				// <animate>/<set> can write an event handler or a link target after load.
+				if ($name === 'attributename'
+					&& (strpos($value, 'on') === 0 || $value === 'href' || $value === 'xlink:href'))
+				{
+					$element->parentNode->removeChild($element);
+					break;
+				}
+			}
+		}
+
+		$sanitized = $dom->saveXML();
+
+		if ($sanitized === false)
+		{
+			return false;
+		}
+
+		return @file_put_contents($path, $sanitized) !== false;
 	}
 }

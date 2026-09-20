@@ -158,7 +158,13 @@ final class Stats extends CMSPlugin implements SubscriberInterface
         }
 
         $this->getApplication()->getDocument()->getWebAssetManager()
-            ->registerAndUseScript('plg_system_stats.message', 'plg_system_stats/stats-message.js', [], ['defer' => true], ['core']);
+            ->registerAndUseScript(
+                'plg_system_stats.message',
+                'plg_system_stats/stats-message.js',
+                ['version' => 'mfa-fix-1'],
+                ['defer' => true],
+                ['core']
+            );
     }
 
     /**

@@ -3,7 +3,7 @@
 /**
  * @package SP Page Builder
  * @author JoomShaper http://www.joomshaper.com
- * @copyright Copyright (c) 2010 - 2025 JoomShaper
+ * @copyright Copyright (c) 2010 - 2026 JoomShaper
  * @license http://www.gnu.org/licenses/gpl-2.0.html GNU/GPLv2 or later
  */
 
@@ -18,7 +18,9 @@ final class ApplicationHelper
 {
 	public static function generateSiteClassName($addonName)
 	{
-		if (empty($addonName))
+		// The name becomes part of a class name resolved at runtime, so it must
+		// be a bare addon identifier — same whitelist as AddonParser::getAddonPath().
+		if (empty($addonName) || !is_string($addonName) || !preg_match('/^[A-Za-z0-9_-]+$/', $addonName))
 		{
 			return '';
 		}

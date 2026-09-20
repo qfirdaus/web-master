@@ -380,7 +380,10 @@ class SppagebuilderModelForm extends SppagebuilderModelPage
 
 			if (!empty($sourceRow))
 			{
-				$initialContent = !empty($sourceRow->content) ? $sourceRow->content : (!empty($sourceRow->text) ? $sourceRow->text : '[]');
+				// `content` is authoritative; `text` is only ever set once, at creation, so it
+				// goes stale the moment the source page is edited - copy the '*' page's real,
+				// current state, not whatever `text` was at its own creation time.
+				$initialContent = !is_null($sourceRow->content) ? $sourceRow->content : (!empty($sourceRow->text) ? $sourceRow->text : '[]');
 				$initialCss = !empty($sourceRow->css) ? $sourceRow->css : '';
 			}
 		}
@@ -392,6 +395,83 @@ class SppagebuilderModelForm extends SppagebuilderModelPage
 		$page->css = $initialCss;
 		$page->extension = 'com_easystore';
 		$page->extension_view = $extensionView;
+		$page->published = 1;
+		$page->created_by = (int) $user->id;
+		$page->created_on = $date->toSql();
+		$page->modified = $date->toSql();
+		$page->language = $language;
+		$page->access = 1;
+
+		$db->insertObject('#__sppagebuilder', $page);
+
+		return (int) $db->insertid();
+	}
+
+	public function getOrCreateDynamicContentPage($extensionView, $collectionId, $title, $language)
+	{
+		$db = $this->getDbo();
+
+		// Legacy rows created before language support have language = '' (the column's schema
+		// default), not '*' - treat them as the same "All" row everywhere below, so a lookup
+		// for '*' still finds them instead of creating a second, blank '*' row alongside them.
+		$languageCondition = ($language === '*')
+			? '(' . $db->quoteName('language') . ' = ' . $db->quote('*') . ' OR ' . $db->quoteName('language') . ' = ' . $db->quote('') . ')'
+			: $db->quoteName('language') . ' = ' . $db->quote($language);
+
+		$query = $db->getQuery(true);
+		$query->select($db->quoteName('id'))
+			->from($db->quoteName('#__sppagebuilder'))
+			->where($db->quoteName('extension') . ' = ' . $db->quote('com_sppagebuilder'))
+			->where($db->quoteName('extension_view') . ' = ' . $db->quote($extensionView))
+			->where($db->quoteName('view_id') . ' = ' . (int) $collectionId)
+			->where($languageCondition);
+		$db->setQuery($query);
+
+		$existingId = $db->loadResult();
+
+		if ($existingId)
+		{
+			return (int) $existingId;
+		}
+
+		$user = Factory::getUser();
+		$date = Factory::getDate();
+
+		// New language variants inherit the '*' (All) page's layout instead of
+		// starting blank, so translators begin from the existing design.
+		$initialContent = '[]';
+		$initialCss = '';
+
+		if ($language !== '*')
+		{
+			$sourceQuery = $db->getQuery(true);
+			$sourceQuery->select($db->quoteName(['content', 'text', 'css']))
+				->from($db->quoteName('#__sppagebuilder'))
+				->where($db->quoteName('extension') . ' = ' . $db->quote('com_sppagebuilder'))
+				->where($db->quoteName('extension_view') . ' = ' . $db->quote($extensionView))
+				->where($db->quoteName('view_id') . ' = ' . (int) $collectionId)
+				->where('(' . $db->quoteName('language') . ' = ' . $db->quote('*') . ' OR ' . $db->quoteName('language') . ' = ' . $db->quote('') . ')');
+			$db->setQuery($sourceQuery);
+			$sourceRow = $db->loadObject();
+
+			if (!empty($sourceRow))
+			{
+				// `content` is authoritative; `text` is only ever set once, at creation, so it
+				// goes stale the moment the source page is edited - copy the '*' page's real,
+				// current state, not whatever `text` was at its own creation time.
+				$initialContent = !is_null($sourceRow->content) ? $sourceRow->content : (!empty($sourceRow->text) ? $sourceRow->text : '[]');
+				$initialCss = !empty($sourceRow->css) ? $sourceRow->css : '';
+			}
+		}
+
+		$page = new stdClass();
+		$page->title = !empty($title) ? $title : ucwords(str_replace(['-', '_', ':'], ' ', $extensionView));
+		$page->text = $initialContent;
+		$page->content = $initialContent;
+		$page->css = $initialCss;
+		$page->extension = 'com_sppagebuilder';
+		$page->extension_view = $extensionView;
+		$page->view_id = (int) $collectionId;
 		$page->published = 1;
 		$page->created_by = (int) $user->id;
 		$page->created_on = $date->toSql();

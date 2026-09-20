@@ -3,7 +3,7 @@
 /**
  * @package SP Page Builder
  * @author JoomShaper https://www.joomshaper.com
- * @copyright Copyright (c) 2010 - 2025 JoomShaper
+ * @copyright Copyright (c) 2010 - 2026 JoomShaper
  * @license https://www.gnu.org/licenses/gpl-2.0.html GNU/GPLv2 or later
  */
 //no direct access
@@ -93,6 +93,14 @@ SpAddonsConfig::addonConfig([
 						'pending'    => Text::_('COM_SPPAGEBUILDER_ADDON_OPTIN_MAILCHIMP_ACTION_PENDING'),
 					],
 					'std'     => 'subscribed',
+					'depends' => ['platform' => 'mailchimp']
+				],
+
+				'mailchimp_tags' => [
+					'type'    => 'text',
+					'title'   => Text::_('COM_SPPAGEBUILDER_ADDON_OPTIN_MAILCHIMP_TAGS'),
+					'desc'    => Text::_('COM_SPPAGEBUILDER_ADDON_OPTIN_MAILCHIMP_TAGS_DESC'),
+					'std'     => '',
 					'depends' => ['platform' => 'mailchimp']
 				],
 

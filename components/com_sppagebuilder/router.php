@@ -2,7 +2,7 @@
 /**
  * @package SP Page Builder
  * @author JoomShaper http://www.joomshaper.com
- * @copyright Copyright (c) 2010 - 2025 JoomShaper
+ * @copyright Copyright (c) 2010 - 2026 JoomShaper
  * @license http://www.gnu.org/licenses/gpl-2.0.html GNU/GPLv2 or later
  */
 
@@ -387,6 +387,8 @@ class SppagebuilderRouterBase
 			return [];
 		}
 
+		static::ensureCollectionIdCacheForItemIds(Arr::make($collectionItemIds)->toArray());
+
 		if (empty(self::$aliasCache)) {
 			$db = Factory::getDbo();
 
@@ -410,20 +412,6 @@ class SppagebuilderRouterBase
 					$key = $element->item_id . '_' . $element->field_id;
 					self::$aliasCache[$key] = $element;
 				}
-			}
-		}
-
-
-		if(empty(self::$collectionIdCache)){
-			$db = Factory::getDbo();
-			$query = $db->getQuery(true)
-				->select('id, collection_id')
-				->from('#__sppagebuilder_collection_items');
-			$db->setQuery($query);
-			$collectionItems = $db->loadObjectList(); 
-			
-			foreach (Arr::make($collectionItems) as $element) { 
-				self::$collectionIdCache[$element->id] = $element->collection_id;
 			}
 		}
 

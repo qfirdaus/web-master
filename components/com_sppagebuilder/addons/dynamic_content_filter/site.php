@@ -3,7 +3,7 @@
 /**
  * @package SP Page Builder
  * @author JoomShaper http://www.joomshaper.com
- * @copyright Copyright (c) 2010 - 2025 JoomShaper
+ * @copyright Copyright (c) 2010 - 2026 JoomShaper
  * @license http://www.gnu.org/licenses/gpl-2.0.html GNU/GPLv2 or later
  */
 //no direct access
@@ -217,7 +217,7 @@ class SppagebuilderAddonDynamic_content_filter extends SppagebuilderAddons
             if (!empty($itemSettings->search_icon)) {
                 $output .= '<span class="sppb-addon-dynamic-content-filter-search-icon ' . $itemSettings->search_icon . '"></span>';
             }
-            $output .= '<input type="text" name="filter_search" value="' . $value . '" placeholder="' . ($itemSettings->search_placeholder ?? '') . '" data-filter-search data-filter-collection-id="' . $collectionId . '" />';
+            $output .= '<input type="text" name="filter_search" value="' . htmlspecialchars($value, ENT_QUOTES, 'UTF-8') . '" placeholder="' . ($itemSettings->search_placeholder ?? '') . '" data-filter-search data-filter-collection-id="' . $collectionId . '" />';
             $output .= '</div>';
 
             $output .= '</div>';
@@ -232,7 +232,7 @@ class SppagebuilderAddonDynamic_content_filter extends SppagebuilderAddons
                         }
                         
                         $output .= '<div class="sppb-addon-dynamic-content-filter-item-input-option">';
-                        $output .= '<input type="text" class="sppb-addon-dynamic-content-filter-input" name="filter_input" value="' . $retrievedValue . '" data-filter-field-id="' . $fieldId . '">';
+                        $output .= '<input type="text" class="sppb-addon-dynamic-content-filter-input" name="filter_input" value="' . htmlspecialchars($retrievedValue, ENT_QUOTES, 'UTF-8') . '" data-filter-field-id="' . $fieldId . '">';
                         $output .= '</div>';
                         break;
                     }
@@ -249,9 +249,9 @@ class SppagebuilderAddonDynamic_content_filter extends SppagebuilderAddons
                         if(!empty($optionItems)){
                             foreach($optionItems as $value => $label){
                                 $output .= '<div class="sppb-addon-dynamic-content-filter-item-radio-option">';
-                                $output .= '<input type="radio" hidden name="filter_option_'. $fieldId . '" value="' . $value . '" data-filter-field-id="' . $fieldId . '" ' . ($retrievedValue === $value ? 'checked' : '') . '>';
+                                $output .= '<input type="radio" hidden name="filter_option_'. $fieldId . '" value="' . htmlspecialchars($value, ENT_QUOTES, 'UTF-8') . '" data-filter-field-id="' . $fieldId . '" ' . ($retrievedValue === $value ? 'checked' : '') . '>';
                                 $output .= '<div class="sppb-addon-dynamic-content-filter-fake-radio-input"></div>';
-                                $output .= '<label>' . $label . '</label>';
+                                $output .= '<label>' . htmlspecialchars($label, ENT_QUOTES, 'UTF-8') . '</label>';
                                 
                                 if($showCount){
                                     $count = $this->getFieldCount($value, $fieldValues);
@@ -268,9 +268,9 @@ class SppagebuilderAddonDynamic_content_filter extends SppagebuilderAddons
                             
                             foreach(array_unique(array_filter($fieldValues, fn($value) => !empty($value))) as $value){
                                 $output .= '<div class="sppb-addon-dynamic-content-filter-item-radio-option">';
-                                $output .= '<input type="radio" hidden name="filter_option_'. $fieldId . '" value="' . $value . '" data-filter-field-id="' . $fieldId . '" ' . ($retrievedValue === $value ? 'checked' : '') . '>';
+                                $output .= '<input type="radio" hidden name="filter_option_'. $fieldId . '" value="' . htmlspecialchars($value, ENT_QUOTES, 'UTF-8') . '" data-filter-field-id="' . $fieldId . '" ' . ($retrievedValue === $value ? 'checked' : '') . '>';
                                 $output .= '<div class="sppb-addon-dynamic-content-filter-fake-radio-input"></div>';
-                                $output .= '<label>' . $value . '</label>';
+                                $output .= '<label>' . htmlspecialchars($value, ENT_QUOTES, 'UTF-8') . '</label>';
                                 
                                 if($showCount){
                                     if($isFieldIdReference){
@@ -300,9 +300,9 @@ class SppagebuilderAddonDynamic_content_filter extends SppagebuilderAddons
                     if(!empty($optionItems)){
                         foreach($optionItems as $value => $label){
                         $output .= '<div class="sppb-addon-dynamic-content-filter-item-checkbox-option">';
-                        $output .= '<input type="checkbox" hidden name="filter_option" value="' . $value . '" data-filter-field-id="' . $fieldId . '" ' . (in_array($value, $retrievedValues) ? 'checked' : '') . '>';
+                        $output .= '<input type="checkbox" hidden name="filter_option" value="' . htmlspecialchars($value, ENT_QUOTES, 'UTF-8') . '" data-filter-field-id="' . $fieldId . '" ' . (in_array($value, $retrievedValues) ? 'checked' : '') . '>';
                         $output .= '<div class="sppb-addon-dynamic-content-filter-fake-checkbox-input"><i style="display: none" class="fa fa-check" aria-hidden="true"></i></div>';
-                        $output .= '<label>' . $label . '</label>';
+                        $output .= '<label>' . htmlspecialchars($label, ENT_QUOTES, 'UTF-8') . '</label>';
 
                         if($showCount){
                             $count = $this->getFieldCount($value, $fieldValues);
@@ -319,9 +319,9 @@ class SppagebuilderAddonDynamic_content_filter extends SppagebuilderAddons
                         
                         foreach(array_unique(array_filter($fieldValues, fn($value) => !empty($value))) as $value){
                             $output .= '<div class="sppb-addon-dynamic-content-filter-item-checkbox-option">';
-                            $output .= '<input type="checkbox" hidden name="filter_option" value="' . $value . '" data-filter-field-id="' . $fieldId . '" ' . (in_array($value, $retrievedValues) ? 'checked' : '') . '>';
+                            $output .= '<input type="checkbox" hidden name="filter_option" value="' . htmlspecialchars($value, ENT_QUOTES, 'UTF-8') . '" data-filter-field-id="' . $fieldId . '" ' . (in_array($value, $retrievedValues) ? 'checked' : '') . '>';
                             $output .= '<div class="sppb-addon-dynamic-content-filter-fake-checkbox-input"><i style="display: none" class="fa fa-check" aria-hidden="true"></i></div>';
-                            $output .= '<label>' . $value . '</label>';
+                            $output .= '<label>' . htmlspecialchars($value, ENT_QUOTES, 'UTF-8') . '</label>';
                             
                             if($showCount){
                                 if($isFieldIdReference){
@@ -361,16 +361,16 @@ class SppagebuilderAddonDynamic_content_filter extends SppagebuilderAddons
                         $output .= '<div class="sppb-addon-dynamic-content-filter-item-slider-option">';
                         $output .= '<div class="sppb-addon-dynamic-content-filter-item-slider-wrapper">';
                         $output .= '<div class="sppb-addon-dynamic-content-filter-item-slider-labels">';
-                        $output .= '<span class="slider-min-value" data-value="'.$minValue.'" data-field-id="' . $fieldId  . '" >'.$minValue.'</span>';
+                        $output .= '<span class="slider-min-value" data-value="'.htmlspecialchars($minValue, ENT_QUOTES, 'UTF-8').'" data-field-id="' . $fieldId  . '" >'.htmlspecialchars($minValue, ENT_QUOTES, 'UTF-8').'</span>';
                         $output .= '<span>-</span>';
-                        $output .= '<span class="slider-max-value" data-value="'.$maxValue.'" data-field-id="' . $fieldId  . '" >'.$maxValue.'</span>';
+                        $output .= '<span class="slider-max-value" data-value="'.htmlspecialchars($maxValue, ENT_QUOTES, 'UTF-8').'" data-field-id="' . $fieldId  . '" >'.htmlspecialchars($maxValue, ENT_QUOTES, 'UTF-8').'</span>';
                         $output .= '</div>';
                         $output .= '<div class="sppb-addon-dynamic-content-filter-item-slider-container">';
                         $output .= '<div class="dual-range-track">';
                         $output .= '<div class="dual-range-fill"></div>';
                         $output .= '</div>';
-                        $output .= '<input type="range" min="'.$min.'" max="'.$max.'" value="'.$minValue.'" class="dual-range-input min-thumb" data-field-id="' . $fieldId  . '" name="filter_slider_min">';
-                        $output .= '<input type="range" min="'.$min.'" max="'.$max.'" value="'.$maxValue.'" class="dual-range-input max-thumb" data-field-id="' . $fieldId  . '" name="filter_slider_max">';
+                        $output .= '<input type="range" min="'.htmlspecialchars($min, ENT_QUOTES, 'UTF-8').'" max="'.htmlspecialchars($max, ENT_QUOTES, 'UTF-8').'" value="'.htmlspecialchars($minValue, ENT_QUOTES, 'UTF-8').'" class="dual-range-input min-thumb" data-field-id="' . $fieldId  . '" name="filter_slider_min">';
+                        $output .= '<input type="range" min="'.htmlspecialchars($min, ENT_QUOTES, 'UTF-8').'" max="'.htmlspecialchars($max, ENT_QUOTES, 'UTF-8').'" value="'.htmlspecialchars($maxValue, ENT_QUOTES, 'UTF-8').'" class="dual-range-input max-thumb" data-field-id="' . $fieldId  . '" name="filter_slider_max">';
                         $output .= '</div>';
                         $output .= '</div>';
                         $output .= '</div>';    
@@ -429,7 +429,7 @@ class SppagebuilderAddonDynamic_content_filter extends SppagebuilderAddons
                             $selectedClass = '';
                         }
                         $output .= '<div class="sppb-addon-dynamic-content-filter-item-button-option">';
-                        $output .= '<button class=" dc-filter-btn '. $class . $selectedClass . '"  type="button" name="filter_option" data-value="' . $value . '" data-field-id="' . $fieldId . '">' . $value . '</button>';
+                        $output .= '<button class=" dc-filter-btn '. $class . $selectedClass . '"  type="button" name="filter_option" data-value="' . htmlspecialchars($value, ENT_QUOTES, 'UTF-8') . '" data-field-id="' . $fieldId . '">' . htmlspecialchars($value, ENT_QUOTES, 'UTF-8') . '</button>';
 
                         if($showCount){
                             if($isFieldIdReference){

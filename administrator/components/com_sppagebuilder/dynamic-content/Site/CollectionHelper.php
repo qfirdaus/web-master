@@ -14,10 +14,13 @@ use DateTime;
 use FieldsHelper;
 use JLoader;
 use Joomla\CMS\Factory;
+use Joomla\CMS\Language\Associations;
+use Joomla\CMS\Language\Multilanguage;
 use Joomla\CMS\Language\Text;
 use Joomla\CMS\Router\Route;
 use Joomla\CMS\Uri\Uri;
 use Joomla\CMS\Version;
+use Joomla\Database\ParameterType;
 use JoomShaper\SPPageBuilder\DynamicContent\Constants\CollectionIds;
 use JoomShaper\SPPageBuilder\DynamicContent\Models\CollectionField;
 use JoomShaper\SPPageBuilder\DynamicContent\Models\CollectionItem;
@@ -132,23 +135,24 @@ class CollectionHelper
      *
      * @since 5.5.0
      */
-    protected static function getDetailPageId($collectionId)
+    protected static function getDetailPageId($collectionId, $routeLanguage = '*')
     {
         if (empty($collectionId)) {
             return null;
         }
 
-        if (array_key_exists($collectionId, static::$detailPageIdCache)) {
-            return static::$detailPageIdCache[$collectionId];
+        if (array_key_exists($collectionId.'_'.$routeLanguage, static::$detailPageIdCache)) {
+            return static::$detailPageIdCache[$collectionId.'_'.$routeLanguage];
         }
 
         $page = Page::where('extension', 'com_sppagebuilder')
             ->where('extension_view', 'dynamic_content:detail')
             ->where('view_id', $collectionId)
+            ->where('language', $routeLanguage)
             ->first(['id']);
 
         $pageId = $page->id ?? null;
-        static::$detailPageIdCache[$collectionId] = $pageId;
+        static::$detailPageIdCache[$collectionId.'_'.$routeLanguage] = $pageId;
 
         return $pageId;
     }
@@ -165,7 +169,8 @@ class CollectionHelper
     {
         $collectionId = $item['collection_id'];
         $itemId = $item['id'];
-        $pageId = static::getDetailPageId($collectionId);
+        $routeLanguage = $item['language'] ?? null;
+        $pageId = static::getDetailPageId($collectionId, $routeLanguage);
 
         if (empty($collectionId) || empty($itemId) || empty($pageId)) {
             return null;
@@ -665,6 +670,10 @@ class CollectionHelper
                         if (!empty($menuItemId)) {
                             $routeUrl .= '&Itemid=' . $menuItemId;
                         }
+                        $language = $item['language'] ?? '';
+                        if (!empty($language) && $language !== '*') {
+                            $routeUrl .= '&lang=' . $language;
+                        }
                         return Route::_(static::buildRouteWithCollectionItemId($routeUrl, $item['id']), false);
                     }
                 }
@@ -846,8 +855,9 @@ class CollectionHelper
      *
      * @since 5.5.0
      */
-    public static function getFirstCollectionItemId(int $collectionId)
+    public static function getFirstCollectionItemId(int $collectionId, ?string $language = null)
     {
+        $useLanguage = !empty($language) && $language !== '*';
 
         if ($collectionId === CollectionIds::ARTICLES_COLLECTION_ID) {
             if (!\class_exists('SppagebuilderHelperArticles')) {
@@ -856,36 +866,67 @@ class CollectionHelper
 
             try {
                 $articles = \SppagebuilderHelperArticles::getArticles(1, 'oldest');
-                if (!empty($articles) && isset($articles[0])) {
-                    return $articles[0]->id;
+
+                if (empty($articles) || !isset($articles[0])) {
+                    return null;
                 }
+
+                $anchorId = $articles[0]->id;
+
+                if (!$useLanguage) {
+                    return $anchorId;
+                }
+
+                // Prefer the article's own translation, the same way the front-end language
+                // switcher module resolves it, before falling back to any article that
+                // simply happens to be tagged with this language.
+                $associatedId = static::getAssociatedItemId('com_content', '#__content', 'com_content.item', $anchorId, $language);
+
+                if ($associatedId) {
+                    return $associatedId;
+                }
+
+                $fallbackArticles = \SppagebuilderHelperArticles::getArticles(1, 'oldest', '', true, '', [], 1, 1, $language);
+
+                return !empty($fallbackArticles[0]->id) ? $fallbackArticles[0]->id : $anchorId;
             } catch (\Exception $e) {
                 return null;
             }
-
-            return null;
         }
 
 
         if ($collectionId === CollectionIds::TAGS_COLLECTION_ID) {
+            // Tags have no cross-language association mechanism in Joomla core, so just
+            // filter by language directly, falling back to any tag if none match.
             try {
                 $db = \Joomla\CMS\Factory::getDbo();
                 $query = $db->getQuery(true)
                     ->select('id')
                     ->from('#__tags')
-                    ->where('published = 1')
-                    ->order('id ASC');
+                    ->where('published = 1');
+
+                if ($useLanguage) {
+                    $query->where('language IN (' . $db->quote($language) . ', ' . $db->quote('*') . ')');
+                }
+
+                $query->order('id ASC');
                 $db->setQuery($query, 0, 1);
                 $tagId = $db->loadResult();
-                
-                if ($tagId) {
-                    return (int) $tagId;
+
+                if (!$tagId && $useLanguage) {
+                    $query = $db->getQuery(true)
+                        ->select('id')
+                        ->from('#__tags')
+                        ->where('published = 1')
+                        ->order('id ASC');
+                    $db->setQuery($query, 0, 1);
+                    $tagId = $db->loadResult();
                 }
+
+                return $tagId ? (int) $tagId : null;
             } catch (\Exception $e) {
                 return null;
             }
-
-            return null;
         }
 
         // Handle regular collections
@@ -897,7 +938,55 @@ class CollectionHelper
             return null;
         }
 
-        return $item->id;
+        $anchorId = $item->id;
+
+        if (!$useLanguage) {
+            return $anchorId;
+        }
+
+        // Prefer the item explicitly linked (via the "Association" field) as this
+        // language's translation, before falling back to any item merely tagged with it.
+        $associatedId = static::getAssociatedItemId('com_sppagebuilder', '#__sppagebuilder_collection_items', 'com_sppagebuilder.collection_item', $anchorId, $language);
+
+        if ($associatedId) {
+            return $associatedId;
+        }
+
+        $fallbackItem = CollectionItem::where('collection_id', $collectionId)
+            ->whereIn('language', [$language, '*'], ParameterType::STRING)
+            ->orderBy('id', 'ASC')
+            ->first(['id']);
+
+        return !$fallbackItem->isEmpty() ? $fallbackItem->id : $anchorId;
+    }
+
+    /**
+     * Resolve the id of the item associated (via Joomla's #__associations, the same
+     * mechanism the core Language Switcher module uses) as the given language's
+     * translation of an anchor item.
+     *
+     * @param string $extension The extension name the association was registered under.
+     * @param string $table     The table storing the items (e.g. "#__content").
+     * @param string $context   The association context (e.g. "com_content.item").
+     * @param int    $anchorId  The id of the item to find a translation for.
+     * @param string $language  The target language tag.
+     *
+     * @return int|null
+     * @since 6.8.0
+     */
+    private static function getAssociatedItemId($extension, $table, $context, $anchorId, $language)
+    {
+        if (!Associations::isEnabled() || !Multilanguage::isEnabled() || empty($anchorId)) {
+            return null;
+        }
+
+        try {
+            $associations = Associations::getAssociations($extension, $table, $context, $anchorId, 'id');
+        } catch (\Exception $e) {
+            return null;
+        }
+
+        return isset($associations[$language]) ? (int) $associations[$language]->id : null;
     }
 
     /**

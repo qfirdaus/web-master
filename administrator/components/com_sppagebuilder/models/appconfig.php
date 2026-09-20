@@ -3,7 +3,7 @@
 /**
  * @package SP Page Builder
  * @author JoomShaper http://www.joomshaper.com
- * @copyright Copyright (c) 2010 - 2025 JoomShaper
+ * @copyright Copyright (c) 2010 - 2026 JoomShaper
  * @license http://www.gnu.org/licenses/gpl-2.0.html GNU/GPLv2 or later
  */
 
@@ -46,6 +46,24 @@ class SppagebuilderModelAppconfig extends ListModel
 	 */
 	public function getPageList()
 	{
+		return $this->buildPageList(false);
+	}
+
+	/**
+	 * Same as getPageList(), but Dynamic Content index/detail pages - which have one row
+	 * per language - are only represented by their "All" (*) row, so a page shows up once
+	 * instead of once per language.
+	 *
+	 * @return array
+	 * @since 6.8.0
+	 */
+	public function getUniquePageList()
+	{
+		return $this->buildPageList(true);
+	}
+
+	private function buildPageList($uniqueLanguageOnly = false)
+	{
 		$db = Factory::getDbo();
 		$query = $db->getQuery(true);
 
@@ -63,6 +81,16 @@ class SppagebuilderModelAppconfig extends ListModel
 			->where($db->quoteName('extension_view') . 'IN (' . implode(',', $pageTypes) . ')')
 			->where($db->quoteName('published') . ' = 1')
 			->order($db->quoteName('title') . ' ASC');
+
+		if ($uniqueLanguageOnly)
+		{
+			$query->where(
+				'(' . $db->quoteName('extension_view') . ' = ' . $db->quote(Page::PAGE_TYPE_REGULAR)
+				. ' OR ' . $db->quoteName('language') . ' = ' . $db->quote('*')
+				. ' OR ' . $db->quoteName('language') . ' = ' . $db->quote('')
+				. ')'
+			);
+		}
 
 		$db->setQuery($query);
 

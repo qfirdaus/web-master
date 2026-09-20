@@ -3,7 +3,7 @@
 /**
  * @package SP Page Builder
  * @author JoomShaper http://www.joomshaper.com
- * @copyright Copyright (c) 2010 - 2025 JoomShaper
+ * @copyright Copyright (c) 2010 - 2026 JoomShaper
  * @license http://www.gnu.org/licenses/gpl-2.0.html GNU/GPLv2 or later
  */
 
@@ -193,6 +193,13 @@ trait MediaFolderTrait
         $report = array();
         $report['status'] = false;
 
+        try {
+            $cleanedFullPath = BuilderMediaHelper::checkForMediaActionBoundary($cleanedFullPath);
+        } catch (\Exception $e) {
+            $response['message'] = $e->getMessage();
+            $this->sendResponse($response, 403);
+        }
+
         if (!SecurityHelper::isActionableFolder($folder))
         {
             $this->sendResponse([
@@ -262,6 +269,14 @@ trait MediaFolderTrait
         $cleanedSrc = Path::clean(JPATH_ROOT . $src);
         $dest = $dirname . '/' . $newbasename;
         $cleanedDest = Path::clean(JPATH_ROOT . $dest);
+
+        try {
+            $cleanedSrc = BuilderMediaHelper::checkForMediaActionBoundary($cleanedSrc);
+            $cleanedDest = BuilderMediaHelper::checkForMediaActionBoundary($cleanedDest);
+        } catch (\Exception $e) {
+            $response['message'] = $e->getMessage();
+            $this->sendResponse($response, 403);
+        }
 
         if (!SecurityHelper::isActionableFolder($currentfolder) || !SecurityHelper::isActionableFolder($newfolder))
         {

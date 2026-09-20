@@ -1989,7 +1989,17 @@ class CollectionItemsService
 
     public static function fetchItemIdsByCollectionId($collectionId)
     {
-        $items = CollectionItem::where('collection_id', $collectionId)->get(['id']);
-        return Arr::make($items)->pluck('id')->toArray();
+        $items = CollectionItem::where('collection_id', (int) $collectionId)->get(['id', 'language']);
+        $ids = Arr::make($items)->pluck('id')->toArray();
+        $languages = Arr::make($items)->pluck('language')->toArray();
+        
+        $result = [];
+        foreach ($ids as $index => $id) {
+            $result[] = [
+                'id' => $id,
+                'language' => $languages[$index] ?? '*',
+            ];
+        }
+        return $result;
     }
 }

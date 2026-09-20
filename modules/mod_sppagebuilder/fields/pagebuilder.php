@@ -3,7 +3,7 @@
 /**
  * @package SP Page Builder
  * @author JoomShaper http://www.joomshaper.com
- * @copyright Copyright (c) 2010 - 2025 JoomShaper
+ * @copyright Copyright (c) 2010 - 2026 JoomShaper
  * @license http://www.gnu.org/licenses/gpl-2.0.html GNU/GPLv2 or later
  */
 //no direct access
@@ -70,7 +70,7 @@ class JFormFieldPagebuilder extends FormField
 
 			$output .= '<input type="hidden" name="' . $this->name . '" id="' . $this->id . '" value="">';
 			$output .= '<input type="hidden" name="jform[content]" id="jform_content" value="">';
-			$output .= '<input type="hidden" id="sppagebuilder_module_id" name="jform[attribs][sppagebuilder_module_id]" value="' . $id . '">';
+			$output .= '<input type="hidden" id="sppagebuilder_module_id" name="jform[attribs][sppagebuilder_module_id]" value="' . (int)$id . '">';
 		}
 		else
 		{
@@ -90,7 +90,7 @@ class JFormFieldPagebuilder extends FormField
 		$query->from($db->quoteName('#__sppagebuilder'));
 		$query->where($db->quoteName('extension') . ' = ' . $db->quote('mod_sppagebuilder'));
 		$query->where($db->quoteName('extension_view') . ' = ' . $db->quote('module'));
-		$query->where($db->quoteName('view_id') . ' = ' . $db->quote($id));
+		$query->where($db->quoteName('view_id') . ' = ' . $db->quote((int)$id));
 		$db->setQuery($query);
 		$result = $db->loadObject();
 

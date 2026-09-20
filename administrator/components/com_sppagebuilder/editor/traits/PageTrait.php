@@ -3,7 +3,7 @@
 /**
  * @package SP Page Builder
  * @author JoomShaper http://www.joomshaper.com
- * @copyright Copyright (c) 2010 - 2025 JoomShaper
+ * @copyright Copyright (c) 2010 - 2026 JoomShaper
  * @license http://www.gnu.org/licenses/gpl-2.0.html GNU/GPLv2 or later
  */
 
@@ -317,7 +317,10 @@ trait PageTrait
 
 						if (!empty($sourceRow))
 						{
-							$initialContent = !empty($sourceRow->content) ? $sourceRow->content : (!empty($sourceRow->text) ? $sourceRow->text : '[]');
+							// Same "content is authoritative, text is stale after the first edit"
+							// rule as loading an existing page - the '*' source page's real state
+							// must be copied as-is, not whatever `text` was at its own creation time.
+							$initialContent = !is_null($sourceRow->content) ? $sourceRow->content : '[]';
 							$initialCss = !empty($sourceRow->css) ? $sourceRow->css : '';
 						}
 					}
@@ -327,6 +330,40 @@ trait PageTrait
 			{
 				$extension = 'com_sppagebuilder';
 				$extensionView = 'popup';
+			}
+		}
+		elseif (in_array($pageType, ['dynamic_content:index', 'dynamic_content:detail'], true) && !empty($collectionId))
+		{
+			// Dynamic Content index/detail pages are multilingual too: one row per
+			// (extension_view, collection_id, language), same as EasyStore store pages above.
+			if ($pageId = $this->isDynamicContentPageExist($pageType, $collectionId, $language))
+			{
+				$this->sendResponse(['id' => $pageId], 200);
+			}
+
+			if ($language !== '*')
+			{
+				$sourcePageId = $this->isDynamicContentPageExist($pageType, $collectionId, '*');
+
+				if ($sourcePageId)
+				{
+					$db = Factory::getDbo();
+					$sourceQuery = $db->getQuery(true);
+					$sourceQuery->select($db->quoteName(['content', 'text', 'css']))
+						->from($db->quoteName('#__sppagebuilder'))
+						->where($db->quoteName('id') . ' = ' . (int) $sourcePageId);
+					$db->setQuery($sourceQuery);
+					$sourceRow = $db->loadObject();
+
+					if (!empty($sourceRow))
+					{
+						// Same "content is authoritative, text is stale after the first edit"
+						// rule as loading an existing page - the '*' source page's real state
+						// must be copied as-is, not whatever `text` was at its own creation time.
+						$initialContent = !is_null($sourceRow->content) ? $sourceRow->content : '[]';
+						$initialCss = !empty($sourceRow->css) ? $sourceRow->css : '';
+					}
+				}
 			}
 		}
 
@@ -399,6 +436,40 @@ trait PageTrait
 		}
 
 		return false;
+	}
+
+	public function isDynamicContentPageExist($extensionView, $collectionId, $language = null)
+	{
+		$db = Factory::getDbo();
+		$query = $db->getQuery(true);
+		$query->select('id')
+			->from($db->quoteName('#__sppagebuilder'))
+			->where($db->quoteName('extension') . ' = ' . $db->quote('com_sppagebuilder'))
+			->where($db->quoteName('extension_view') . ' = ' . $db->quote($extensionView))
+			->where($db->quoteName('view_id') . ' = ' . (int) $collectionId);
+
+		if (!is_null($language))
+		{
+			if ($language === '*')
+			{
+				$query->where('(' . $db->quoteName('language') . ' = ' . $db->quote('*') . ' OR ' . $db->quoteName('language') . ' = ' . $db->quote('') . ')');
+			}
+			else
+			{
+				$query->where($db->quoteName('language') . ' = ' . $db->quote($language));
+			}
+		}
+
+		$db->setQuery($query);
+
+		try
+		{
+			return $db->loadResult();
+		}
+		catch (Exception $error)
+		{
+			return false;
+		}
 	}
 
 	public function previewUrl()

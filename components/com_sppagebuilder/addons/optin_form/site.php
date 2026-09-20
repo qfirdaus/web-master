@@ -3,7 +3,7 @@
 /**
  * @package SP Page Builder
  * @author JoomShaper http://www.joomshaper.com
- * @copyright Copyright (c) 2010 - 2025 JoomShaper
+ * @copyright Copyright (c) 2010 - 2026 JoomShaper
  * @license http://www.gnu.org/licenses/gpl-2.0.html GNU/GPLv2 or later
  */
 
@@ -68,7 +68,6 @@ class SppagebuilderAddonOptin_form extends SppagebuilderAddons
 		$show_checkbox      = (isset($settings->show_checkbox)) ? $settings->show_checkbox : 0;
 		$recaptcha      	= (isset($settings->recaptcha)) ? $settings->recaptcha : 0;
 
-		$_SESSION['isOptinEnabledCaptcha_' . $this->addon->id] = (isset($settings->recaptcha) && $settings->recaptcha) ? true : false;
 
 		$captcha_type       = (isset($settings->captcha_type)) ? $settings->captcha_type : 'recaptcha';
 		$captcha_question   = (isset($settings->captcha_question) && $settings->captcha_question) ? $settings->captcha_question : '';
@@ -509,8 +508,6 @@ class SppagebuilderAddonOptin_form extends SppagebuilderAddons
 			}
 		}
 
-		$showcaptcha = isset($_SESSION['isOptinEnabledCaptcha_' . $addonId]) ? $_SESSION['isOptinEnabledCaptcha_' . $addonId] : true;
-
 		// get addon infos
 		if ($view_type == 'module')
 		{
@@ -537,7 +534,22 @@ class SppagebuilderAddonOptin_form extends SppagebuilderAddons
 		$output = array();
 		$output['status'] = false;
 
-		if (isset($showcaptcha) && $showcaptcha)
+		if (empty($addon_info))
+		{
+			$output['content'] = '<span class="sppb-text-danger">' . Text::_('COM_SPPAGEBUILDER_ADDON_AJAX_CONTACT_FAILED') . '</span>';
+			return json_encode($output);
+		}
+
+		// The stored addon is the trusted source for the captcha configuration.
+		// Read whether it is enabled and which type it is from there, never from the request.
+		$showcaptcha  = !empty($addon_info->recaptcha);
+		// Falls back to 'recaptcha', matching this addon's own renderer. captcha_type only
+		// arrived in optin_form in 771be29fb4 (2023-10-11); forms saved before that store
+		// only the on/off flag and render a reCAPTCHA widget, so defaulting to 'default'
+		// here would reject every submission on them.
+		$captcha_type = (isset($addon_info->captcha_type) && $addon_info->captcha_type) ? $addon_info->captcha_type : 'recaptcha';
+
+		if ($showcaptcha)
 		{
 			if($captcha_type !== 'default') {
 				if ($recaptcha == '') {
@@ -556,11 +568,12 @@ class SppagebuilderAddonOptin_form extends SppagebuilderAddons
 				}
 
 				if ($captcha_type == 'recaptcha' || $captcha_type == 'recaptcha_invisible' || $captcha_type == 'gcaptcha' || $captcha_type == 'igcaptcha') {
+					// The captcha plugin's verdict is authoritative in every render context.
+					// $view_type comes from the request, and the module branch that used to sit
+					// here replaced this result with a non-empty test, so posting view_type=module
+					// passed any token at all.
 					$res = Factory::getApplication()->triggerEvent('onCheckAnswer', [$recaptcha]);
-					// if module then verify gcaptcha
-					if ($view_type == 'module') {
-						$res = ($recaptcha != null || strlen($recaptcha) != 0) ? array(true) : array(false);
-					}
+
 					if (empty($res[0])) {
 						$output['content'] = '<span class="sppb-text-danger">' . Text::_('COM_SPPAGEBUILDER_ADDON_AJAX_CONTACT_INVALID_CAPTCHA') . '</span>';
 						return json_encode($output);
@@ -587,9 +600,14 @@ class SppagebuilderAddonOptin_form extends SppagebuilderAddons
 					$output['gcaptchaId'] = 'custom_recaptcha_' . $addonId;
 					$output['gcaptchaType'] = 'custom';
 				}
-			} else if ($captcha_type == 'default' && md5($captcha_question) != $captcha_answer) {
-				$output['content'] = '<span class="sppb-text-danger">' . Text::_('COM_SPPAGEBUILDER_ADDON_AJAX_CONTACT_WRONG_CAPTCHA') . '</span>';
-				return json_encode($output);
+			} else {
+				// Read the expected answer from the stored addon, never from the request.
+				$expectedAnswer = isset($addon_info->captcha_answer) ? trim((string) $addon_info->captcha_answer) : '';
+
+				if ($expectedAnswer === '' || trim((string) $captcha_question) !== $expectedAnswer) {
+					$output['content'] = '<span class="sppb-text-danger">' . Text::_('COM_SPPAGEBUILDER_ADDON_AJAX_CONTACT_WRONG_CAPTCHA') . '</span>';
+					return json_encode($output);
+				}
 			}
 		}
 
@@ -616,18 +634,26 @@ class SppagebuilderAddonOptin_form extends SppagebuilderAddons
 			$mcapi 			= (isset($addon_info->mailchimp_api) && $addon_info->mailchimp_api) ? $addon_info->mailchimp_api : '';
 			$mclistid 		= (isset($addon_info->mailchimp_listid) && $addon_info->mailchimp_listid) ? $addon_info->mailchimp_listid : '';
 			$mcaction 		= (isset($addon_info->mailchimp_action) && $addon_info->mailchimp_action) ? $addon_info->mailchimp_action : '';
+			$mctags 		= (isset($addon_info->mailchimp_tags) && $addon_info->mailchimp_tags) ? array_values(array_filter(array_map('trim', explode(',', $addon_info->mailchimp_tags)))) : [];
 
 			$memberId = md5(strtolower($email));
 			$dataCenter = substr($mcapi, strpos($mcapi, '-') + 1);
 			$url = 'https://' . $dataCenter . '.api.mailchimp.com/3.0/lists/' . $mclistid . '/members/' . $memberId;
-			$json = json_encode([
+			$payload = [
 				'email_address' => $email,
 				'status'        => $mcaction, // "subscribed","unsubscribed","cleaned","pending"
 				'merge_fields'  => [
 					'FNAME'     => $name,
 					'LNAME'     => ''
 				]
-			]);
+			];
+
+			// Tags aren't part of this endpoint's request schema, and Mailchimp only applies
+			// them here when the contact is first created - silently ignoring them on repeat
+			// submissions from an existing subscriber. They're applied via the dedicated
+			// tags endpoint below instead, which works for both new and existing contacts.
+
+			$json = json_encode($payload);
 
 			$ch = curl_init($url);
 			curl_setopt($ch, CURLOPT_USERPWD, 'user:' . $mcapi);
@@ -635,7 +661,7 @@ class SppagebuilderAddonOptin_form extends SppagebuilderAddons
 			curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 			curl_setopt($ch, CURLOPT_TIMEOUT, 10);
 			curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'PUT');
-			curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+			curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
 			curl_setopt($ch, CURLOPT_POSTFIELDS, $json);
 			$result = curl_exec($ch);
 			$httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
@@ -654,6 +680,41 @@ class SppagebuilderAddonOptin_form extends SppagebuilderAddons
 			// store the status message based on response code
 			if ($httpCode == 200)
 			{
+				if (!empty($mctags))
+				{
+					$tagsUrl = 'https://' . $dataCenter . '.api.mailchimp.com/3.0/lists/' . $mclistid . '/members/' . $memberId . '/tags';
+					$tagsJson = json_encode([
+						'tags' => array_map(function ($tag) {
+							return ['name' => $tag, 'status' => 'active'];
+						}, $mctags),
+					]);
+
+					$tagsCh = curl_init($tagsUrl);
+					curl_setopt($tagsCh, CURLOPT_USERPWD, 'user:' . $mcapi);
+					curl_setopt($tagsCh, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
+					curl_setopt($tagsCh, CURLOPT_RETURNTRANSFER, true);
+					curl_setopt($tagsCh, CURLOPT_TIMEOUT, 10);
+					curl_setopt($tagsCh, CURLOPT_CUSTOMREQUEST, 'POST');
+					curl_setopt($tagsCh, CURLOPT_SSL_VERIFYPEER, true);
+					curl_setopt($tagsCh, CURLOPT_POSTFIELDS, $tagsJson);
+					$tagsResult = curl_exec($tagsCh);
+					$tagsHttpCode = curl_getinfo($tagsCh, CURLINFO_HTTP_CODE);
+					$tagsErr = curl_error($tagsCh);
+					curl_close($tagsCh);
+
+					// Tagging is best-effort: the subscriber is already saved at this point,
+					// so a tagging failure is logged for the site operator rather than
+					// surfaced as a subscribe failure to the visitor.
+					if ($tagsErr || $tagsHttpCode != 204)
+					{
+						\Joomla\CMS\Log\Log::add(
+							'Mailchimp tags request failed (HTTP ' . $tagsHttpCode . '): ' . ($tagsErr ?: $tagsResult),
+							\Joomla\CMS\Log\Log::ERROR,
+							'com_sppagebuilder'
+						);
+					}
+				}
+
 				if ($mcaction == 'pending')
 				{
 					$output['content'] = Text::_('COM_SPPAGEBUILDER_ADDON_OPTIN_PLATFORM_EMAIL_PENDING');
@@ -673,6 +734,11 @@ class SppagebuilderAddonOptin_form extends SppagebuilderAddons
 						$output['status'] = false;
 						break;
 					default:
+						\Joomla\CMS\Log\Log::add(
+							'Mailchimp member request failed (HTTP ' . $httpCode . '): ' . $result,
+							\Joomla\CMS\Log\Log::ERROR,
+							'com_sppagebuilder'
+						);
 						$output['content'] = Text::_('COM_SPPAGEBUILDER_ADDON_OPTIN_PLATFORM_EMAIL_ERROR');
 						$output['status'] = false;
 						break;
@@ -707,7 +773,7 @@ class SppagebuilderAddonOptin_form extends SppagebuilderAddons
 			curl_setopt($curl, CURLOPT_MAXREDIRS, 10);
 			curl_setopt($curl, CURLOPT_TIMEOUT, 30);
 			curl_setopt($curl, CURLOPT_HTTP_VERSION, CURL_HTTP_VERSION_1_1);
-			curl_setopt($curl, CURLOPT_SSL_VERIFYPEER, CURLOPT_SSL_VERIFYPEER);
+			curl_setopt($curl, CURLOPT_SSL_VERIFYPEER, true);
 			curl_setopt($curl, CURLOPT_CUSTOMREQUEST, "PUT");
 			curl_setopt($curl, CURLOPT_POSTFIELDS, $input_data);
 			curl_setopt($curl, CURLOPT_HTTPHEADER, $access_api);
@@ -771,7 +837,7 @@ class SppagebuilderAddonOptin_form extends SppagebuilderAddons
 			if (strtoupper(substr(PHP_OS, 0, 3)) === 'WIN')
 			{
 				// Windows only over-ride
-				curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+				curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
 			}
 			curl_setopt($ch, CURLOPT_HTTPHEADER, array($auth_header, $content_header));
 			curl_setopt($ch, CURLOPT_FOLLOWLOCATION, 1);
@@ -1151,7 +1217,10 @@ class SppagebuilderAddonOptin_form extends SppagebuilderAddons
 						continue;
 					}
 
-					if ($addon->id == $addonId)
+					// Match the addon type as well as the id. The captcha configuration is read
+					// from whatever this returns, and both the id and the page it is looked up
+					// in come from the request, so an id alone does not identify an optin form.
+					if ($addon->id == $addonId && isset($addon->name) && $addon->name === 'optin_form')
 					{
 						$addonInfo = $addon->settings;
 						break;

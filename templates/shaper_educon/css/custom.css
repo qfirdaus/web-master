@@ -120,12 +120,13 @@ div.mod-languages img {
 }
 
 #sp-top-bar .mod-languages ul.lang-inline > li.lang-active > a {
-    padding: 6px 9px;
-    border: 1px solid rgba(245, 207, 106, 0.45);
-    border-radius: 5px;
-    background: rgba(245, 207, 106, 0.13);
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
     color: #f5cf6a !important;
-    box-shadow: inset 0 -2px 0 rgba(245, 207, 106, 0.55);
+    box-shadow: none;
+    text-decoration: none;
 }
 
 #sp-top-bar .mod-languages ul.lang-inline > li:not(.lang-active) > a {
@@ -1314,35 +1315,94 @@ div.mod-languages img {
     }
 }
 
-/* Static SP Page Builder hero for the Malay faculty homepage. */
+/* Keep faculty and department slideshow heroes usable if Owl fails to load. */
+.site-mode-faculty .addon-root-slideshow-full .sppb-slider-fullwidth-wrapper,
+.site-mode-department .addon-root-slideshow-full .sppb-slider-fullwidth-wrapper {
+    position: relative;
+}
+
+.site-mode-faculty .addon-root-slideshow-full .customNavigation,
+.site-mode-department .addon-root-slideshow-full .customNavigation {
+    position: absolute;
+    z-index: 5;
+    top: 50%;
+    right: 0;
+    left: 0;
+    transform: translateY(-50%);
+    pointer-events: none;
+}
+
+.site-mode-faculty .addon-root-slideshow-full .customNavigation .container,
+.site-mode-department .addon-root-slideshow-full .customNavigation .container {
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+    max-width: none !important;
+    padding-right: 24px;
+    padding-left: 24px;
+}
+
+.site-mode-faculty .addon-root-slideshow-full .customNavigation a,
+.site-mode-department .addon-root-slideshow-full .customNavigation a {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    color: #fff;
+    background: rgba(0, 0, 0, 0.45);
+    border-radius: 50%;
+    cursor: pointer;
+    pointer-events: auto;
+}
+
+.site-mode-faculty .addon-root-slideshow-full > .sppb-addon-wrapper > .clearfix > .owl-dots,
+.site-mode-department .addon-root-slideshow-full > .sppb-addon-wrapper > .clearfix > .owl-dots,
+.site-mode-faculty .addon-root-slideshow-full > .clearfix > .owl-dots,
+.site-mode-department .addon-root-slideshow-full > .clearfix > .owl-dots {
+    position: relative;
+    z-index: 6;
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    margin-top: -34px;
+    padding-bottom: 16px;
+}
+
+.site-mode-faculty .addon-root-slideshow-full > .clearfix > .owl-dots .owl-dot,
+.site-mode-department .addon-root-slideshow-full > .clearfix > .owl-dots .owl-dot {
+    cursor: pointer;
+}
+
 @media (min-width: 768px) {
-    #section-id-3ec852b3-90bb-42c7-9c3c-7ab79cbca725 .sppb-slider-item-wrapper {
-        background-image: url("/web-master/images/fakulti-home/banner-faculty.png");
-        background-position: center center;
-        background-repeat: no-repeat;
-        background-size: cover;
-        min-height: min(34.3vw, 650px);
-    }
-
-    #sppb-addon-2eb510d0-e04a-49a6-8b57-8bc6c55f5689 #slide-fullwidth,
-    #sppb-addon-2eb510d0-e04a-49a6-8b57-8bc6c55f5689 .sppb-slider-wrapper > .owl-dots {
-        display: none !important;
-    }
-
     /* Owl hides the carousel until it initializes. Keep a functional fallback
        so a script error never leaves the hero blank. */
-    #sppb-addon-ced596e7-5986-4729-a080-f263055a6a9a #slide-fullwidth:not(.owl-loaded) {
+    body.site-mode-faculty .sppb-slider-fullwidth-wrapper #slide-fullwidth:not(.owl-loaded),
+    body.site-mode-department .sppb-slider-fullwidth-wrapper #slide-fullwidth:not(.owl-loaded) {
         display: block !important;
         overflow: hidden;
     }
 
-    #sppb-addon-ced596e7-5986-4729-a080-f263055a6a9a #slide-fullwidth:not(.owl-loaded) > .sppb-slideshow-fullwidth-item {
+    body.site-mode-faculty .sppb-slider-fullwidth-wrapper #slide-fullwidth:not(.owl-loaded) > .sppb-slideshow-fullwidth-item,
+    body.site-mode-department .sppb-slider-fullwidth-wrapper #slide-fullwidth:not(.owl-loaded) > .sppb-slideshow-fullwidth-item {
         display: none;
     }
 
-    #sppb-addon-ced596e7-5986-4729-a080-f263055a6a9a #slide-fullwidth:not(.owl-loaded):not(.has-fallback-slider) > .sppb-slideshow-fullwidth-item:first-child,
-    #sppb-addon-ced596e7-5986-4729-a080-f263055a6a9a #slide-fullwidth:not(.owl-loaded).has-fallback-slider > .sppb-slideshow-fullwidth-item.is-fallback-active {
+    body.site-mode-faculty .sppb-slider-fullwidth-wrapper #slide-fullwidth:not(.owl-loaded):not(.has-fallback-slider) > .sppb-slideshow-fullwidth-item:first-child,
+    body.site-mode-faculty .sppb-slider-fullwidth-wrapper #slide-fullwidth:not(.owl-loaded).has-fallback-slider > .sppb-slideshow-fullwidth-item.is-fallback-active,
+    body.site-mode-department .sppb-slider-fullwidth-wrapper #slide-fullwidth:not(.owl-loaded):not(.has-fallback-slider) > .sppb-slideshow-fullwidth-item:first-child,
+    body.site-mode-department .sppb-slider-fullwidth-wrapper #slide-fullwidth:not(.owl-loaded).has-fallback-slider > .sppb-slideshow-fullwidth-item.is-fallback-active {
         display: block;
+    }
+
+    #sppb-addon-2eb510d0-e04a-49a6-8b57-8bc6c55f5689 #slide-fullwidth,
+    #sppb-addon-2eb510d0-e04a-49a6-8b57-8bc6c55f5689 .owl-stage-outer,
+    #sppb-addon-2eb510d0-e04a-49a6-8b57-8bc6c55f5689 .owl-stage,
+    #sppb-addon-2eb510d0-e04a-49a6-8b57-8bc6c55f5689 .owl-item,
+    #sppb-addon-2eb510d0-e04a-49a6-8b57-8bc6c55f5689 .sppb-slideshow-fullwidth-item,
+    #sppb-addon-2eb510d0-e04a-49a6-8b57-8bc6c55f5689 .sppb-slideshow-fullwidth-item-bg {
+        height: min(34.3vw, 650px) !important;
+        min-height: min(34.3vw, 650px) !important;
     }
 }
 
@@ -1353,22 +1413,36 @@ div.mod-languages img {
     padding-bottom: 0;
 }
 
-/* Keep the Malay department hero responsive while allowing SP Page Builder
-   to supply and rotate the configured banner images. */
-body.itemid-1138 #sp-page-title {
+/* Keep the faculty home hero flush with the header on both language pages. */
+body.itemid-998 #sp-page-title,
+body.itemid-1138 #sp-page-title,
+body.itemid-1182 #sp-page-title,
+body.itemid-1203 #sp-page-title {
     display: none;
 }
 
+body.itemid-998 #sp-main-body,
+body.itemid-998 #sp-page-builder,
+body.itemid-998 #sp-page-builder > .page-content,
 body.itemid-1138 #sp-main-body,
 body.itemid-1138 #sp-page-builder,
 body.itemid-1138 #sp-page-builder > .page-content,
-body.itemid-1138 #section-id-686b406d-bde0-4f05-97ef-5eab6610efb5 {
+body.itemid-1182 #sp-main-body,
+body.itemid-1182 #sp-page-builder,
+body.itemid-1182 #sp-page-builder > .page-content,
+body.itemid-1203 #sp-main-body,
+body.itemid-1203 #sp-page-builder,
+body.itemid-1203 #sp-page-builder > .page-content {
     margin-top: 0 !important;
     padding-top: 0 !important;
 }
 
-body.itemid-1138 #section-id-686b406d-bde0-4f05-97ef-5eab6610efb5 {
+body.itemid-998 #sp-page-builder > .page-content > .sppb-section:first-child,
+body.itemid-1138 #sp-page-builder > .page-content > .sppb-section:first-child,
+body.itemid-1182 #sp-page-builder > .page-content > .sppb-section:first-child,
+body.itemid-1203 #sp-page-builder > .page-content > .sppb-section:first-child {
     margin-top: -15px !important;
+    padding-top: 0 !important;
 }
 
 @media (min-width: 768px) {
@@ -1428,15 +1502,38 @@ body.itemid-1138 #section-id-686b406d-bde0-4f05-97ef-5eab6610efb5 {
 }
 
 /* Equal-size administration and section cards on Home Jabatan. */
+#section-id-5b8930c8-c8a0-4ec3-8912-b0516633eca1 .sppb-addon-feature,
+#section-id-5b8930c8-c8a0-4ec3-8912-b0516633eca1 .sppb-addon-feature > .sppb-addon-content,
 #section-id-5b8930c8-c8a0-4ec3-8912-b0516633eca1 .sppb-addon-feature .sppb-img-container,
+#section-id-5b8930c8-c8a0-4ec3-8912-b0516633eca1 .sppb-addon-feature .sppb-img-container > a,
+#section-id-5b8930c8-c8a0-4ec3-8912-b0516633eca1 .sppb-addon-feature .sppb-img-container img {
+    box-sizing: border-box;
+    width: 100% !important;
+    max-width: none !important;
+}
+
+#section-id-5b8930c8-c8a0-4ec3-8912-b0516633eca1 .sppb-addon-feature .sppb-img-container,
+#section-id-5b8930c8-c8a0-4ec3-8912-b0516633eca1 .sppb-addon-feature .sppb-img-container > a,
 #section-id-5b8930c8-c8a0-4ec3-8912-b0516633eca1 .sppb-addon-feature .sppb-img-container img {
     display: block !important;
-    width: 100%;
     height: 210px;
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+#section-id-5b8930c8-c8a0-4ec3-8912-b0516633eca1 .sppb-addon-feature .sppb-img-container {
+    overflow: hidden;
 }
 
 #section-id-5b8930c8-c8a0-4ec3-8912-b0516633eca1 .sppb-addon-feature .sppb-img-container img {
     object-fit: cover;
+    object-position: center;
+    transform: translate3d(-18px, 0, 0) scale(1.12) !important;
+    transition: transform .4s ease !important;
+}
+
+#section-id-5b8930c8-c8a0-4ec3-8912-b0516633eca1 .sppb-addon-feature:hover .sppb-img-container img {
+    transform: translate3d(18px, 0, 0) scale(1.12) !important;
 }
 
 #section-id-5b8930c8-c8a0-4ec3-8912-b0516633eca1 .sppb-addon-feature .sppb-media-content {
@@ -1447,6 +1544,7 @@ body.itemid-1138 #section-id-686b406d-bde0-4f05-97ef-5eab6610efb5 {
 
 @media (max-width: 767px) {
     #section-id-5b8930c8-c8a0-4ec3-8912-b0516633eca1 .sppb-addon-feature .sppb-img-container,
+    #section-id-5b8930c8-c8a0-4ec3-8912-b0516633eca1 .sppb-addon-feature .sppb-img-container > a,
     #section-id-5b8930c8-c8a0-4ec3-8912-b0516633eca1 .sppb-addon-feature .sppb-img-container img {
         height: auto;
     }

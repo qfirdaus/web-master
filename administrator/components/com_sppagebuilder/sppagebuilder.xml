@@ -5,11 +5,13 @@
 	<creationDate>Sep 2014</creationDate>
 	<authorEmail>support@joomshaper.com</authorEmail>
 	<authorUrl>https://www.joomshaper.com</authorUrl>
-	<copyright>Copyright @ 2010 - 2025 JoomShaper. All rights reserved.</copyright>
+	<copyright>Copyright @ 2010 - 2026 JoomShaper. All rights reserved.</copyright>
 	<license>GNU General Public License version 2 or later</license>
-	<version>6.8.0</version>
+	<version>6.9.1</version>
 	<scriptfile>installer.script.php</scriptfile>
 	<variant>pro</variant>
+
+	<changelogurl>https://www.joomshaper.com/updates/changelogs/com-sp-page-builder-pro-next.xml</changelogurl>
 
 	<updateservers>
 		<server type="extension" priority="1" name="SP Page Builder">https://www.joomshaper.com/updates/com-sp-page-builder-pro-next.xml</server>

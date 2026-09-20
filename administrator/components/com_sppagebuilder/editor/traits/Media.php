@@ -3,7 +3,7 @@
 /**
  * @package SP Page Builder
  * @author JoomShaper http://www.joomshaper.com
- * @copyright Copyright (c) 2010 - 2025 JoomShaper
+ * @copyright Copyright (c) 2010 - 2026 JoomShaper
  * @license http://www.gnu.org/licenses/gpl-2.0.html GNU/GPLv2 or later
  */
 
@@ -228,6 +228,13 @@ trait Media
 
 							if ($dir != '')
 							{
+								if (!SecurityHelper::isGetablePath($dir))
+								{
+									$report['status'] = false;
+									$report['message'] = Text::_('COM_SPPAGEBUILDER_MEDIA_MANAGER_UPLOAD_FAILED');
+									$this->sendResponse($report, 400);
+								}
+
 								$folder = ltrim($dir, '/');
 							}
 
@@ -260,6 +267,25 @@ trait Media
 
 							$src = $folder . '/' . $media_name;
 
+							// File::upload is called with $allowUnsafe = true, which skips
+							// InputFilter::isSafeFile entirely -- including php_tag_in_content, the
+							// check that rejects an image carrying <?php. Run it explicitly, the same
+							// way importLayoutWithMedia() does.
+							$isSafe = \Joomla\CMS\Filter\InputFilter::isSafeFile([
+								'name'     => $media_name,
+								'tmp_name' => $path,
+								'type'     => '',
+								'error'    => '',
+								'size'     => '',
+							]);
+
+							if (!$isSafe)
+							{
+								$report['status'] = false;
+								$report['message'] = Text::_('COM_SPPAGEBUILDER_MEDIA_MANAGER_FILE_NOT_SUPPORTED');
+								$this->sendResponse($report, 400);
+							}
+
 							if (File::upload($path, $dest, false, true))
 							{
 								$media_attr = [];
@@ -269,6 +295,15 @@ trait Media
 								{
 									if (strtolower($ext) === 'svg')
 									{
+										if (!BuilderMediaHelper::sanitizeSvgFile($dest))
+										{
+											File::delete($dest);
+
+											$report['status'] = false;
+											$report['message'] = Text::_('COM_SPPAGEBUILDER_MEDIA_MANAGER_FILE_NOT_SUPPORTED');
+											$this->sendResponse($report, 400);
+										}
+
 										$report['src'] = Uri::root(true) . '/' . $src;
 									}
 									else if ($ext !== 'avif')
@@ -650,18 +685,41 @@ trait Media
 		$id = $this->getInput('id', 0, 'INT');
 		$title = $this->getInput('title', '', 'STR');
 		$path = $this->getInput('path', '', 'STR');
-		$thumb = $this->getInput('thumb', '', 'STR');
 
 		$title = $this->sanitizeTitle($title);
 
-		if(!$this->pathExistsInDB($path))
+		$model = $this->getModel('Media');
+		$media = $model->getMediaByID($id);
+
+		// Resolve the record from the path, because the path is what actually gets renamed.
+		// Trusting the request's id lets a core.edit.own user pair an id they own with someone
+		// else's path: the ownership test below and $thumb would both come from their record
+		// while a different file is renamed. pathExistsInDB() is an exact match on path, unlike
+		// getMediaByPath(), which matches with LIKE '%path%' and can resolve the wrong row.
+		$pathId = $this->pathExistsInDB($path);
+
+		if ($pathId)
+		{
+			$media = $model->getMediaByID($pathId);
+			$id    = $pathId;
+		}
+
+		// Confine the rename to the configured media folders, whatever the request asked for.
+		//
+		// The conditions are OR-ed deliberately: every one of them must hold. Weakening this to
+		// && reopens an arbitrary file rename -- f04087449 (2026-09-07) did exactly that to the
+		// last two, silently reverting the fix for issue #3360 a day before it was reported
+		// again from outside. .github/security-invariants.php now guards the shape of this line.
+		if (!SecurityHelper::isGetablePath($path) || !$this->pathExistsInDB($path) || !$media)
 		{
 			$error = new stdClass();
-			$error->message = Text::_("COM_SPPAGEBUILDER_MEDIA_MANAGER_MEDIA_RENAME_ERROR");
+			$error->message = Text::_('COM_SPPAGEBUILDER_MEDIA_MANAGER_MEDIA_RENAME_ERROR');
 			$error->status = false;
 
 			$this->sendResponse($error, 500);
 		}
+
+		$thumb = $media->thumb ?? '';
 
 		$mediaType = empty($id) ? 'folder' : 'DB';
 
@@ -730,12 +788,20 @@ trait Media
 
 	private function replacePathByTitle($path, $title)
 	{
-		$fileName = pathinfo($path, PATHINFO_FILENAME);
-		$basename = basename($path);
+		// Replace only the filename stem and keep the extension. str_replace() over the
+		// basename rewrote every occurrence of the stem, so "jpg.jpg" renamed to "php"
+		// became "php.php" -- a rename that changes the file's extension.
+		if ($path === '')
+		{
+			return '';
+		}
 
-		$newFile = str_replace($fileName, $title, $basename);
+		$dirname = pathinfo($path, PATHINFO_DIRNAME);
+		$ext     = pathinfo($path, PATHINFO_EXTENSION);
 
-		return str_replace($basename, $newFile, $path);
+		$newBasename = $title . ($ext !== '' ? '.' . $ext : '');
+
+		return ($dirname !== '' && $dirname !== '.') ? $dirname . '/' . $newBasename : $newBasename;
 	}
 
 	private function sanitizeTitle($title)

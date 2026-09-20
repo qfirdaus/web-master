@@ -3,7 +3,7 @@
 /**
  * @package SP Page Builder
  * @author JoomShaper http://www.joomshaper.com
- * @copyright Copyright (c) 2010 - 2025 JoomShaper
+ * @copyright Copyright (c) 2010 - 2026 JoomShaper
  * @license http://www.gnu.org/licenses/gpl-2.0.html GNU/GPLv2 or later
  */
 
@@ -11,8 +11,10 @@ use Joomla\CMS\Factory;
 use Joomla\CMS\Table\Table;
 use Joomla\CMS\Language\Text;
 use Joomla\CMS\HTML\HTMLHelper;
+use Joomla\CMS\Language\LanguageHelper;
 use Joomla\CMS\MVC\Model\ItemModel;
 use Joomla\CMS\Plugin\PluginHelper;
+use Joomla\Database\ParameterType;
 
 //no direct access
 defined('_JEXEC') or die('Restricted access');
@@ -36,6 +38,58 @@ class SppagebuilderModelPage extends ItemModel
 		$app = Factory::getApplication('site');
 
 		$pageId = $app->input->getInt('id');
+
+		$db = Factory::getDbo();
+		$query = $db->getQuery(true);
+		$query->select(['extension_view', 'view_id'])
+			->from($db->quoteName('#__sppagebuilder'))
+			->where($db->quoteName('id') . ' = ' . (int) $pageId);
+		$db->setQuery($query);
+		$result = $db->loadObject();
+
+		if(!empty($result) && $result->extension_view === 'dynamic_content:index') {
+			$languageInput = Factory::getLanguage()->getTag() ?? '*';
+			$language = $languageInput;
+
+			if ($languageInput !== '*') {
+				$languages = LanguageHelper::getLanguages('lang_code');
+				foreach ($languages as $lang) {
+					if ($lang->lang_code === $languageInput || $lang->sef === $languageInput) {
+						$language = $lang->lang_code;
+						break;
+					}
+				}
+			}
+			$db = Factory::getDbo();
+			$query = $db->getQuery(true);
+			$query->select(['id', 'language'])
+				->from($db->quoteName('#__sppagebuilder'))
+				->whereIn($db->quoteName('language'), [$language, '*'], ParameterType::STRING)
+				->where('published = 1')
+				->where($db->quoteName('extension_view') . ' = ' . $db->quote('dynamic_content:index'))
+				->where($db->quoteName('view_id') . ' = ' . (int) $result->view_id);
+				
+			$db->setQuery($query);
+			$pageObjects = $db->loadObjectList();
+
+			if(empty($pageObjects)) {
+				$query = $db->getQuery(true);
+				$query->select(['id', 'language'])
+					->from($db->quoteName('#__sppagebuilder'))
+					->where('published = 1')
+					->where($db->quoteName('extension_view') . ' = ' . $db->quote('dynamic_content:index'))
+					->where($db->quoteName('view_id') . ' = ' . (int) $result->view_id);
+				$db->setQuery($query);
+				$pageObjects = $db->loadObjectList();
+
+				if(!empty($pageObjects)) {
+					$pageId = $pageObjects[0]->id ?? null;
+				}
+			} else {
+				$pageId = $this->getPreferredLanguagePageId($pageObjects, $language);
+			}
+		}
+
 		$this->setState('page.id', $pageId);
 
 		$user = Factory::getUser();
@@ -44,6 +98,23 @@ class SppagebuilderModelPage extends ItemModel
 		{
 			$this->setState('filter.published', 1);
 		}
+	}
+
+	private function getPreferredLanguagePageId($pages, $language)
+	{
+		foreach ($pages as $page) {
+			if ($page->language === $language) {
+				return $page->id;
+			}
+		}
+
+		foreach ($pages as $page) {
+			if ($page->language === '*') {
+				return $page->id;
+			}
+		}
+
+		return null;
 	}
 
 	public function getItem($pageId = null)

@@ -95,8 +95,8 @@ class PlgSearchSppagebuilder extends CMSPlugin
 			default:
 				$text = $db->quote('%' . $db->escape($text, true) . '%', false);
 				$wheres1 = array();
-				$wheres1[] = 's.title LIKE ' . $text;
-				$wheres1[] = 's.text LIKE ' . $text;
+				$wheres1[] = 's.title LIKE ' . $db->quoteName($text);
+				$wheres1[] = 's.text LIKE ' . $db->quoteName($text);
 				$where = '((' . implode(') OR (', $wheres1) . ')) AND s.published = 1';
 				break;
 		}
@@ -172,7 +172,7 @@ class PlgSearchSppagebuilder extends CMSPlugin
 		$query = $db->getQuery(true);
 		$query->select(array('title, id'));
 		$query->from($db->quoteName('#__menu'));
-		$query->where($db->quoteName('link') . ' LIKE '. $db->quote('%option=com_sppagebuilder&view=page&id='. $pageId .'%'));
+		$query->where($db->quoteName('link') . ' LIKE '. $db->quote('%option=com_sppagebuilder&view=page&id='. (int)$pageId .'%'));
 		$query->where($db->quoteName('published') . ' = '. $db->quote('1'));
 		$db->setQuery($query);
 		$item = $db->loadObject();

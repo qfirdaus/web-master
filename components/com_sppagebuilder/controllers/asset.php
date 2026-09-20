@@ -2,7 +2,7 @@
 /**
  * @package SP Page Builder
  * @author JoomShaper http://www.joomshaper.com
- * @copyright Copyright (c) 2010 - 2025 JoomShaper
+ * @copyright Copyright (c) 2010 - 2026 JoomShaper
  * @license http://www.gnu.org/licenses/gpl-2.0.html GNU/GPLv2 or later
  */
 
@@ -372,7 +372,16 @@ class SppagebuilderControllerAsset extends FormController
 
         foreach ($files as $file)
         {
-            if (!in_array(strtolower(File::getExt($file)), $allowed, true))
+            $extension = strtolower(File::getExt($file));
+
+            if (!in_array($extension, $allowed, true))
+            {
+                File::delete($file);
+                continue;
+            }
+
+            // SVG fonts land in a public folder and can carry script, so strip it or drop the file.
+            if ($extension === 'svg' && !BuilderMediaHelper::sanitizeSvgFile($file))
             {
                 File::delete($file);
             }

@@ -3,7 +3,7 @@
 /**
  * @package SP Page Builder
  * @author JoomShaper http://www.joomshaper.com
- * @copyright Copyright (c) 2010 - 2025 JoomShaper
+ * @copyright Copyright (c) 2010 - 2026 JoomShaper
  * @license http://www.gnu.org/licenses/gpl-2.0.html GNU/GPLv2 or later
  */
 //no direct access
@@ -194,7 +194,12 @@ class SppagebuilderAddonDynamic_content_text extends SppagebuilderAddons
             $content = $this->renderIcon($content);
         }
 
-        $plainContact = trim(strip_tags((string) $content));
+        $plainContact = '';
+
+        if (!is_object($content))
+        {
+            $plainContact = trim(strip_tags((string) $content));
+        }
 
         if (
             $plainContact !== '' && !$noLink

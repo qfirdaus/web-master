@@ -3,7 +3,7 @@
 /**
  * @package SP Page Builder
  * @author JoomShaper https://www.joomshaper.com
- * @copyright Copyright (c) 2010 - 2025 JoomShaper
+ * @copyright Copyright (c) 2010 - 2026 JoomShaper
  * @license https://www.gnu.org/licenses/gpl-2.0.html GNU/GPLv2 or later
  */
 //no direct access
@@ -38,6 +38,16 @@ SpAddonsConfig::addonConfig([
 							'std'  => true,
 						],
 
+						'media_type' => [
+							'type'   => 'buttons',
+							'values' => [
+								['label' => Text::_('COM_SPPAGEBUILDER_GLOBAL_TYPE_IMAGE'), 'value' => 'image'],
+								['label' => Text::_('COM_SPPAGEBUILDER_GLOBAL_TYPE_VIDEO'), 'value' => 'video'],
+							],
+							'std'   => 'image',
+							'tabs'    => true,
+						],
+
 						'thumb' => [
 							'type'  => 'media',
 							'title' => Text::_('COM_SPPAGEBUILDER_ADDON_GALLERY_THUMB'),
@@ -47,6 +57,7 @@ SpAddonsConfig::addonConfig([
 								'height' => '',
 								'width'  => '',
 							],
+							'depends' => [['media_type', '!=', 'video']],
 						],
 
 						'full' => [
@@ -59,6 +70,27 @@ SpAddonsConfig::addonConfig([
 								'height' => '',
 								'width'  => '',
 							],
+							'depends' => [['media_type', '!=', 'video']],
+						],
+
+						'video_poster' => [
+							'type'  => 'media',
+							'title' => Text::_('COM_SPPAGEBUILDER_ADDON_GALLERY_VIDEO_POSTER'),
+							'desc'  => Text::_('COM_SPPAGEBUILDER_ADDON_GALLERY_VIDEO_POSTER_DESC'),
+							'std'   => [
+								'src'    => 'https://sppagebuilder.com/addons/gallery/gallery1.jpg',
+								'height' => '',
+								'width'  => '',
+							],
+							'depends' => [['media_type', '=', 'video']],
+						],
+
+						'video' => [
+							'type'  => 'media',
+							'title' => Text::_('COM_SPPAGEBUILDER_ADDON_GALLERY_FULL_VIDEO'),
+							'desc'  => Text::_('COM_SPPAGEBUILDER_ADDON_GALLERY_FULL_VIDEO_DESC'),
+							'format' => 'video',
+							'depends' => [['media_type', '=', 'video']],
 						],
 
 						'description' => [

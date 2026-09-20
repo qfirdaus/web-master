@@ -61,6 +61,18 @@ class CollectionData
     protected $sortingColumn = null;
 
     /**
+     * The language to filter collection items by. When null, callers fall back to the
+     * site's currently active language. Set explicitly by the page builder editor so a
+     * page being edited in a specific language shows that language's items instead of
+     * whatever the active site language happens to be.
+     *
+     * @var string|null
+     *
+     * @since 6.8.0
+     */
+    protected $language = null;
+
+    /**
      * The direction of the collection items.
      *
      * @var string
@@ -359,6 +371,20 @@ class CollectionData
     public function setDirection($direction)
     {
         $this->direction = $direction;
+        return $this;
+    }
+
+    /**
+     * Set the language to filter collection items by.
+     *
+     * @param string|null $language The language tag to filter by, or null to use the site's active language.
+     * @return self
+     *
+     * @since 6.8.0
+     */
+    public function setLanguage($language)
+    {
+        $this->language = $language;
         return $this;
     }
 
@@ -1076,7 +1102,7 @@ class CollectionData
     public function loadDataBySource($collectionId)
     {
         try {
-            $items = (new CollectionDataService)->fetchCollectionItems($collectionId, $this->direction, $this->sortingColumn);
+            $items = (new CollectionDataService)->fetchCollectionItems($collectionId, $this->direction, $this->sortingColumn, $this->language);
         } catch (Throwable $error) {
             $items = [];
         }

@@ -2,7 +2,7 @@
 /**
  * @package SP Page Builder
  * @author JoomShaper http://www.joomshaper.com
- * @copyright Copyright (c) 2010 - 2025 JoomShaper
+ * @copyright Copyright (c) 2010 - 2026 JoomShaper
  * @license http://www.gnu.org/licenses/gpl-2.0.html GNU/GPLv2 or later
  */
 
@@ -250,9 +250,15 @@ class SppagebuilderControllerDynamic_content extends FormController
         $filters = $input->filters;
         $limit = $input->limit ?? 20;
         $direction = $this->sanitizeDirecton($input->direction ?? 'ASC');
+        $sortingColumn = $input->sortingColumn ?? null;
+        $sortingColumn = ($sortingColumn === 'default' || empty($sortingColumn)) ? null : (int) $sortingColumn;
         $parentItem = $input->parent_item;
         $currentLink = $input->currentLink ?? '';
         $isSite = $input->isSite ?? true;
+        // Sent by the page builder editor when editing a specific language variant of a
+        // Dynamic Content page, so collection items are filtered by that language instead
+        // of the site's currently active one. Left empty for live/public requests.
+        $language = !empty($input->language) ? $input->language : null;
 
         if (!empty($isSite)) {
             // Get collection fields with proper handling for articles and tags
@@ -288,7 +294,7 @@ class SppagebuilderControllerDynamic_content extends FormController
                 try {
                     $ordering = $direction === 'desc' ? 'latest' : 'oldest';
                     $articleCount = \SppagebuilderHelperArticles::getArticlesCount();
-                    $articles = \SppagebuilderHelperArticles::getArticles($articleCount, $ordering);
+                    $articles = \SppagebuilderHelperArticles::getArticles($articleCount, $ordering, language: $language);
                     
                     $items = array_map(function ($article) {
                         $article->collection_id = CollectionIds::ARTICLES_COLLECTION_ID;
@@ -349,7 +355,7 @@ class SppagebuilderControllerDynamic_content extends FormController
         [$referenceFilters, $regularFilters, $hasReferenceFilters] = CollectionData::partitionByReferenceFilters($filters);
 
         if ($hasReferenceFilters) {
-            $items = (new CollectionDataService)->getCollectionReferenceItemsOnDemand($parentItem, $referenceFilters, $direction);
+            $items = (new CollectionDataService)->getCollectionReferenceItemsOnDemand($parentItem, $referenceFilters, $direction, $sortingColumn);
 
             if (!empty($isSite)) {
             $data = (new CollectionData())
@@ -362,7 +368,9 @@ class SppagebuilderControllerDynamic_content extends FormController
                 ->getData();
             } else {
             $data = (new CollectionData())
+                ->setSortingColumn($sortingColumn)
                 ->setDirection($direction)
+                ->setLanguage($language)
                 ->loadDataBySource($id)
                 ->setLimit($limit)
                 ->applyFilters($filters)
@@ -371,17 +379,21 @@ class SppagebuilderControllerDynamic_content extends FormController
         } else {
             if (!empty($isSite)) {
                           $data = (new CollectionData())
+                ->setSortingColumn($sortingColumn)
                 ->setDirection($direction)
+                ->setLanguage($language)
                 ->loadDataBySource($id)
                 ->setLimit($limit)
                 ->setParentItem($parentItem ?? null)
                 ->applyFilters($filters, $allPaths)
                 ->applyUserFilters($allPaths, $currentLink, false)
                 ->applyUserSearchFilters($id, $path, $allPaths, false)
-                ->getData();  
+                ->getData();
             } else {
             $data = (new CollectionData())
+                ->setSortingColumn($sortingColumn)
                 ->setDirection($direction)
+                ->setLanguage($language)
                 ->loadDataBySource($id)
                 ->setLimit($limit)
                 ->setParentItem($parentItem ?? null)
@@ -403,6 +415,7 @@ class SppagebuilderControllerDynamic_content extends FormController
         $limit = $data->limit ?? 20;
         $page = $data->page ?? 1;
         $sortingColumn = $data->sortingColumn ?? null;
+        $sortingColumn = ($sortingColumn === 'default' || empty($sortingColumn)) ? null : (int) $sortingColumn;
         $direction = $this->sanitizeDirecton($data->direction ?? 'ASC');
         $currentLink = $data->currentLink;
         $isSite = $data->isSite ?? true;
@@ -485,11 +498,10 @@ class SppagebuilderControllerDynamic_content extends FormController
                 [$referenceFilters, $regularFilters, $hasReferenceFilters] = CollectionData::partitionByReferenceFilters($filters);
 
                 if ($hasReferenceFilters) {
-                    $items = (new CollectionDataService)->getCollectionReferenceItemsOnDemand($parentItem, $referenceFilters, $direction);
+                    $items = (new CollectionDataService)->getCollectionReferenceItemsOnDemand($parentItem, $referenceFilters, $direction, $sortingColumn);
                     $data = (new CollectionData())
                         ->setData($items)
                         ->setLimit($limit)
-                        ->setSortingColumn($sortingColumn)
                         ->setDirection($direction)
                         ->setPage($page)
                         ->applyFilters($regularFilters, $allPaths)

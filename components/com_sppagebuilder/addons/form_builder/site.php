@@ -3,7 +3,7 @@
 /**
  * @package SP Page Builder
  * @author JoomShaper http://www.joomshaper.com
- * @copyright Copyright (c) 2010 - 2025 JoomShaper
+ * @copyright Copyright (c) 2010 - 2026 JoomShaper
  * @license http://www.gnu.org/licenses/gpl-2.0.html GNU/GPLv2 or later
  */
 
@@ -129,6 +129,7 @@ class SppagebuilderAddonForm_builder extends SppagebuilderAddons
         $success_message        = (isset($settings->success_message) && $settings->success_message) ? $settings->success_message : 'Email successfully sent!';
         $failed_message         = (isset($settings->failed_message) && $settings->failed_message) ? $settings->failed_message : 'Email sent failed, fill required field and try again!';
         $required_field_message = (isset($settings->required_field_message) && $settings->required_field_message) ? $settings->required_field_message : 'Please fill the required field.';
+        $inline_validation      = (isset($settings->inline_validation) && $settings->inline_validation) ? true : false;
 
         // Button options
         $btn_text      = (isset($settings->btn_text) && $settings->btn_text) ? $settings->btn_text : '';
@@ -159,7 +160,7 @@ class SppagebuilderAddonForm_builder extends SppagebuilderAddons
         $output = '';
         $output .= '<div class="sppb-addon sppb-addon-form-builder' . $class . '">';
         $output .= '<div class="sppb-addon-content">';
-        $output .= '<form class="sppb-addon-form-builder-form"' . ($enable_redirect && $redirect_url != '' ? ' data-redirect="yes" data-redirect-url="' . $redirect_url . '"' : '') . '>';
+        $output .= '<form class="sppb-addon-form-builder-form"' . ($enable_redirect && $redirect_url != '' ? ' data-redirect="yes" data-redirect-url="' . $redirect_url . '"' : '') . ($inline_validation ? ' novalidate' : '') . '>';
         $output .= HTMLHelper::_('form.token');
 
         $date_formatters = [];
@@ -386,7 +387,7 @@ class SppagebuilderAddonForm_builder extends SppagebuilderAddons
                     }
 
                     $output .= '<input inputmode="numeric" type="number" id="' . $item_name_id . '" name="form-builder-item-[' . $field_name . '' . ($field_is_required ? '*' : '') . ']" class="sppb-form-control"' . ($number_min != '' ? ' min="' . $number_min . '"' : '') . '' . ($number_max ? ' max="' . $number_max . '"' : '') . '' . ($number_step ? ' step="' . $number_step . '"' : '') . '' . ($field_placeholder ? ' placeholder="' . $field_placeholder . '"' : '') . '' . ($field_is_required ? ' aria-required="true" required' : '') . '>';
-                    $output .= $field_is_required ? '<span class="sppb-form-builder-required">' . $required_field_message . '</span>' : '';
+                    $output .= ($field_is_required || $inline_validation) ? '<span class="sppb-form-builder-required">' . $required_field_message . '</span>' : '';
                     $output .= '</div>'; //.sppb-form-group
                 } else if ($field_type == 'heading') {
                     $item_unique_class = 'sppb-form-builder-heading-' . $item_key;
@@ -394,6 +395,16 @@ class SppagebuilderAddonForm_builder extends SppagebuilderAddons
                     $output .= '<' . $heading_selector . ' class="sppb-addon-title ' . $item_unique_class . '">';
                     $output .= $label;
                     $output .= '</' . $heading_selector . '>';
+                } elseif ($field_type === 'tel') {
+                    $output .= '<div class="sppb-form-group ' . $item_name_id . '">';
+
+                    if ($label) {
+                        $output .= '<label ' . $hidden_label_class . ' for="' . $item_name_id . '">' . $label . '' . ($field_required_star && $field_is_required ? '<span class="sppb-field-required"> *</span>' : '') . '</label>';
+                    }
+
+                    $output .= '<input type="tel" id="' . $item_name_id . '" name="form-builder-item-[' . $field_name . '' . ($field_is_required ? '*' : '') . ']" class="sppb-form-control"' . ($field_placeholder ? ' placeholder="' . $field_placeholder . '"' : '') . '' . ($tel_pattern ? ' pattern="' . htmlspecialchars($tel_pattern, ENT_QUOTES) . '"' : '') . '' . ($field_is_required ? ' aria-required="true" required' : '') . '>';
+                    $output .= ($field_is_required || $inline_validation) ? '<span class="sppb-form-builder-required">' . $required_field_message . '</span>' : '';
+                    $output .= '</div>'; //.sppb-form-group
                 } else {
                     $output .= '<div class="sppb-form-group ' . $item_name_id . '">';
 
@@ -401,8 +412,8 @@ class SppagebuilderAddonForm_builder extends SppagebuilderAddons
                         $output .= '<label ' . $hidden_label_class . ' for="' . $item_name_id . '">' . $label . '' . ($field_required_star && $field_is_required ? '<span class="sppb-field-required"> *</span>' : '') . '</label>';
                     }
 
-                    $output .= '<input type="' . $field_type . '" id="' . $item_name_id . '" name="form-builder-item-[' . $field_name . '' . ($field_is_required ? '*' : '') . ']" class="sppb-form-control"' . ($field_placeholder ? ' placeholder="' . $field_placeholder . '"' : '') . '' . ($field_type === 'tel' && $tel_pattern ? ' pattern="' . $tel_pattern . '"' : '') . '' . ($field_is_required ? ' aria-required="true" required' : '') . ($field_type === 'text' ? $maximum_character . $minimum_character : '') . '>';
-                    $output .= ($field_is_required || ($field_type === 'text' && ($minimum_character || $maximum_character))) ? '<span class="sppb-form-builder-required">' . $required_field_message . '</span>' : '';
+                    $output .= '<input type="' . $field_type . '" id="' . $item_name_id . '" name="form-builder-item-[' . $field_name . '' . ($field_is_required ? '*' : '') . ']" class="sppb-form-control"' . ($field_placeholder ? ' placeholder="' . $field_placeholder . '"' : '') . '' . ($field_is_required ? ' aria-required="true" required' : '') . ($field_type === 'text' ? $maximum_character . $minimum_character : '') . '>';
+                    $output .= ($field_is_required || $inline_validation || ($field_type === 'text' && ($minimum_character || $maximum_character))) ? '<span class="sppb-form-builder-required">' . $required_field_message . '</span>' : '';
                     $output .= '</div>'; //.sppb-form-group
                 }
             } //end fields foreach
@@ -739,11 +750,19 @@ class SppagebuilderAddonForm_builder extends SppagebuilderAddons
         $output['gcaptchaId'] = '';
 
         // Match has addon id
-        if (self::verifyAddon($item_data->content ?? $item_data->text, $addon_id) === false) {
+        $captchaAddon = self::getAddonById($item_data->content ?? $item_data->text, $addon_id);
+
+        if ($captchaAddon === null) {
             $output['content'] = '<span class="sppb-text-danger">' . $failed_message_ajax . '</span>';
 
             return json_encode($output);
         }
+
+        // Read the captcha type from the stored addon, never from the request, so a form
+        // configured for reCAPTCHA cannot be downgraded to the simple question captcha.
+        $captcha_type = (isset($captchaAddon->settings->captcha_type) && $captchaAddon->settings->captcha_type)
+            ? $captchaAddon->settings->captcha_type
+            : 'default';
 
         if ($showcaptcha) {
             if ($gcaptcha == '' && $captcha_type != 'default') {
@@ -761,12 +780,11 @@ class SppagebuilderAddonForm_builder extends SppagebuilderAddons
                     $output['gcaptchaType'] = 'dynamic';
                 }
 
+                // The captcha plugin's verdict is authoritative in every render context.
+                // $view_type comes from the request, and the module branch that used to sit
+                // here replaced this result with a non-empty test, so posting view_type=module
+                // passed any token at all.
                 $res = Factory::getApplication()->triggerEvent('onCheckAnswer', [$gcaptcha]);
-
-                // If module then verify gcaptcha
-                if ($view_type === 'module') {
-                    $res = ($gcaptcha != null || strlen($gcaptcha) != 0) ? [true] : [false];
-                }
 
                 if (empty($res[0])) {
                     $output['content'] = '<span class="sppb-text-danger">' . Text::_('COM_SPPAGEBUILDER_ADDON_AJAX_CONTACT_INVALID_CAPTCHA') . '</span>';
@@ -775,8 +793,7 @@ class SppagebuilderAddonForm_builder extends SppagebuilderAddons
                 }
             } else if ($captcha_type == 'default') {
                 // Read the expected answer from the stored addon, never from the request.
-                $captchaAddon   = self::getAddonById($item_data->content ?? $item_data->text, $addon_id);
-                $expectedAnswer = ($captchaAddon && isset($captchaAddon->settings->captcha_answer)) ? (string) $captchaAddon->settings->captcha_answer : '';
+                $expectedAnswer = isset($captchaAddon->settings->captcha_answer) ? (string) $captchaAddon->settings->captcha_answer : '';
 
                 if ($expectedAnswer === '' || trim((string) $captcha_question) !== trim($expectedAnswer)) {
                     $output['content'] = '<span class="sppb-text-danger">' . Text::_('COM_SPPAGEBUILDER_ADDON_AJAX_CONTACT_WRONG_CAPTCHA') . '</span>';
@@ -1273,12 +1290,11 @@ class SppagebuilderAddonForm_builder extends SppagebuilderAddons
         $transformCss = $cssHelper->generateTransformStyle('.sppb-addon-form-builder-form', $settings, 'transform');
         $css .= $transformCss;
 
-        return $css;
-    }
+        if (!empty($settings->inline_validation)) {
+            $css .= $cssHelper->generateStyle('.sppb-form-builder-required', $settings, ['inline_validation_color' => 'color'], ['inline_validation_color' => false]);
+        }
 
-    public static function verifyAddon($pageContent, $addonId)
-    {
-        return self::getAddonById($pageContent, $addonId) !== null;
+        return $css;
     }
 
     /**
@@ -1637,6 +1653,12 @@ class SppagebuilderAddonForm_builder extends SppagebuilderAddons
 
         $output .= $lodash->generateTransformCss('.sppb-addon-form-builder-form', 'data.transform');
 
+        // Match css(): only apply the colour when inline validation is actually on, otherwise
+        // the editor preview would show it even with the toggle off.
+        $output .= '<# if (data.inline_validation) { #>';
+        $output .= $lodash->color('color', '.sppb-form-builder-required', 'data.inline_validation_color');
+        $output .= '<# } #>';
+
         $output .= '
         </style>
 
@@ -1650,11 +1672,13 @@ class SppagebuilderAddonForm_builder extends SppagebuilderAddons
                 redirect_url_attr = `data-redirect="yes" data-redirect-url="${redirect_url}"`;
             }
 
+            let inline_validation_attr = data.inline_validation ? "novalidate" : "";
+
         #>
 
         <div class="sppb-addon sppb-addon-form-builder {{data.class}}">
         <div class="sppb-addon-content">
-        <form class="sppb-addon-form-builder-form" {{{redirect_url_attr}}}>
+        <form class="sppb-addon-form-builder-form" {{{redirect_url_attr}}} {{{inline_validation_attr}}}>
 
             <#
             var __steps = (_.isArray(data.sp_form_builder_steps) && data.sp_form_builder_steps.length) ? data.sp_form_builder_steps : [{ step_title: "Step 1", sp_form_builder_item: (data.sp_form_builder_item || []) }];

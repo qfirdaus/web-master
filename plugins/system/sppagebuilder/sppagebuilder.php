@@ -3,7 +3,7 @@
 /**
  * @package SP Page Builder
  * @author JoomShaper http://www.joomshaper.com
- * @copyright Copyright (c) 2010 - 2025 JoomShaper
+ * @copyright Copyright (c) 2010 - 2026 JoomShaper
  * @license http://www.gnu.org/licenses/gpl-2.0.html GNU/GPLv2 or later
  */
 //no direct access
@@ -58,6 +58,8 @@ class  plgSystemSppagebuilder extends CMSPlugin
 			return [];
 		}
 
+		$ids = array_map('intval', $ids);
+
 		$db = Factory::getDbo();
 		$query = $db->getQuery(true);
 
@@ -78,6 +80,7 @@ class  plgSystemSppagebuilder extends CMSPlugin
 
 	protected function getPageContentById($ids)
 	{
+		$ids = array_map('intval', $ids ?? []);
 		$idArray = array_map(
 			function ($item) {
 				return $item->id;
@@ -928,6 +931,7 @@ class  plgSystemSppagebuilder extends CMSPlugin
 
 	private function getVisibilityScriptContent($popupId, $popupAttribs)
 	{
+		$popupId = (int)$popupId;
 		$popupAttribs['enter_animation_duration'] = isset($popupAttribs['enter_animation_duration']) && isset($popupAttribs['toggle_enter_animation']) && $popupAttribs['toggle_enter_animation'] == 1 ? $popupAttribs['enter_animation_duration'] : (isset($popupAttribs['toggle_enter_animation']) && $popupAttribs['toggle_enter_animation'] == 1 ? 2000 : 0);
 
 		$popupAttribs['exit_animation_duration'] = isset($popupAttribs['exit_animation_duration']) && isset($popupAttribs['toggle_exit_animation']) && $popupAttribs['toggle_exit_animation'] == 1 ? $popupAttribs['exit_animation_duration'] : (isset($popupAttribs['toggle_exit_animation']) && $popupAttribs['toggle_exit_animation'] == 1 ? 2000 : 0);
@@ -1285,6 +1289,7 @@ class  plgSystemSppagebuilder extends CMSPlugin
 
 	private function getAdvancedScriptContent($popupId, $popupAttribs) 
 	{
+		$popupId = (int)$popupId;
 		$popupAttribs['enter_animation_duration'] = isset($popupAttribs['enter_animation_duration']) && isset($popupAttribs['toggle_enter_animation']) && $popupAttribs['toggle_enter_animation'] == 1 ? $popupAttribs['enter_animation_duration'] : (isset($popupAttribs['toggle_enter_animation']) && $popupAttribs['toggle_enter_animation'] == 1 ? 2000 : 0);
 
 		$popupAttribs['exit_animation_duration'] = isset($popupAttribs['exit_animation_duration']) && isset($popupAttribs['toggle_exit_animation']) && $popupAttribs['toggle_exit_animation'] == 1 ? $popupAttribs['exit_animation_duration'] : (isset($popupAttribs['toggle_exit_animation']) && $popupAttribs['toggle_exit_animation'] == 1 ? 2000 : 0);
@@ -1388,6 +1393,7 @@ class  plgSystemSppagebuilder extends CMSPlugin
 
 	private function getScriptContent($popupId, $popupAttribs)
 	{
+		$popupId = (int)$popupId;
 		$popupAttribs['enter_animation_duration'] = isset($popupAttribs['enter_animation_duration']) && isset($popupAttribs['toggle_enter_animation']) && $popupAttribs['toggle_enter_animation'] == 1 ? $popupAttribs['enter_animation_duration'] : (isset($popupAttribs['toggle_enter_animation']) && $popupAttribs['toggle_enter_animation'] == 1 ? 2000 : 0);
 
 		$popupAttribs['exit_animation_duration'] = isset($popupAttribs['exit_animation_duration']) && isset($popupAttribs['toggle_exit_animation']) && $popupAttribs['toggle_exit_animation'] == 1 ? $popupAttribs['exit_animation_duration'] : (isset($popupAttribs['toggle_exit_animation']) && $popupAttribs['toggle_exit_animation'] == 1 ? 2000 : 0);
@@ -1608,7 +1614,7 @@ class  plgSystemSppagebuilder extends CMSPlugin
 	
 				$query->select($db->quoteName(array('extension_view')))
 					->from($db->quoteName('#__sppagebuilder'))
-					->where($db->quoteName('id') . ' = ' . $pageId);
+					->where($db->quoteName('id') . ' = ' . (int)$pageId);
 	
 				$db->setQuery($query);
 				$result = $db->loadObject();
@@ -1933,7 +1939,7 @@ class  plgSystemSppagebuilder extends CMSPlugin
 			
 			$app = Factory::getApplication();
 			$input = $app->input;
-			$input->set('collection_item_id', [$id]);
+			$input->set('collection_item_id', [(int)$id]);
 			$input->set('collection_type', 'articles');
 			
 			if (!class_exists('AddonParser')) {
@@ -1993,7 +1999,7 @@ class  plgSystemSppagebuilder extends CMSPlugin
 			
 			$app = Factory::getApplication();
 			$input = $app->input;
-			$input->set('collection_item_id', [$id]);
+			$input->set('collection_item_id', [(int)$id]);
 			$input->set('collection_type', 'articles');
 			
 			
@@ -2043,8 +2049,9 @@ class  plgSystemSppagebuilder extends CMSPlugin
 			$query = $db->getQuery(true);
 			$query->select(['id, content'])
 				->from($db->quoteName('#__sppagebuilder'))
+				->where($db->quoteName('id') . ' = ' . (int)$id)
 				->where($db->quoteName('extension_view') . ' = ' . $db->quote('article'))
-				->where($db->quoteName('view_id') . ' = ' . $db->quote($id))
+				->where($db->quoteName('view_id') . ' = ' . $db->quote((int)$id))
 				->where($db->quoteName('active') . ' = ' . $db->quote('1'))
 				->where($db->quoteName('published') . ' = 1');
 			$db->setQuery($query);
@@ -2390,7 +2397,7 @@ class  plgSystemSppagebuilder extends CMSPlugin
 		$query->from($db->quoteName('#__sppagebuilder'));
 		$query->where($db->quoteName('extension') . ' = ' . $db->quote($extension));
 		$query->where($db->quoteName('extension_view') . ' = ' . $db->quote($extension_view));
-		$query->where($db->quoteName('view_id') . ' = ' . $view_id);
+		$query->where($db->quoteName('view_id') . ' = ' . ((int)$view_id));
 		$db->setQuery($query);
 		$result = $db->loadObject();
 
@@ -2496,7 +2503,7 @@ class  plgSystemSppagebuilder extends CMSPlugin
 					$db = Factory::getDbo();
 					$query = $db->getQuery();
 					$query->clear();
-					$query->select('*')->from($db->quoteName('#__sppagebuilder'))->where($db->quoteName('view_id') . '=' . $id);
+					$query->select('*')->from($db->quoteName('#__sppagebuilder'))->where($db->quoteName('view_id') . '=' . (int)$id);
 					$db->setQuery($query);
 					$result = $db->loadObject();
 

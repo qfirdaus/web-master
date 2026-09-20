@@ -73,7 +73,7 @@ abstract class AbstractScript
     /**
      * @var CMSApplication
      */
-    protected CMSApplication $app;
+    protected $app;
 
     /**
      * @var \JDatabaseDriver|DatabaseDriver

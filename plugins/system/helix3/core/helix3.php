@@ -587,7 +587,15 @@ class Helix3
         foreach ($srcs as $src) {
 
             if (file_exists($path . $src)) {
-                self::getInstance()->document->addStyleSheet(Uri::base(true) . '/templates/' . $template . '/css/' . $src, [], $attribs);
+                $stylesheet = Uri::base(true) . '/templates/' . $template . '/css/' . $src;
+
+                // custom.css is cached by the web server for a long time. Tie its
+                // URL to the file modification time so deployed fixes load at once.
+                if ($src === 'custom.css') {
+                    $stylesheet .= '?v=' . filemtime($path . $src);
+                }
+
+                self::getInstance()->document->addStyleSheet($stylesheet, [], $attribs);
             } else {
                 if ($src != 'custom.css') {
                     self::getInstance()->document->addStyleSheet($src, [], $attribs);

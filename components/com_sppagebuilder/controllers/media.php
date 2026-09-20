@@ -3,7 +3,7 @@
 /**
  * @package SP Page Builder
  * @author JoomShaper http://www.joomshaper.com
- * @copyright Copyright (c) 2010 - 2025 JoomShaper
+ * @copyright Copyright (c) 2010 - 2026 JoomShaper
  * @license http://www.gnu.org/licenses/gpl-2.0.html GNU/GPLv2 or later
  */
 //no direct access
@@ -120,11 +120,32 @@ class SppagebuilderControllerMedia extends FormController
 		$id = $input->json->get('id', 0, 'INT');
 		$title = $input->json->get('title', '', 'STR');
 		$path = $input->json->get('path', '', 'STR');
-		$thumb = $input->json->get('thumb', '', 'STR');
 
 		$title = $this->sanitizeTitle($title);
 
-		if(!$this->pathExistsInDB($path))
+		$model = $this->getModel();
+		$media = $model->getMediaByID($id);
+
+		// Resolve the record from the path, because the path is what actually gets renamed.
+		// Trusting the request's id lets a core.edit.own user pair an id they own with someone
+		// else's path: the ownership test below and $thumb would both come from their record
+		// while a different file is renamed. pathExistsInDB() is an exact match on path, unlike
+		// getMediaByPath(), which matches with LIKE '%path%' and can resolve the wrong row.
+		$pathId = $this->pathExistsInDB($path);
+
+		if ($pathId)
+		{
+			$media = $model->getMediaByID($pathId);
+			$id    = $pathId;
+		}
+
+		// Confine the rename to the configured media folders, whatever the request asked for.
+		//
+		// The conditions are OR-ed deliberately: every one of them must hold. Weakening this to
+		// && reopens an arbitrary file rename -- f04087449 (2026-09-07) did exactly that to the
+		// last two, silently reverting the fix for issue #3360 a day before it was reported
+		// again from outside. .github/security-invariants.php now guards the shape of this line.
+		if (!SecurityHelper::isGetablePath($path) || !$this->pathExistsInDB($path) || !$media)
 		{
 			$app->setHeader('status', 500, true);
 			$app->sendHeaders();
@@ -136,6 +157,8 @@ class SppagebuilderControllerMedia extends FormController
 			echo new JsonResponse($response);
 			$app->close();
 		}
+
+		$thumb = $media->thumb ?? '';
 
 		$mediaType = empty($id) ? 'folder' : 'DB';
 
@@ -204,12 +227,20 @@ class SppagebuilderControllerMedia extends FormController
 
 	private function replacePathByTitle($path, $title)
 	{
-		$fileName = pathinfo($path, PATHINFO_FILENAME);
-		$basename = basename($path);
+		// Replace only the filename stem and keep the extension. str_replace() over the
+		// basename rewrote every occurrence of the stem, so "jpg.jpg" renamed to "php"
+		// became "php.php" -- a rename that changes the file's extension.
+		if ($path === '')
+		{
+			return '';
+		}
 
-		$newFile = str_replace($fileName, $title, $basename);
+		$dirname = pathinfo($path, PATHINFO_DIRNAME);
+		$ext     = pathinfo($path, PATHINFO_EXTENSION);
 
-		return str_replace($basename, $newFile, $path);
+		$newBasename = $title . ($ext !== '' ? '.' . $ext : '');
+
+		return ($dirname !== '' && $dirname !== '.') ? $dirname . '/' . $newBasename : $newBasename;
 	}
 
 	/**
@@ -402,6 +433,14 @@ class SppagebuilderControllerMedia extends FormController
 
 							if ($dir != '')
 							{
+								if (!SecurityHelper::isGetablePath($dir))
+								{
+									$report['status'] = false;
+									$report['output'] = Text::_('COM_SPPAGEBUILDER_MEDIA_MANAGER_UPLOAD_FAILED');
+									echo json_encode($report);
+									die();
+								}
+
 								$folder = ltrim($dir, '/');
 							}
 
@@ -435,6 +474,26 @@ class SppagebuilderControllerMedia extends FormController
 							} while (file_exists($dest));
 							// End Do not override
 
+							// File::upload is called with $allowUnsafe = true, which skips
+							// InputFilter::isSafeFile entirely -- including php_tag_in_content, the
+							// check that rejects an image carrying <?php. Run it explicitly, the same
+							// way importLayoutWithMedia() does.
+							$isSafe = \Joomla\CMS\Filter\InputFilter::isSafeFile([
+								'name'     => $media_name,
+								'tmp_name' => $path,
+								'type'     => '',
+								'error'    => '',
+								'size'     => '',
+							]);
+
+							if (!$isSafe)
+							{
+								$report['status'] = false;
+								$report['output'] = Text::_('COM_SPPAGEBUILDER_MEDIA_MANAGER_FILE_NOT_SUPPORTED');
+								echo json_encode($report);
+								die;
+							}
+
 							if (File::upload($path, $dest, false, true))
 							{
 								$media_attr = [];
@@ -442,6 +501,16 @@ class SppagebuilderControllerMedia extends FormController
 
 								if ($media_type == 'image')
 								{
+									if (strtolower($ext) == 'svg' && !BuilderMediaHelper::sanitizeSvgFile($dest))
+									{
+										File::delete($dest);
+
+										$report['status'] = false;
+										$report['output'] = Text::_('COM_SPPAGEBUILDER_MEDIA_MANAGER_FILE_NOT_SUPPORTED');
+										echo json_encode($report);
+										die;
+									}
+
 									list($imgWidth, $imgHeight) = getimagesize($dest);
 
 									if (strtolower($ext) == 'svg')
@@ -1059,6 +1128,23 @@ class SppagebuilderControllerMedia extends FormController
 		$report = array();
 		$report['status'] = false;
 
+		try
+        {
+            $cleanedFullPath = BuilderMediaHelper::checkForMediaActionBoundary($cleanedFullPath);
+        }
+        catch (\Exception $e)
+        {
+			$app->setHeader('status', 403, true);
+			$app->sendHeaders();
+            $response = [
+				'message' => $e->getMessage(),
+				'status' => false,
+				'code' => 403
+			];
+			echo new JsonResponse($response);
+			$app->close();
+        }
+
 		if (!SecurityHelper::isActionableFolder($folder))
         {
 			$app->setHeader('status', 403, true);
@@ -1148,6 +1234,24 @@ class SppagebuilderControllerMedia extends FormController
 		$cleanedSrc = Path::clean(JPATH_ROOT . $src);
 		$dest = $dirname . '/' . $newbasename;
 		$cleanedDest = Path::clean(JPATH_ROOT . $dest);
+
+		try{
+			
+			$cleanedSrc = BuilderMediaHelper::checkForMediaActionBoundary($cleanedSrc);
+			$cleanedDest = BuilderMediaHelper::checkForMediaActionBoundary($cleanedDest);
+		}
+		catch (\Exception $e)
+		{
+			$app->setHeader('status', 403, true);
+			$app->sendHeaders();
+			$response = [
+				'message' => $e->getMessage(),
+				'status' => false,
+				'code' => 403
+			];
+			echo new JsonResponse($response);
+			$app->close();
+		}
 
 		if (!SecurityHelper::isActionableFolder($currentfolder) || !SecurityHelper::isActionableFolder($newfolder))
         {
