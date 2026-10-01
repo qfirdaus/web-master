@@ -79,14 +79,6 @@ Joomla = window.Joomla || {};
     });
   };
   document.addEventListener('DOMContentLoaded', () => {
-    // The administrator MFA challenge may be rendered after a login request,
-    // so the server-side captive-page check cannot always prevent this asset
-    // from loading. Do not make the stats AJAX request while MFA is pending;
-    // its HTML redirect would otherwise be rendered as an error message.
-    if (document.body.matches('.com_users.view-captive')) {
-      return;
-    }
-
     getJson();
   });
 })(Joomla, document);

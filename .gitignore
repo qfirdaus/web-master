@@ -13,6 +13,7 @@
 !/tmp/index.html
 /logs/*
 !/logs/index.html
+/images/slider/cache/*
 
 # Local editor and OS files
 /.idea/

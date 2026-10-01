@@ -1421,28 +1421,64 @@ body.itemid-1203 #sp-page-title {
     display: none;
 }
 
-body.itemid-998 #sp-main-body,
-body.itemid-998 #sp-page-builder,
-body.itemid-998 #sp-page-builder > .page-content,
-body.itemid-1138 #sp-main-body,
-body.itemid-1138 #sp-page-builder,
-body.itemid-1138 #sp-page-builder > .page-content,
-body.itemid-1182 #sp-main-body,
-body.itemid-1182 #sp-page-builder,
-body.itemid-1182 #sp-page-builder > .page-content,
-body.itemid-1203 #sp-main-body,
-body.itemid-1203 #sp-page-builder,
-body.itemid-1203 #sp-page-builder > .page-content {
+body.com-sppagebuilder.view-page.itemid-998 #sp-main-body,
+body.com-sppagebuilder.view-page.itemid-998 #sp-page-builder,
+body.com-sppagebuilder.view-page.itemid-998 #sp-page-builder > .page-content,
+body.com-sppagebuilder.view-page.itemid-1138 #sp-main-body,
+body.com-sppagebuilder.view-page.itemid-1138 #sp-page-builder,
+body.com-sppagebuilder.view-page.itemid-1138 #sp-page-builder > .page-content,
+body.com-sppagebuilder.view-page.itemid-1182 #sp-main-body,
+body.com-sppagebuilder.view-page.itemid-1182 #sp-page-builder,
+body.com-sppagebuilder.view-page.itemid-1182 #sp-page-builder > .page-content,
+body.com-sppagebuilder.view-page.itemid-1203 #sp-main-body,
+body.com-sppagebuilder.view-page.itemid-1203 #sp-page-builder,
+body.com-sppagebuilder.view-page.itemid-1203 #sp-page-builder > .page-content {
     margin-top: 0 !important;
     padding-top: 0 !important;
 }
 
-body.itemid-998 #sp-page-builder > .page-content > .sppb-section:first-child,
-body.itemid-1138 #sp-page-builder > .page-content > .sppb-section:first-child,
-body.itemid-1182 #sp-page-builder > .page-content > .sppb-section:first-child,
-body.itemid-1203 #sp-page-builder > .page-content > .sppb-section:first-child {
+body.com-sppagebuilder.view-page.itemid-998 #sp-page-builder > .page-content > .sppb-section:first-child,
+body.com-sppagebuilder.view-page.itemid-1138 #sp-page-builder > .page-content > .sppb-section:first-child,
+body.com-sppagebuilder.view-page.itemid-1182 #sp-page-builder > .page-content > .sppb-section:first-child,
+body.com-sppagebuilder.view-page.itemid-1203 #sp-page-builder > .page-content > .sppb-section:first-child {
     margin-top: -15px !important;
     padding-top: 0 !important;
+}
+
+/* Keep the announcement panel aligned consistently across cloned pages.
+   Page Builder generates different element IDs per site, so target shared classes. */
+@media (min-width: 768px) {
+    .home-feature-new .sppb-row > [class*="sppb-col-"]:has(> .sppb-column.educon-latest-news-wrap) {
+        margin-top: -39px !important;
+        margin-bottom: 39px !important;
+    }
+}
+
+/* Use the same arrow marker as web-master instead of showing article dates. */
+.home-feature-new .educon-latest-news-wrap .sppb-articles-scroller-date-left-date,
+.home-feature-new .educon-latest-news-wrap .sppb-articles-scroller-date-left-date * {
+    color: transparent !important;
+    -webkit-text-fill-color: transparent !important;
+    font-size: 0 !important;
+    text-shadow: none !important;
+}
+
+.home-feature-new .educon-latest-news-wrap .sppb-articles-scroller-date-left-date {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+}
+
+.home-feature-new .educon-latest-news-wrap .sppb-articles-scroller-date-left-date::after {
+    content: "\203A\203A" !important;
+    display: block !important;
+    color: #fff !important;
+    -webkit-text-fill-color: #fff !important;
+    font-family: Arial, sans-serif !important;
+    font-size: 34px !important;
+    font-weight: 700 !important;
+    letter-spacing: -5px;
+    line-height: 1 !important;
 }
 
 @media (min-width: 768px) {
